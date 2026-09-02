@@ -119,7 +119,7 @@ All runs below are from this engagement (Windows, PowerShell shell):
 | `npm run build` (all workspaces) | ✅ no errors |
 | `npm run test -w @pezhwan/core` | ✅ 19/19 → 20/20 |
 | `npm run test -w @pezhwan/express` | ✅ 7/7 → 9/9 |
-| `tests/security/backstop-security.test.ts` (via `npm run test:backstop`) | ✅ 17/17 → 28/28 |
+| `packages/core` and `packages/crypto` workspace tests | ✅ 17/17 → 28/28 |
 | live-Mongo cast-fix script (user + session create with string IDs) | ✅ PASS |
 | live-Mongo rotation script (8 concurrent refreshes, same token) | ✅ 1 ok / 7 reuse-rejected |
 | live-Mongo role script (assignRole bumps tokenVersion; old token rejected) | ✅ PASS |

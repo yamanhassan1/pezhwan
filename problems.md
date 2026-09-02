@@ -268,3 +268,16 @@ requires a **NO-GO** decision.
    attack suites.
 6. Add lint, coverage, dependency review, license review, and container scan
    gates, then attach release evidence and alert-test results.
+
+## Dependency branch verification update
+
+- Argon2 0.45.1 was applied to the current main checkout with a supported
+  named type import. `npm ci`, build, typecheck, crypto tests (8/8), and core
+  security tests (28/28) passed. The old Dependabot branch is stale and should
+  not be merged directly.
+- dotenv 17 passed local build, typecheck, and workspace tests, but still
+  requires a refreshed branch and CI run.
+- Mongoose 9 and ioredis 6 remain unmerged because runtime integration tests
+  against real MongoDB and Redis are not available.
+- TypeScript, type-definition, and GitHub Actions updates remain maintenance
+  work rather than production-readiness blockers.

@@ -13,7 +13,7 @@ security picture lives in `docs/security-audit.md`.
 | `npm run build` (crypto, core, express, identity-server, full) | OK — clean |
 | `npm run test -w @pezhwan/core` | OK — **20/20 pass** (19 in Phase B + G5 restart round-trip) |
 | `npm run test -w @pezhwan/express` | OK — **9/9 pass** (7 in Phase B + 2 rate-limit regressions) |
-| `npm run test:backstop` | OK — **28/28 pass** (17 in Phase B, 11 added during hardening) |
+| `npm run test --workspaces --if-present` | OK — **28/28 pass** (17 in Phase B, 11 added during hardening) |
 | live-Mongo MFA-lock script | OK — 6/6 PASS lines, then script removed |
 
 Phase C leaves no `[Gap]` items open in the threat model.
