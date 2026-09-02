@@ -26,9 +26,19 @@ export interface SigningKey {
   privateKey: string;
   /** Epoch ms when this key was generated (for rotation bookkeeping). */
   createdAt: number;
+  /** Lifecycle state controlling signing, verification, and publication. */
+  status: KeyStatus;
+  /** Epoch ms when this key became active, if activated. */
+  activatedAt?: number;
+  /** Epoch ms when this key stopped signing new tokens, if retired. */
+  retiredAt?: number;
+  /** Epoch ms when this key was emergency-revoked, if revoked. */
+  revokedAt?: number;
   /** Epoch ms after which this key is retired. */
   expiresAt: number;
 }
+
+export type KeyStatus = 'GENERATED' | 'STAGED' | 'ACTIVE' | 'VERIFY-ONLY' | 'RETIRED' | 'REVOKED';
 
 /** JWKS JSON Web Key Set entry (public, safe to publish). */
 export interface JwkJson {
@@ -110,7 +120,9 @@ export class KeyStore {
     const all = [...this.keys.values()].sort(
       (a, b) => b.createdAt - a.createdAt,
     );
-    const active = all.find((k) => k.expiresAt > Date.now());
+    const active = all.find(
+      (k) => k.status === 'ACTIVE' && k.expiresAt > Date.now(),
+    );
     if (active) {
       return active;
     }
@@ -120,7 +132,10 @@ export class KeyStore {
 
   /** Look up a key by kid (for verification). Returns undefined if unknown. */
   byKid(kid: string): SigningKey | undefined {
-    return this.keys.get(kid);
+    const key = this.keys.get(kid);
+    return key && key.status !== 'REVOKED' && key.expiresAt > Date.now()
+      ? key
+      : undefined;
   }
 
   /**
@@ -144,6 +159,8 @@ export class KeyStore {
       publicKey,
       privateKey,
       createdAt: now,
+      status: 'ACTIVE',
+      activatedAt: now,
       expiresAt: now + ttlMs,
     };
     this.keys.set(kid, key);
@@ -153,10 +170,21 @@ export class KeyStore {
 
   /** Add a key from persisted material (restore from disk/store). */
   addKeyWithMaterial(key: SigningKey): void {
-    if (!key?.kid || !key?.publicKey || !key?.privateKey) {
+    if (
+      !key?.kid ||
+      !key?.publicKey ||
+      !key?.privateKey ||
+      !Number.isFinite(key.createdAt) ||
+      !Number.isFinite(key.expiresAt)
+    ) {
       throw new Error('Cannot restore an incomplete signing key');
     }
-    this.keys.set(key.kid, key);
+    const restored: SigningKey = {
+      ...key,
+      status: key.status ?? 'ACTIVE',
+      activatedAt: key.activatedAt ?? key.createdAt,
+    };
+    this.keys.set(restored.kid, restored);
     this.prune();
   }
 
@@ -164,8 +192,32 @@ export class KeyStore {
   jwks(): JwkJson[] {
     const now = Date.now();
     return [...this.keys.values()]
-      .filter((k) => k.expiresAt > now)
+      .filter(
+        (k) =>
+          k.expiresAt > now &&
+          (k.status === 'ACTIVE' || k.status === 'VERIFY-ONLY'),
+      )
       .map((k) => publicKeyToJwk(k.publicKey, k.kid));
+  }
+
+  /** Stop signing with the current key while keeping it available for verification. */
+  retire(kid: string): void {
+    const key = this.keys.get(kid);
+    if (!key || key.status === 'REVOKED') {
+      throw new Error(`Cannot retire unknown or revoked signing key "${kid}"`);
+    }
+    key.status = 'VERIFY-ONLY';
+    key.retiredAt = Date.now();
+  }
+
+  /** Emergency revoke a key so it is no longer accepted or published. */
+  revoke(kid: string): void {
+    const key = this.keys.get(kid);
+    if (!key) {
+      throw new Error(`Cannot revoke unknown signing key "${kid}"`);
+    }
+    key.status = 'REVOKED';
+    key.revokedAt = Date.now();
   }
 
   /** Remove expired keys to bound memory in the no-persistence path. */

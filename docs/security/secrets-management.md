@@ -120,7 +120,7 @@ The application supports interchangeable secret providers via the
 
 ```ts
 interface SecretProvider {
-  getSecret(name: string): Promise<string | undefined>;
+  getSecret(name: string): Promise<string>;
   getOptionalSecret(name: string): Promise<string | undefined>;
 }
 ```
@@ -148,6 +148,18 @@ Because auth logic only talks to `SecretProvider`, swapping the backing store
 does **not** require rewriting authentication code.
 
 Never hard-code a provider SDK into the app; pass the provider in via config.
+
+### Production startup invariants
+
+The identity server rejects production configuration unless:
+
+- `PEZHWAN_ISSUER` uses `https://`
+- `PEZHWAN_COOKIE_SECURE=true`
+- signing-key rotation is enabled
+- `PEZHWAN_ALLOWED_ORIGINS` contains no wildcard
+
+Boolean environment values are parsed explicitly, so the string `false` is not
+mistaken for a truthy value.
 
 ## 8. Secret rotation
 

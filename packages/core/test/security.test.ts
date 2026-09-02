@@ -218,6 +218,43 @@ test('access token missing a required claim is rejected (hollow token)', () => {
   assert.throws(() => service.verifyAccessToken(hollow), /claim|INVALID_JWT/);
 });
 
+test('access tokens require a kid header', () => {
+  const { store, service } = makeTokenService();
+  const key = store.current;
+  const token = signJwt(
+    {
+      sub: 'u1',
+      tenantId: 'dev-tenant',
+      applicationId: 'dev-app',
+      sessionId: 's1',
+      roles: [],
+      permissions: [],
+      authMethod: 'password',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 900,
+      iss: 'https://id.pezhwan.test',
+      aud: 'pezhwan.clients',
+    },
+    key.privateKey,
+    '',
+    'RS256',
+    { algorithm: 'RS256' as const },
+  );
+  assert.throws(() => service.verifyAccessToken(token), /kid|INVALID_JWT/);
+});
+
+test('key rotation retires the previous key and revocation blocks verification', async () => {
+  const store = new CoreKeyStore('RS256');
+  const first = store.addKey();
+  const second = store.addKey();
+  store.retire(first.kid);
+  assert.equal(store.byKid(first.kid)?.status, 'VERIFY-ONLY');
+  assert.equal(store.current.kid, second.kid);
+  store.revoke(first.kid);
+  assert.equal(store.byKid(first.kid), undefined);
+  assert.equal(store.jwks().some((key) => key.kid === first.kid), false);
+});
+
 test('KeyStore file load fails closed on a corrupt key file', async (t) => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pezhwan-keystore-'));
   t.after(() => fs.rm(dir, { recursive: true, force: true }).catch(() => {}));

@@ -117,6 +117,19 @@ export class OAuthService {
     };
   }
 
+  private assertClientScope(
+    client: OAuthRawClient,
+    tenantId: string,
+    applicationId: string,
+  ): void {
+    if (
+      String(client.tenantId) !== tenantId ||
+      String(client.applicationId) !== applicationId
+    ) {
+      throw new AuthenticationError('Invalid client', 'INVALID_CLIENT');
+    }
+  }
+
   /** Register/persist a new OAuth client (admin only). */
   async registerClient(input: {
     tenantId: string;
@@ -193,6 +206,9 @@ export class OAuthService {
     const client = await this.findClient(input.clientId);
     if (!client || client.isActive === false) {
       throw new ValidationError('Unknown client', 'UNKNOWN_CLIENT');
+    }
+    if (input.tenantId && input.applicationId) {
+      this.assertClientScope(client, input.tenantId, input.applicationId);
     }
     if (!client.redirectUris.includes(input.redirectUri)) {
       await this.deps.audit?.log({
@@ -286,6 +302,7 @@ export class OAuthService {
       input.clientId,
       input.clientSecret,
     );
+    this.assertClientScope(client, input.tenantId, input.applicationId);
 
     switch (input.grantType) {
       case 'authorization_code':

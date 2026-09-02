@@ -3,14 +3,20 @@
  *
  * Implements RFC 6238 TOTP as the primary second factor, plus single-use
  * backup codes for recovery. Secret handling:
- *   - TOTP secret: generated here, stored BASE64 on the user (select:false),
+ *   - TOTP secret: generated here, encrypted on the user (select:false),
  *     provisioned to the authenticator via an otpauth:// URI.
  *   - Backup codes: generated as high-entropy strings; only SHA-256 hashes are
  *     stored.
  * Verification is constant-time and clock-skew tolerant.
  */
 
-import { createHash, timingSafeEqual } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+  timingSafeEqual,
+} from 'node:crypto';
 import { AuthenticationError, ValidationError } from '@pezhwan/shared';
 import {
   generateToptSecretBytes,
@@ -41,7 +47,58 @@ export class MfaService {
     private readonly tenantId: string,
     private readonly applicationId: string,
     private readonly audit?: AuditService,
-  ) {}
+    private readonly encryptionKey?: string | Buffer,
+  ) {
+    if (encryptionKey !== undefined) {
+      const key = Buffer.isBuffer(encryptionKey)
+        ? encryptionKey
+        : Buffer.from(encryptionKey, 'base64');
+      if (key.length !== 32) {
+        throw new ValidationError(
+          'MFA encryption key must be 32 bytes',
+          'INVALID_MFA_ENCRYPTION_KEY',
+        );
+      }
+    }
+  }
+
+  private protectSecret(secret: Buffer): string {
+    if (!this.encryptionKey) {
+      throw new ValidationError(
+        'MFA encryption is not configured',
+        'MFA_ENCRYPTION_NOT_CONFIGURED',
+      );
+    }
+    const key = Buffer.isBuffer(this.encryptionKey)
+      ? this.encryptionKey
+      : Buffer.from(this.encryptionKey, 'base64');
+    const iv = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', key, iv);
+    const ciphertext = Buffer.concat([cipher.update(secret), cipher.final()]);
+    return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString('base64');
+  }
+
+  private revealSecret(value: string): Buffer {
+    if (!this.encryptionKey) {
+      throw new ValidationError(
+        'MFA encryption is not configured',
+        'MFA_ENCRYPTION_NOT_CONFIGURED',
+      );
+    }
+    const key = Buffer.isBuffer(this.encryptionKey)
+      ? this.encryptionKey
+      : Buffer.from(this.encryptionKey, 'base64');
+    const payload = Buffer.from(value, 'base64');
+    if (payload.length < 28) {
+      throw new ValidationError('Invalid MFA secret', 'INVALID_MFA_SECRET');
+    }
+    const decipher = createDecipheriv('aes-256-gcm', key, payload.subarray(0, 12));
+    decipher.setAuthTag(payload.subarray(12, 28));
+    return Buffer.concat([
+      decipher.update(payload.subarray(28)),
+      decipher.final(),
+    ]);
+  }
 
   private hashBackupCode(code: string): string {
     return createHash('sha256').update(code).digest('base64');
@@ -75,7 +132,7 @@ export class MfaService {
     await UserModel.updateOne(
       { _id: userId },
       {
-        mfaSecret: Buffer.from(secret).toString('base64'),
+        mfaSecret: this.protectSecret(secret),
         mfaSecretVerifiedAt: null,
       },
     );
@@ -111,7 +168,7 @@ export class MfaService {
     if (user.mfaEnabled) {
       throw new ValidationError('MFA is already enabled', 'MFA_ALREADY_ENABLED');
     }
-    const secret = Buffer.from(user.mfaSecret, 'base64');
+    const secret = this.revealSecret(user.mfaSecret);
     if (!this.verify(secret, code)) {
       throw new AuthenticationError('Invalid authenticator code', 'INVALID_TOTP');
     }
@@ -140,7 +197,7 @@ export class MfaService {
     if (!user?.mfaEnabled || !user.mfaSecret) {
       return false;
     }
-    const secret = Buffer.from(user.mfaSecret, 'base64');
+    const secret = this.revealSecret(user.mfaSecret);
     if (this.verify(secret, code)) {
       await this.touchVerified(userId);
       await this.resetMfaFailures(userId);
@@ -269,7 +326,7 @@ export class MfaService {
     if (await this.mfaLocked(userId)) {
       throw new AuthenticationError('Invalid code', 'INVALID_TOTP');
     }
-    const secret = user.mfaSecret ? Buffer.from(user.mfaSecret, 'base64') : null;
+    const secret = user.mfaSecret ? this.revealSecret(user.mfaSecret) : null;
     let ok = false;
     if (secret) {
       ok = this.verify(secret, code);

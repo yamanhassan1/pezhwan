@@ -66,6 +66,8 @@ export interface PezhwanConfig {
 
   // Password policy (optional)
   passwordPolicy?: PasswordPolicy;
+  /** 32-byte key used to encrypt TOTP secrets at rest. */
+  mfaEncryptionKey?: string | Buffer;
 
   // OTP
   otp?: {
@@ -164,7 +166,12 @@ export function createPezhwan(
   const audit = new AuditService();
   const authorization = new AuthorizationService(audit, accountState);
 
-  const mfa = new MfaService(config.tenantId, config.applicationId, audit);
+  const mfa = new MfaService(
+    config.tenantId,
+    config.applicationId,
+    audit,
+    config.mfaEncryptionKey,
+  );
   const verificationTokens = new VerificationTokenService(
     config.tenantId,
     config.applicationId,

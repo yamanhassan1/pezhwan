@@ -77,13 +77,19 @@ async function bootstrap(): Promise<void> {
     audience: 'pezhwan.clients',
     accessTokenTtlMs: config.tokens.accessTokenTtlMs,
     redis,
+    mfaEncryptionKey: config.mfaEncryptionKey,
     rateLimits: config.rateLimit.rules,
     otpDelivery: {
-      // Dev reference: log the code instead of sending an email/SMS.
       sendEmail: async (target: string, code: string) => {
+        if (config.env === 'production') {
+          throw new Error(`Email OTP delivery is not configured for ${target}`);
+        }
         console.log(`[pezhwan:otp] email ${target} => code ${code}`);
       },
       sendSms: async (target: string, code: string) => {
+        if (config.env === 'production') {
+          throw new Error(`SMS OTP delivery is not configured for ${target}`);
+        }
         console.log(`[pezhwan:otp] sms ${target} => code ${code}`);
       },
     },
@@ -106,6 +112,7 @@ function wireApp(
   redisManager: ReturnType<typeof createRedisManager> | null = null,
 ): void {
   const app = express();
+  let httpServer: ReturnType<typeof app.listen> | undefined;
   app.set('trust proxy', 1);
   app.use(cookieParser());
   // Explicit body cap (DO NOT remove): prevents oversized-payload/parser abuse.
@@ -120,6 +127,21 @@ function wireApp(
     // origin (browser demo, health probes) without being allowlisted.
     publicPaths: ['/.well-known'],
   }));
+
+  app.get('/health/live', (_req, res) => {
+    res.status(200).json({ ok: true });
+  });
+  app.get('/health/ready', (_req, res) => {
+    const mongoReady = mongoose.connection.readyState === 1;
+    const ready = mongoReady;
+    res.status(ready ? 200 : 503).json({
+      ok: ready,
+      dependencies: {
+        mongodb: mongoReady ? 'ready' : 'unavailable',
+        redis: redisManager ? (redisManager.connectedClient ? 'ready' : 'degraded') : 'disabled',
+      },
+    });
+  });
 
   const routers = buildRouters(runtime);
 
@@ -186,7 +208,7 @@ function wireApp(
     },
   );
 
-  app.listen(config.server.port, () => {
+  httpServer = app.listen(config.server.port, () => {
     console.log(`[pezhwan] identity server listening on :${config.server.port}`);
     console.log(`[pezhwan] issuer ${config.issuer} — use /v1/auth/login`);
     console.log(`[pezhwan] JWKS at /.well-known/jwks.json`);
@@ -201,6 +223,17 @@ function wireApp(
     }
     shuttingDown = true;
     console.log(`[pezhwan] ${signal} received — shutting down`);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        if (!httpServer) {
+          resolve();
+          return;
+        }
+        httpServer.close((err) => (err ? reject(err) : resolve()));
+      });
+    } catch (err) {
+      console.warn(`[pezhwan] http shutdown error: ${err instanceof Error ? err.message : String(err)}`);
+    }
     try {
       await redisManager?.disconnect();
     } catch (err) {

@@ -14,6 +14,15 @@
 
 import { z } from 'zod';
 
+const booleanEnv = z.preprocess((value) => {
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  return value;
+}, z.boolean());
+
 // ---------------------------------------------------------------------------
 // Schema
 // ---------------------------------------------------------------------------
@@ -77,10 +86,11 @@ const envSchema = z.object({
   // Rotation cadence for the persisted signing keys (ms). 0 disables.
   // Capped at Node's setInterval maximum (2^31-1 ms, ~24.8d).
   PEZHWAN_SIGNING_KEY_ROTATION_MS: z.coerce.number().int().min(0).default(2_147_483_000),
+  PEZHWAN_MFA_ENCRYPTION_KEY: z.string().optional(),
 
   // ── Cookie security ───────────────────────────────────────────────────
   PEZHWAN_COOKIE_DOMAIN: z.string().default(''),
-  PEZHWAN_COOKIE_SECURE: z.coerce.boolean().default(false),
+  PEZHWAN_COOKIE_SECURE: booleanEnv.default(false),
   PEZHWAN_COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
 
   // ── CORS ──────────────────────────────────────────────────────────────
@@ -103,7 +113,7 @@ const envSchema = z.object({
 
   // ── Observability ─────────────────────────────────────────────────────
   PEZHWAN_OTEL_ENDPOINT: z.string().optional(),
-  PEZHWAN_REQUEST_LOGGING: z.coerce.boolean().default(true),
+  PEZHWAN_REQUEST_LOGGING: booleanEnv.default(true),
   PEZHWAN_LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 
   // ── Environment label ─────────────────────────────────────────────────
@@ -125,6 +135,7 @@ function validateEnv(input: NodeJS.ProcessEnv = process.env): EnvConfig {
       .join('\n');
     throw new Error(`Invalid environment configuration:\n${issues}`);
   }
+  assertProductionSafety(parsed.data);
   return parsed.data;
 }
 
@@ -145,7 +156,29 @@ function parseEnv(): EnvConfig {
     process.exit(1);
   }
 
+  assertProductionSafety(parsed.data);
   return parsed.data;
+}
+
+function assertProductionSafety(raw: EnvConfig): void {
+  if (raw.NODE_ENV !== 'production') {
+    return;
+  }
+  if (!raw.PEZHWAN_ISSUER.startsWith('https://')) {
+    throw new Error('PEZHWAN_ISSUER must use HTTPS in production');
+  }
+  if (!raw.PEZHWAN_COOKIE_SECURE) {
+    throw new Error('PEZHWAN_COOKIE_SECURE must be true in production');
+  }
+  if (raw.PEZHWAN_SIGNING_KEY_ROTATION_MS === 0) {
+    throw new Error('PEZHWAN_SIGNING_KEY_ROTATION_MS cannot be 0 in production');
+  }
+  if (!raw.PEZHWAN_MFA_ENCRYPTION_KEY) {
+    throw new Error('PEZHWAN_MFA_ENCRYPTION_KEY is required in production');
+  }
+  if (raw.PEZHWAN_ALLOWED_ORIGINS.split(',').some((origin) => origin.trim() === '*')) {
+    throw new Error('PEZHWAN_ALLOWED_ORIGINS cannot contain "*" in production');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -200,6 +233,7 @@ function buildConfig(raw: EnvConfig) {
       path: raw.PEZHWAN_SIGNING_KEYS_PATH,
       rotationIntervalMs: raw.PEZHWAN_SIGNING_KEY_ROTATION_MS,
     }),
+    mfaEncryptionKey: raw.PEZHWAN_MFA_ENCRYPTION_KEY,
 
     cookie: Object.freeze({
       domain: raw.PEZHWAN_COOKIE_DOMAIN || undefined,

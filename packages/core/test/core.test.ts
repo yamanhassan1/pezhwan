@@ -1,7 +1,66 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { createPezhwan, MemoryKeyStoreAdapter, KeyStoreService } from '@pezhwan/core';
+import {
+  ChainSecretProvider,
+  EnvSecretProvider,
+  FileSecretProvider,
+  SecretNotFoundError,
+  createPezhwan,
+  MemoryKeyStoreAdapter,
+  KeyStoreService,
+} from '@pezhwan/core';
+
+test('secret providers distinguish required and optional lookups', async () => {
+  const provider = new EnvSecretProvider();
+  const name = 'PEZHWAN_TEST_REQUIRED_SECRET';
+  const previous = process.env[name];
+  process.env[name] = 'test-value';
+
+  try {
+    assert.equal(await provider.getSecret(name), 'test-value');
+    delete process.env[name];
+    assert.equal(await provider.getOptionalSecret(name), undefined);
+    await assert.rejects(provider.getSecret(name), SecretNotFoundError);
+  } finally {
+    if (previous === undefined) delete process.env[name];
+    else process.env[name] = previous;
+  }
+});
+
+test('file secret provider rejects unsafe names and propagates non-missing errors', async () => {
+  const provider = new FileSecretProvider('/run/secrets', async () => {
+    const error = new Error('permission denied') as Error & { code: string };
+    error.code = 'EACCES';
+    throw error;
+  });
+
+  await assert.rejects(provider.getOptionalSecret('../outside'), /Invalid secret name/);
+  await assert.rejects(provider.getOptionalSecret('secret'), /permission denied/);
+});
+
+test('chain secret provider falls back and fails closed when absent', async () => {
+  const provider = new ChainSecretProvider([
+    new FileSecretProvider('/run/secrets', async () => {
+      const error = new Error('missing') as Error & { code: string };
+      error.code = 'ENOENT';
+      throw error;
+    }),
+    new EnvSecretProvider(),
+  ]);
+  const name = 'PEZHWAN_CHAIN_SECRET';
+  const previous = process.env[name];
+  process.env[name] = 'chain-value';
+
+  try {
+    assert.equal(await provider.getSecret(name), 'chain-value');
+    delete process.env[name];
+    await assert.rejects(provider.getSecret(name), SecretNotFoundError);
+  } finally {
+    if (previous === undefined) delete process.env[name];
+    else process.env[name] = previous;
+  }
+});
 
 test('createPezhwan requires mandatory config', () => {
   assert.throws(

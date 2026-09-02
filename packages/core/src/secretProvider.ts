@@ -28,7 +28,7 @@ export interface SecretProvider {
    * Fetch a required secret. Throws if missing.
    * Implementations MUST NOT log or reveal the secret value.
    */
-  getSecret(name: string): Promise<string | undefined>;
+  getSecret(name: string): Promise<string>;
 
   /**
    * Fetch an optional secret. Returns undefined if absent.
@@ -36,15 +36,22 @@ export interface SecretProvider {
   getOptionalSecret(name: string): Promise<string | undefined>;
 }
 
+export class SecretNotFoundError extends Error {
+  constructor(public readonly secretName: string) {
+    super(`Required secret "${secretName}" was not found`);
+    this.name = 'SecretNotFoundError';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Environment SecretProvider
 // ---------------------------------------------------------------------------
 
 export class EnvSecretProvider implements SecretProvider {
-  async getSecret(name: string): Promise<string | undefined> {
-    const value = process.env[name];
-    if (value === undefined || value === '') {
-      return undefined;
+  async getSecret(name: string): Promise<string> {
+    const value = await this.getOptionalSecret(name);
+    if (value === undefined) {
+      throw new SecretNotFoundError(name);
     }
     return value;
   }
@@ -70,22 +77,30 @@ export class FileSecretProvider implements SecretProvider {
   ) {}
 
   private filePath(name: string): string {
-    // Sanitize: names may only contain [A-Za-z0-9_-.]
-    const safe = name.replace(/[^A-Za-z0-9_.-]/g, '_');
-    return `${this.directory}/${safe}`;
+    if (!/^[A-Za-z0-9_.-]+$/.test(name) || name === '.' || name === '..') {
+      throw new Error(`Invalid secret name "${name}"`);
+    }
+    return `${this.directory}/${name}`;
   }
 
-  async getSecret(name: string): Promise<string | undefined> {
-    try {
-      const content = await this.readFile(this.filePath(name));
-      return content.trim() || undefined;
-    } catch {
-      return undefined;
+  async getSecret(name: string): Promise<string> {
+    const value = await this.getOptionalSecret(name);
+    if (value === undefined) {
+      throw new SecretNotFoundError(name);
     }
+    return value;
   }
 
   async getOptionalSecret(name: string): Promise<string | undefined> {
-    return this.getSecret(name);
+    try {
+      const content = await this.readFile(this.filePath(name));
+      return content.trim() || undefined;
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+        return undefined;
+      }
+      throw error;
+    }
   }
 }
 
@@ -100,14 +115,14 @@ export class ChainSecretProvider implements SecretProvider {
     }
   }
 
-  async getSecret(name: string): Promise<string | undefined> {
+  async getSecret(name: string): Promise<string> {
     for (const provider of this.providers) {
-      const value = await provider.getSecret(name);
+      const value = await provider.getOptionalSecret(name);
       if (value !== undefined) {
         return value;
       }
     }
-    return undefined;
+    throw new SecretNotFoundError(name);
   }
 
   async getOptionalSecret(name: string): Promise<string | undefined> {
