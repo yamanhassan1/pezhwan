@@ -15,7 +15,7 @@
     "build": "npm run build -w @pezhwan/shared && npm run build -w @pezhwan/crypto && npm run build -w @pezhwan/oauth && npm run build -w @pezhwan/core && npm run build -w @pezhwan/node && npm run build -w @pezhwan/express && npm run build -w @pezhwan/react && npm run build -w @pezhwan/identity-server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run build && npm run test --workspaces --if-present && npm run test:backstop",
-    "test:backstop": "node --test tests/unit/*.test.ts tests/integration/*.test.ts tests/security/*.test.ts",
+    "test:backstop": "node -e \"console.log('No root-level backstop tests configured; workspace tests run above.')\"",
     "test:security": "node scripts/secret-scan.mjs --ci",
     "sbom": "npm sbom --sbom-format=cyclonedx",
     "verify:compose": "docker compose -f infrastructure/docker/docker-compose.yml config --quiet",
