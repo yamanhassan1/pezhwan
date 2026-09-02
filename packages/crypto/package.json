@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@pezhwan/shared": "*",
-    "argon2": "^0.40.0",
+    "argon2": "^0.45.1",
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
