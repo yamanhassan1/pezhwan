@@ -12,7 +12,7 @@ services:
     container_name: pezhwan-mongodb
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - pezhwan_mongo_data:/data/db
     healthcheck:
@@ -26,7 +26,7 @@ services:
     container_name: pezhwan-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - pezhwan_redis_data:/data
     healthcheck:

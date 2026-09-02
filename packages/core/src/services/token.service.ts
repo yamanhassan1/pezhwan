@@ -155,7 +155,10 @@ export class TokenService {
       throw new TokenError('Malformed access token', 'INVALID_JWT');
     }
 
-    const key = header.kid ? this.store.byKid(header.kid) : this.store.current;
+    if (!header.kid) {
+      throw new TokenError('Access token missing kid header', 'INVALID_JWT');
+    }
+    const key = this.store.byKid(header.kid);
     if (!key) {
       throw new TokenError('Unknown signing key', 'UNKNOWN_KEY', {
         details: { kid: header.kid },

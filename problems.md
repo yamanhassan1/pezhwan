@@ -185,3 +185,86 @@ Notes:
 
 - the browser demo is a development reference and should be considered unsafe to copy into production
 - do not store tokens in browser-local state outside of a local debugging environment
+
+---
+
+# Current production-readiness assessment
+
+**Assessment date:** 2026-09-02
+**Current rating:** **7.4/10**
+**Decision:** **NO-GO**
+
+The SDK has materially improved security controls, but it does not yet have
+enough live infrastructure and operational evidence to meet the requested
+9.9/10 production target. This rating is based on implemented controls plus
+verified evidence, not documentation alone.
+
+## Release-blocking problems
+
+1. No repeatable live MongoDB/Redis integration suite runs in CI.
+2. No executed Mongo backup/restore drill with measured RPO/RTO and
+   post-restore authentication verification.
+3. Mongo replica-set transactions, Redis Sentinel/Cluster, multi-instance
+   behavior, and JWKS consistency are not proven.
+4. Refresh rotation is not transactionally atomic across child creation and
+   finalization; the current atomic claim and replay checks reduce, but do not
+   eliminate, failure-window risk.
+5. The audit hash chain is best-effort under concurrent HA writers and has no
+   strict single-writer ordering or retention control.
+6. Existing base64 MFA records require a migration to the new AES-GCM envelope
+   format before upgrading an existing deployment.
+7. The reference server has development console OTP adapters; production fails
+   closed rather than sending, but no real email/SMS provider integration exists.
+8. Redis outages reduce distributed rate limiting to bounded process-local
+   limits, which is insufficient for strong multi-instance abuse protection.
+
+## Important unverified or incomplete controls
+
+- No dedicated load-test suite or measured throughput/latency baseline.
+- No systematic failure-injection suite for Mongo, Redis, JWKS, key storage,
+  provider timeouts, and recovery.
+- CI has no lint job, coverage threshold, dependency-review policy, license
+  review, or container vulnerability scan.
+- Compose syntax and image build are checked, but container smoke testing has
+  not been completed.
+- MongoDB/Redis authentication, TLS, and ACL hardening are not demonstrated by
+  the development Compose stack.
+- External OAuth/OIDC interoperability tests with a real provider are absent.
+- Alert thresholds and dashboard behavior are documented, not tested.
+- Frontend bundle inspection proving private secrets cannot enter browser
+  artifacts is not recorded.
+- No migration command exists for identifier, MFA, index, or persisted-key
+  changes.
+
+## Evidence-based scorecard
+
+| Category | Score |
+|---|---:|
+| Security and secrets | 8.5 |
+| Cryptography and JWT | 8.5 |
+| Authentication and MFA/OTP | 7.0 |
+| Authorization and tenancy | 8.0 |
+| Session security | 8.0 |
+| OAuth/OIDC | 7.5 |
+| MongoDB and data integrity | 6.5 |
+| Redis and distributed limits | 6.5 |
+| Reliability and scalability | 6.0 |
+| Observability and operations | 7.0 |
+| Disaster recovery | 4.0 |
+| Testing and failure verification | 6.0 |
+| CI/CD and supply chain | 7.0 |
+| Documentation and developer experience | 8.0 |
+
+**Overall:** **7.4/10**. Per the production prompt, any score below 9.9
+requires a **NO-GO** decision.
+
+## Required path to production approval
+
+1. Add real MongoDB/Redis integration tests and run them in CI.
+2. Add Mongo replica-set transaction coverage and Redis HA coverage.
+3. Execute backup/restore and signing-key recovery drills.
+4. Add MFA legacy-secret migration with rollback and verification.
+5. Add load, failure-injection, OAuth interoperability, and cross-tenant
+   attack suites.
+6. Add lint, coverage, dependency review, license review, and container scan
+   gates, then attach release evidence and alert-test results.

@@ -27,6 +27,9 @@ export class FileKeyStoreAdapter implements KeyStorePersistAdapter {
   private writeChain: Promise<void> = Promise.resolve();
 
   private idFile(kid: string): string {
+    if (!/^[A-Za-z0-9_-]+$/.test(kid)) {
+      throw new Error(`Invalid signing key id "${kid}"`);
+    }
     return `${this.directory}/${kid}.pem`;
   }
 
@@ -137,7 +140,11 @@ export class KeyStoreService {
 
   /** Rotate: generate a new key, persist all non-expired keys. */
   async rotate(): Promise<void> {
+    const previous = this.keyStore.all.find((key) => key.status === 'ACTIVE');
     this.keyStore.addKey();
+    if (previous) {
+      this.keyStore.retire(previous.kid);
+    }
     await this.persist.save(this.keyStore.all);
   }
 }

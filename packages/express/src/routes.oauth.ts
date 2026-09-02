@@ -15,6 +15,7 @@ import { ValidationError, AuthenticationError } from '@pezhwan/shared';
 import type { PezhwanRequest } from './index.ts';
 import type { PezhwanRuntime } from '@pezhwan/core';
 import { rateLimit } from './rateLimit.ts';
+import { requireAuth, requireRole } from './index.ts';
 
 function ok(res: Response, data: unknown, status = 200): void {
   res.status(status).json(data);
@@ -59,6 +60,8 @@ export function createOauthRouter(runtime: PezhwanRuntime): Router {
         nonce: q.nonce,
         userId: req.pezhwan.userId,
         sessionId: req.pezhwan.sessionId,
+        tenantId: runtime.config.tenantId,
+        applicationId: runtime.config.applicationId,
         authMethod: req.pezhwan.authMethod,
         codeChallenge: q.code_challenge,
         codeChallengeMethod: q.code_challenge_method,
@@ -120,6 +123,8 @@ export function createOauthRouter(runtime: PezhwanRuntime): Router {
   // Admin: register a client (in production, gate behind ADMIN role).
   router.post(
     '/clients',
+    requireAuth(),
+    requireRole('ADMIN'),
     rateLimit(runtime, { type: 'api', scope: scopeForAuth }),
     async (req: PezhwanRequest, res: Response) => {
     const b = req.body as Record<string, unknown>;

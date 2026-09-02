@@ -175,6 +175,22 @@ export class SessionService {
       expiresAt,
     });
 
+    // A concurrent replay may have revoked the family while the child was
+    // being created. Never leave that child active after such a revocation.
+    const parentState = await SessionModel.findById(session._id)
+      .select('status')
+      .lean();
+    if (!parentState || parentState.status !== 'rotating') {
+      await SessionModel.updateOne(
+        { _id: newSession._id },
+        { status: 'revoked', revokedAt: new Date() },
+      );
+      throw new SessionError(
+        'Refresh token reuse detected — session revoked',
+        'REFRESH_TOKEN_REUSE',
+      );
+    }
+
     await SessionModel.updateOne(
       { _id: session._id },
       {

@@ -81,6 +81,9 @@ package layering:
 | F7 | Hollow access tokens accepted (missing required claims) | `verifyAccessToken` requires `sub/tenantId/applicationId/sessionId/iat` | hollow-token test |
 | F8 | Corrupt signing-key file silently ignored → HA desync / tamper-masking | FileKeystore `load()` throws on corrupt file | corrupt-file test |
 | F9 | Role revoke didn't invalidate existing tokens (revocation latency) | `assignRole`/`removeRole` bump `tokenVersion` + drop account-state cache | live-Mongo: tokenVersion 0→1, old token rejected |
+| F10 | Production boolean parsing accepted the string `false` as truthy, allowing insecure cookie configuration | Explicit boolean environment parser plus HTTPS, secure-cookie, rotation, and wildcard-origin production invariants | production configuration fixture: valid accepted; each insecure variant rejected |
+| F11 | OAuth client registration route was reachable without the documented admin gate; token exchange trusted caller tenant/application values | `requireAuth` + `requireRole('ADMIN')` on registration and client-scope validation during exchange | build + Express/OAuth tests |
+| F12 | Reference server lacked explicit unauthenticated liveness/readiness probes and did not drain the HTTP listener before dependency shutdown | `/health/live`, Mongo-backed `/health/ready`, and HTTP server close during SIGINT/SIGTERM shutdown | build + Docker Compose configuration validation |
 
 ### Material — determined already correct (no change required)
 
