@@ -1,0 +1,41 @@
+{
+  "name": "@pezhwan/express",
+  "version": "0.1.0",
+  "description": "Pezhwan Express middleware — authenticate(), requireAuth(), requireRole(), requirePermission(), authRouter(), sessionRouter(), JWKS.",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "express": "^4.19.0 || ^5.0.0"
+  },
+  "dependencies": {
+    "@pezhwan/core": "*",
+    "@pezhwan/shared": "*",
+    "@pezhwan/crypto": "*",
+    "cookie-parser": "^1.4.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0",
+    "@types/express": "^5.0.0",
+    "@types/cookie-parser": "^1.4.7"
+  }
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# PEZHWAN — pre-commit hook: secret scan
+# Blocks commits that stage obvious secrets.
+
+npm exec --node -- scripts/secret-scan.mjs 2>/dev/null || node scripts/secret-scan.mjs
+if [ $? -ne 0 ]; then
+  echo "❌ Commit blocked by secret scan. See messages above."
+  exit 1
+fi

@@ -1,0 +1,61 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# PEZHWAN — Git Ignore
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Dependencies ──────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ── Build output ──────────────────────────────────────────────────────────
+dist/
+build/
+*.tsbuildinfo
+
+# ── Environment & secrets (NEVER commit these) ───────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Cryptographic material ────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.cert
+
+# ── Secret / credential files ─────────────────────────────────────────────
+credentials.json
+service-account.json
+*-service-account.json
+secrets/
+private/
+keys/
+
+# ── Logs ──────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+
+# ── Editor / OS ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ── Test coverage ─────────────────────────────────────────────────────────
+coverage/
+tests/
+
+# ── Docker override (may contain local secrets) ───────────────────────────
+docker-compose.override.yml
+
+# ── Terraform (if ever used) ─────────────────────────────────────────────
+*.tfstate
+*.tfstate.backup
+.terraform/

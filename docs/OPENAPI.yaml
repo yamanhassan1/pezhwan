@@ -1,0 +1,851 @@
+openapi: 3.0.3
+info:
+  title: PEZHWAN Identity Server
+  description: |
+    Universal Identity & Access Management API. Reference host for the
+    `@pezhwan/*` SDK stack. All endpoints use a `{ success, data, error }`
+    envelope except OAuth/OIDC, which follow OAuth 2.1 / OIDC wire format.
+  version: 0.1.0
+servers:
+  - url: http://localhost:4011
+    description: Development reference server
+security:
+  - {}
+tags:
+  - name: Auth
+    description: Registration, login, OTP, password, email verification
+  - name: Sessions
+    description: Session listing and revocation
+  - name: MFA
+    description: TOTP multi-factor authentication
+  - name: Verification
+    description: Token-based password reset, email verify, magic links
+  - name: OAuth
+    description: OAuth 2.1 authorization-code + PKCE + OIDC
+  - name: Well-known
+    description: Discovery metadata and public keys
+
+paths:
+  # ---------------------------------------------------------------- Auth
+  /v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user and open a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, example: demo@pezhwan.dev }
+                phone: { type: string, example: "+15551234567" }
+                password: { type: string, example: "Str0ng!Pass#2026" }
+                metadata: { type: object }
+              required: [email, password]
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginTokens" }
+        "400":
+          description: Validation error (password policy / duplicate)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Password login (MFA-gated when enabled)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, example: demo@pezhwan.dev }
+                phone: { type: string }
+                password: { type: string }
+              required: [password]
+      responses:
+        "200":
+          description: Tokens (or MFA challenge when mfaRequired)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/LoginTokens" }
+                  - $ref: "#/components/schemas/MfaChallenge"
+        "401":
+          description: Invalid credentials / locked / disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/auth/logout:
+    post:
+      tags: [Auth]
+      security:
+        - Bearer: []
+      summary: Revoke the current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate a refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string }
+              required: [refreshToken]
+      responses:
+        "200":
+          description: New access + refresh token pair
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenRefresh" }
+        "400":
+          description: Missing / invalid / reused refresh token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/auth/otp/send:
+    post:
+      tags: [Auth]
+      summary: Generate and deliver a one-time code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel:
+                  type: string
+                  enum: [email, phone]
+                target: { type: string }
+                purpose:
+                  type: string
+                  enum: [login, password_reset, verify_email]
+              required: [channel, target, purpose]
+      responses:
+        "200":
+          description: Sent (retryAfterSeconds when throttled)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retryAfterSeconds: { type: integer }
+
+  /v1/auth/otp/verify:
+    post:
+      tags: [Auth]
+      summary: Verify a one-time code (purpose-driven)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel: { type: string, enum: [email, phone] }
+                target: { type: string }
+                purpose: { type: string, enum: [login, password_reset, verify_email] }
+                code: { type: string, example: "123456" }
+              required: [channel, target, purpose, code]
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified: { type: boolean }
+
+  /v1/auth/otp/login:
+    post:
+      tags: [Auth]
+      summary: Passwordless OTP login (MFA-gated when enabled)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel: { type: string, enum: [email, phone] }
+                target: { type: string }
+                code: { type: string }
+              required: [channel, target, code]
+      responses:
+        "200":
+          description: Tokens (or MFA challenge)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/LoginTokens" }
+                  - $ref: "#/components/schemas/MfaChallenge"
+
+  /v1/auth/password/change:
+    post:
+      tags: [Auth]
+      security:
+        - Bearer: []
+      summary: Change password (bumps tokenVersion)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword: { type: string }
+                newPassword: { type: string }
+              required: [currentPassword, newPassword]
+      responses:
+        "200":
+          description: Changed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /v1/auth/password/reset:
+    post:
+      tags: [Auth]
+      summary: OTP-gated password reset (legacy OTP flow)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel: { type: string, enum: [email, phone], default: email }
+                target: { type: string }
+                code: { type: string }
+                newPassword: { type: string }
+              required: [target, code, newPassword]
+      responses:
+        "200":
+          description: Rotated refresh token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refreshToken: { type: string }
+
+  /v1/auth/password/forgot:
+    post:
+      tags: [Auth]
+      summary: Issue a password-reset verification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                redirectUri: { type: string }
+              required: [email]
+      responses:
+        "200":
+          description: Token issued (enumeration-safe)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expiresIn: { type: integer }
+
+  /v1/auth/email/verify:
+    post:
+      tags: [Auth]
+      summary: OTP-gated email verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                code: { type: string }
+              required: [email, code]
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  # ------------------------------------------------------------- Sessions
+  /v1/sessions:
+    get:
+      tags: [Sessions]
+      security:
+        - Bearer: []
+      summary: List the user's active sessions
+      responses:
+        "200":
+          description: Active sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items: { $ref: "#/components/schemas/Session" }
+
+  /v1/sessions/all/revoke:
+    post:
+      tags: [Sessions]
+      security:
+        - Bearer: []
+      summary: Revoke all of the user's sessions
+      responses:
+        "200":
+          description: Revoked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /v1/sessions/{id}/revoke:
+    post:
+      tags: [Sessions]
+      security:
+        - Bearer: []
+      summary: Revoke one session
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Revoked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+        "401":
+          description: Session not found / not owned by caller
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ------------------------------------------------------------------ MFA
+  /v1/mfa/setup:
+    post:
+      tags: [MFA]
+      security:
+        - Bearer: []
+      summary: Begin TOTP setup (returns secret + otpauth URI + backup codes)
+      responses:
+        "200":
+          description: Setup material
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret: { type: string }
+                  otpauthUri: { type: string }
+                  backupCodes:
+                    type: array
+                    items: { type: string }
+
+  /v1/mfa/enable:
+    post:
+      tags: [MFA]
+      security:
+        - Bearer: []
+      summary: Confirm a TOTP code and enable MFA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code: { type: string }
+              required: [code]
+      responses:
+        "200":
+          description: Enabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /v1/mfa/verify:
+    post:
+      tags: [MFA]
+      security:
+        - Bearer: []
+      summary: Verify a TOTP/backup code (step-up)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code: { type: string }
+              required: [code]
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified: { type: boolean }
+
+  /v1/mfa/disable:
+    post:
+      tags: [MFA]
+      security:
+        - Bearer: []
+      summary: Disable MFA (requires current code)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code: { type: string }
+              required: [code]
+      responses:
+        "200":
+          description: Disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /v1/mfa/login:
+    post:
+      tags: [MFA]
+      summary: Complete an MFA-challenged login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId: { type: string }
+                code: { type: string }
+              required: [userId, code]
+      responses:
+        "200":
+          description: Tokens
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginTokens" }
+
+  # ---------------------------------------------------------- Verification
+  /v1/verify/password/forgot:
+    post:
+      tags: [Verification]
+      summary: Issue a password-reset verification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                redirectUri: { type: string }
+              required: [email]
+      responses:
+        "200":
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expiresIn: { type: integer }
+
+  /v1/verify/password/reset/confirm:
+    post:
+      tags: [Verification]
+      summary: Complete a password reset with a verification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token: { type: string }
+                newPassword: { type: string }
+              required: [token, newPassword]
+      responses:
+        "200":
+          description: Tokens + user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/LoginTokens" }
+                  - type: object
+                    properties:
+                      user: { $ref: "#/components/schemas/User" }
+
+  /v1/verify/email/verify-token:
+    post:
+      tags: [Verification]
+      summary: Verify email with a verification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token: { type: string }
+              required: [token]
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /v1/verify/magic/send:
+    post:
+      tags: [Verification]
+      summary: Send a magic link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                redirectUri: { type: string }
+              required: [email]
+      responses:
+        "200":
+          description: Magic-link token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expiresIn: { type: integer }
+
+  /v1/verify/magic/redeem:
+    post:
+      tags: [Verification]
+      summary: Exchange a magic-link token for a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token: { type: string }
+              required: [token]
+      responses:
+        "200":
+          description: Tokens + user + redirectUri
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/LoginTokens" }
+                  - type: object
+                    properties:
+                      user: { $ref: "#/components/schemas/User" }
+                      redirectUri: { type: string }
+
+  # ------------------------------------------------------------------ OAuth
+  /v1/oauth/authorize:
+    get:
+      tags: [OAuth]
+      security:
+        - Bearer: []
+      summary: Authorization-code endpoint (OAuth 2.1 / PKCE)
+      parameters:
+        - in: query
+          name: client_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: redirect_uri
+          required: true
+          schema: { type: string }
+        - in: query
+          name: response_type
+          schema: { type: string, enum: [code], default: code }
+        - in: query
+          name: scope
+          schema: { type: string, default: openid }
+        - in: query
+          name: state
+          schema: { type: string }
+        - in: query
+          name: nonce
+          schema: { type: string }
+        - in: query
+          name: code_challenge
+          schema: { type: string }
+        - in: query
+          name: code_challenge_method
+          schema: { type: string, enum: [S256, plain], default: S256 }
+      responses:
+        "302":
+          description: Redirect to redirect_uri with code + state (#fragment)
+        "401":
+          description: Authentication required
+
+  /v1/oauth/token:
+    post:
+      tags: [OAuth]
+      summary: Token endpoint (code exchange, refresh, client_credentials)
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  enum: [authorization_code, refresh_token, client_credentials]
+                client_id: { type: string }
+                client_secret: { type: string }
+                code: { type: string }
+                redirect_uri: { type: string }
+                code_verifier: { type: string }
+                refresh_token: { type: string }
+                scope: { type: string }
+              required: [grant_type, client_id]
+      responses:
+        "200":
+          description: Token response (RFC 6749)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OAuthToken" }
+        "400":
+          description: invalid_request / invalid_grant / unsupported_grant_type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+                  error_description: { type: string }
+
+  /v1/oauth/clients:
+    post:
+      tags: [OAuth]
+      summary: Register an OAuth client (in production, admin-gated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                redirect_uris:
+                  type: array
+                  items: { type: string }
+                grants:
+                  type: array
+                  items:
+                    type: string
+                    enum: [authorization_code, refresh_token, client_credentials]
+                  default: [authorization_code, refresh_token]
+                scopes:
+                  type: array
+                  items: { type: string }
+                confidential: { type: boolean, default: true }
+      responses:
+        "201":
+          description: client_id (+ client_secret for confidential clients)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  client_id: { type: string }
+                  client_secret: { type: string }
+
+  # ------------------------------------------------------------ Well-known
+  /.well-known/jwks.json:
+    get:
+      tags: [Well-known]
+      summary: Public JSON Web Key Set for access-token verification
+      responses:
+        "200":
+          description: JWKS
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        alg: { type: string }
+                        kid: { type: string }
+
+  /.well-known/openid-configuration:
+    get:
+      tags: [Well-known]
+      summary: OIDC discovery metadata
+      responses:
+        "200":
+          description: Discovery document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer: { type: string }
+                  authorization_endpoint: { type: string }
+                  token_endpoint: { type: string }
+                  jwks_uri: { type: string }
+                  response_types_supported:
+                    type: array
+                    items: { type: string }
+                  grant_types_supported:
+                    type: array
+                    items: { type: string }
+                  code_challenge_methods_supported:
+                    type: array
+                    items: { type: string }
+
+  # ----------------------------------------------------- Admin / services
+  /v1/admin/health:
+    get:
+      tags: [Auth]
+      security:
+        - Bearer: []
+        - RoleAdmin: []
+      summary: Health check (requires ADMIN role)
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /v1/services/ping:
+    get:
+      tags: [Auth]
+      security:
+        - ApiKey: []
+      summary: Server-to-server ping via API key
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+components:
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
+      description: Access token from /v1/auth/login|register|refresh (JWT RS256)
+    ApiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API key (pk_live_...) as `Bearer <key>`
+    RoleAdmin:
+      type: http
+      scheme: bearer
+      description: Requires the ADMIN role on the identity
+  schemas:
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        emailVerified: { type: boolean }
+        phoneVerified: { type: boolean }
+        isActive: { type: boolean }
+    LoginTokens:
+      type: object
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        accessToken: { type: string }
+        refreshToken: { type: string }
+    TokenRefresh:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+    MfaChallenge:
+      type: object
+      properties:
+        mfaRequired: { type: boolean, enum: [true] }
+        userId: { type: string }
+    Session:
+      type: object
+      properties:
+        _id: { type: string }
+        userAgent: { type: string, nullable: true }
+        ip: { type: string, nullable: true }
+        createdAt: { type: string }
+        lastSeenAt: { type: string }
+    OAuthToken:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, enum: [Bearer] }
+        expires_in: { type: integer }
+        refresh_token: { type: string }
+        id_token: { type: string }
+        scope: { type: string }
+    Ok:
+      type: object
+      properties:
+        success: { type: boolean, enum: [true] }
+        data:
+          type: object
+          properties:
+            message: { type: string }
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, enum: [false] }
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+            requestId: { type: string }

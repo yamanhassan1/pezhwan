@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output (Dockerfile compiles fresh inside the build stage)
+dist
+build
+*.tsbuildinfo
+
+# Git / editor
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.*
+*.log
+coverage
+
+# Docs & tests not needed for the image
+docs
+tests
+infrastructure

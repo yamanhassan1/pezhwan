@@ -1,0 +1,36 @@
+{
+  "name": "@pezhwan/crypto",
+  "version": "0.1.0",
+  "description": "Pezhwan cryptographic primitives — Argon2id hashing, RS256 JWT, JWKS, key rotation.",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@pezhwan/shared": "*",
+    "argon2": "^0.40.0",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0",
+    "@types/jsonwebtoken": "^9.0.6"
+  }
+}

@@ -1,0 +1,62 @@
+# Pezhwan development stack — MongoDB (durable identity store), Redis (ephemeral
+# state: rate limits, OTP, session cache) and the reference Identity Server.
+#
+#   docker compose up --build
+#
+# The server reads its issuer/host from the PEZHWAN_ISSUER_REPLACEMENT var so
+# it works both with host networking here and behind a reverse proxy.
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: pezhwan-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - pezhwan_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: pezhwan-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - pezhwan_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  identity-server:
+    build:
+      context: ../..            # monorepo root (npm workspaces)
+      dockerfile: apps/identity-server/Dockerfile
+    container_name: pezhwan-identity-server
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "4011:4011"
+    environment:
+      PEZHWAN_PORT: "4011"
+      PEZHWAN_ISSUER: "${PEZHWAN_ISSUER_REPLACEMENT:-http://localhost:4011}"
+      PEZHWAN_TENANT_ID: "dev-tenant"
+      PEZHWAN_APPLICATION_ID: "dev-app"
+      PEZHWAN_MONGODB_URI: "mongodb://mongodb:27017/pezhwan"
+      PEZHWAN_REDIS_URL: "redis://redis:6379"
+      PEZHWAN_ALLOWED_ORIGINS: "${PEZHWAN_ALLOWED_ORIGINS:-http://localhost:4011,http://127.0.0.1:4011,http://localhost:5173,http://127.0.0.1:5500}"
+
+volumes:
+  pezhwan_mongo_data:
+  pezhwan_redis_data:

@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pezhwan SDK — Browser Demo</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root {
+    --bg: #f3f6fb;
+    --bg-strong: #eaf0f8;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --surface-soft: #eef3ff;
+    --border: #dfe7f3;
+    --border-strong: #ccd9ec;
+    --text: #0f172a;
+    --text-soft: #475569;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-soft: #dfeaff;
+    --accent-deep: #1d4ed8;
+    --green: #15803d;
+    --red: #dc2626;
+    --orange: #d97706;
+    --shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+    --radius: 14px;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(180deg, #f8fafc 0%, #f3f6fb 100%);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  #root { min-height: 100vh; }
+
+  .app {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 32px 18px 48px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 26px 0 20px;
+  }
+  .header h1 {
+    font-size: clamp(2.2rem, 4vw, 3rem);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.06em;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .header .tagline {
+    color: var(--text-soft);
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+  }
+  .header .pkg-badge {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    color: var(--accent-deep);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-family: var(--mono);
+  }
+
+  /* Cards */
+  .card {
+    background: rgba(255,255,255,0.82);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+  }
+  .card h2 {
+    font-size: 1.02rem;
+    margin-bottom: 16px;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .card h3 {
+    font-size: 0.76rem;
+    margin-bottom: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+
+  /* Forms */
+  .form-row { margin-bottom: 12px; }
+  .form-row label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .form-row input, .form-row select {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: rgba(248, 250, 252, 0.9);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: var(--mono);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .form-row input:focus, .form-row select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+  }
+  .form-row input::placeholder { color: #94a3b8; }
+
+  .btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    letter-spacing: 0.01em;
+  }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-deep) 100%);
+    color: #fff;
+    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.18);
+    border: 1px solid rgba(37, 99, 235, 0.25);
+  }
+  .btn-primary:hover:not(:disabled) { filter: brightness(0.98); }
+  .btn-danger {
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+  }
+  .btn-danger:hover:not(:disabled) { filter: brightness(0.98); }
+  .btn-ghost {
+    background: rgba(255,255,255,0.75);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--border-strong); background: #fff; }
+  .btn-sm { padding: 7px 12px; font-size: 0.74rem; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+  .tab {
+    padding: 9px 14px;
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s ease;
+    font-weight: 600;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent-deep);
+    border-bottom-color: var(--accent);
+    background: rgba(37, 99, 235, 0.03);
+  }
+
+  /* Token viewer */
+  .token-box {
+    background: rgba(248, 250, 252, 0.95);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--text);
+  }
+  .token-box.jwt-header { color: #b91c1c; }
+  .token-box.jwt-payload { color: #166534; }
+  .token-box.jwt-sig { color: #b45309; }
+  .token-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+  }
+
+  /* Log */
+  .log {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    max-height: 240px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+  .log-entry { margin-bottom: 2px; }
+  .log-method { color: var(--accent-deep); font-weight: 700; }
+  .log-url { color: var(--text-soft); }
+  .log-status-ok { color: var(--green); }
+  .log-status-err { color: var(--red); }
+  .log-status { font-weight: 700; }
+
+  /* Status */
+  .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .status-active { background: rgba(21, 128, 61, 0.08); color: var(--green); }
+  .status-revoked { background: rgba(220, 38, 38, 0.08); color: var(--red); }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* Loading */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border-strong);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg { color: var(--red); font-size: 0.8rem; margin-top: 8px; }
+  .success-msg { color: var(--green); font-size: 0.8rem; margin-top: 8px; }
+
+  /* Server status */
+  .server-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.76rem;
+    color: var(--text-soft);
+    margin-bottom: 18px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    width: fit-content;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.03);
+    backdrop-filter: blur(8px);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-green { background: var(--green); }
+  .dot-red { background: var(--red); }
+  .dot-yellow { background: var(--orange); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+// When served from the identity server, API is same-origin (relative).
+// Otherwise, target the same host on port 4011 so the demo can use the
+// identity server cookies and CSRF tokens without cross-site surprises.
+const API = (() => {
+  if (window.location.port === '4011') return '';
+
+  const hostname = window.location.hostname || 'localhost';
+  const protocol = window.location.protocol || 'http:';
+
+  // Keep the demo working from either localhost or the Live Server host while
+  // preserving the HTTP cookie rules used by the CSRF double-submit flow.
+  if (['localhost', '127.0.0.1', '0.0.0.0'].includes(hostname)) {
+    return `${protocol}//${hostname}:4011`;
+  }
+
+  return `${protocol}//localhost:4011`;
+})();
+
+// ---------------------------------------------------------------------------
+// Global state (outside React) for the API client
+// ---------------------------------------------------------------------------
+let _accessToken = null;
+function setGlobalToken(t) { _accessToken = t; }
+
+function decodeJwtPayload(token) {
+  try {
+    const base64 = token.split('.')[1];
+    const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  } catch { return null; }
+}
+
+function redactValue(value, keepStart = 6, keepEnd = 4) {
+  if (!value || typeof value !== 'string') return '—';
+  if (value.length <= keepStart + keepEnd) return '••••••';
+  return `${value.slice(0, keepStart)}…${value.slice(-keepEnd)}`;
+}
+
+function sanitizeLogDetail(detail) {
+  if (typeof detail !== 'string') return 'ok';
+  return detail
+    .replace(/Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi, 'Bearer [REDACTED]')
+    .replace(/(accessToken|refreshToken|token|authorization|Authorization)["']?\s*[:=]\s*["']?[^\s"',;]+/gi, '$1=[REDACTED]')
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[JWT_REDACTED]')
+    .replace(/(email|phone)["']?\s*:\s*["']?[^"'\s,}]+/gi, '$1=[REDACTED]');
+}
+
+const apiLogRef = { current: [] };
+function addLog(method, url, status, detail) {
+  const safeDetail = sanitizeLogDetail(detail);
+  apiLogRef.current = [
+    { id: Date.now(), method, url, status, detail: safeDetail, time: new Date().toLocaleTimeString() },
+    ...apiLogRef.current,
+  ].slice(0, 50);
+}
+
+function getCsrfToken() {
+  return /(?:^|;\s*)pezhwan_csrf=([^;]*)/.exec(document.cookie)?.[1] || '';
+}
+
+// Prime the double-submit CSRF cookie via GET /v1/auth/csrf (which sets the
+// cookie when absent) so later state-changing calls can echo it.
+async function primeCsrf() {
+  if (getCsrfToken()) return;
+  try {
+    await fetch(`${API}/v1/auth/csrf`, { credentials: 'include' });
+  } catch { /* non-fatal; retried before state-changing calls */ }
+}
+
+async function api(path, opts = {}) {
+  const method = opts.method || 'GET';
+  const headers = { 'Content-Type': 'application/json' };
+  // Echo the double-submit CSRF cookie on state-changing requests.
+  if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+    if (!getCsrfToken()) await primeCsrf();
+    const csrf = getCsrfToken();
+    if (csrf) headers['X-CSRF-Token'] = csrf;
+  }
+  if (_accessToken && !opts.noAuth) {
+    headers['Authorization'] = 'Bearer ' + _accessToken;
+  }
+  const body = opts.body ? JSON.stringify(opts.body) : undefined;
+  try {
+    const res = await fetch(`${API}${path}`, { method, headers, body, credentials: 'include' });
+    const json = await res.json().catch(() => ({}));
+    addLog(method, path, res.status, json.success ? 'ok' : json.error?.message || 'error');
+    if (!res.ok) throw Object.assign(new Error(json.error?.message || `HTTP ${res.status}`), { status: res.status, ...json.error });
+    return json.data;
+  } catch (err) {
+    if (!err.status) addLog(method, path, 0, 'Network error');
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Components
+// ---------------------------------------------------------------------------
+
+function ServerStatus({ status }) {
+  return (
+    <div className="server-status">
+      <div className={`dot ${status === 'ok' ? 'dot-green' : status === 'checking' ? 'dot-yellow' : 'dot-red'}`} />
+      {status === 'ok' ? `Identity server online — ${API}` :
+       status === 'checking' ? 'Connecting...' :
+       `Offline — start server on port 4011`}
+    </div>
+  );
+}
+
+function Tabs({ tabs, active, onChange }) {
+  return (
+    <div className="tabs">
+      {tabs.map(t => (
+        <button key={t.key} className={`tab ${active === t.key ? 'active' : ''}`} onClick={() => onChange(t.key)}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RegisterForm({ onResult }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError(null);
+    try {
+      const data = await api('/v1/auth/register', {
+        method: 'POST',
+        body: { email, password },
+      });
+      onResult(data);
+    } catch (err) {
+      setError(err.message);
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <form onSubmit={submit}>
+      <div className="form-row">
+        <label>Email</label>
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="user@example.com" />
+      </div>
+      <div className="form-row">
+        <label>Password</label>
+        <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+      </div>
+      <button className="btn btn-primary" disabled={loading} type="submit">
+        {loading ? <span><span className="spinner" /> Registering...</span> : 'Register'}
+      </button>
+      {error && <div className="error-msg">{error}</div>}
+    </form>
+  );
+}
+
+function LoginForm({ onResult }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError(null);
+    try {
+      const data = await api('/v1/auth/login', {
+        method: 'POST',
+        body: { email, password },
+      });
+      onResult(data);
+    } catch (err) {
+      setError(err.message);
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <form onSubmit={submit}>
+      <div className="form-row">
+        <label>Email</label>
+        <input value={email} onChange={e => setEmail(e.target.value)} />
+      </div>
+      <div className="form-row">
+        <label>Password</label>
+        <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+      </div>
+      <button className="btn btn-primary" disabled={loading} type="submit">
+        {loading ? <span><span className="spinner" /> Logging in...</span> : 'Login'}
+      </button>
+      {error && <div className="error-msg">{error}</div>}
+    </form>
+  );
+}
+
+function OtpFlow({ onResult }) {
+  const [tab, setTab] = useState('send');
+  const [channel, setChannel] = useState('email');
+  const [target, setTarget] = useState('demo@pezhwan.dev');
+  const [purpose, setPurpose] = useState('login');
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const sendOtp = async () => {
+    setLoading(true); setError(null);
+    try {
+      const data = await api('/v1/auth/otp/send', { method: 'POST', body: { channel, target, purpose } });
+      setResult(data);
+      setTab('verify');
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const verifyOtp = async () => {
+    setLoading(true); setError(null);
+    try {
+      const data = await api('/v1/auth/otp/verify', { method: 'POST', body: { channel, target, purpose, code } });
+      setResult(data);
+      onResult && onResult(data);
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div>
+      <Tabs
+        tabs={[{ key: 'send', label: '1. Send OTP' }, { key: 'verify', label: '2. Verify OTP' }]}
+        active={tab} onChange={setTab}
+      />
+      {tab === 'send' ? (
+        <div>
+          <div className="grid-2">
+            <div className="form-row">
+              <label>Channel</label>
+              <select value={channel} onChange={e => setChannel(e.target.value)}>
+                <option value="email">Email</option>
+                <option value="phone">SMS</option>
+              </select>
+            </div>
+            <div className="form-row">
+              <label>Purpose</label>
+              <select value={purpose} onChange={e => setPurpose(e.target.value)}>
+                <option value="login">Login</option>
+                <option value="password_reset">Password Reset</option>
+                <option value="verify_email">Verify Email</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <label>Target ({channel === 'email' ? 'email address' : 'phone number'})</label>
+            <input value={target} onChange={e => setTarget(e.target.value)} />
+          </div>
+          <button className="btn btn-primary" disabled={loading} onClick={sendOtp}>
+            {loading ? <span><span className="spinner" /> Sending...</span> : 'Send OTP'}
+          </button>
+          <div style={{ marginTop: 8, fontSize: '0.75rem', color: 'var(--text2)' }}>
+            Dev mode: OTP code is logged to server stdout
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="form-row">
+            <label>Enter OTP Code</label>
+            <input value={code} onChange={e => setCode(e.target.value)} placeholder="6-digit code" maxLength={6} />
+          </div>
+          <button className="btn btn-primary" disabled={loading} onClick={verifyOtp}>
+            {loading ? <span><span className="spinner" /> Verifying...</span> : 'Verify OTP'}
+          </button>
+        </div>
+      )}
+      {result && <div className="success-msg" style={{ marginTop: 12 }}>{JSON.stringify({
+        status: 'ok',
+        response: result && typeof result === 'object' ? {
+          mfaRequired: !!result.mfaRequired,
+          userId: result.userId ? redactValue(String(result.userId)) : null,
+          verified: !!result.verified,
+          message: result.message || null,
+        } : 'non-standard payload',
+      }, null, 2)}</div>}
+      {error && <div className="error-msg">{error}</div>}
+    </div>
+  );
+}
+
+function JwtViewer({ token }) {
+  if (!token) return <div style={{ color: 'var(--text2)', fontSize: '0.8rem' }}>No token yet</div>;
+
+  const payload = decodeJwtPayload(token);
+  const [reveal, setReveal] = useState(false);
+
+  const safeSummary = payload ? {
+    iss: payload.iss,
+    sub: redactValue(String(payload.sub || '')),
+    aud: payload.aud,
+    exp: payload.exp ? new Date(payload.exp * 1000).toLocaleString() : null,
+    scopes: Array.isArray(payload.scopes) ? payload.scopes : [],
+  } : null;
+
+  const summaryText = JSON.stringify({
+    status: 'stored in memory only',
+    issuer: safeSummary?.iss || 'unknown',
+    subject: safeSummary?.sub || 'unknown',
+    expiresAt: safeSummary?.exp || 'unknown',
+    scopeCount: (safeSummary?.scopes || []).length,
+  }, null, 2);
+
+  return (
+    <div>
+      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="token-label" style={{ marginBottom: 0 }}>Access token</div>
+        <button className="btn btn-ghost btn-sm" onClick={() => setReveal(v => !v)}>
+          {reveal ? 'Hide sensitive data' : 'Reveal metadata'}
+        </button>
+      </div>
+
+      <div className="token-box jwt-payload">
+        {reveal ? JSON.stringify(safeSummary || { status: 'unavailable' }, null, 2) : JSON.stringify({
+          status: 'stored in memory only',
+          issuer: safeSummary?.iss || 'unknown',
+          subject: safeSummary?.sub || 'unknown',
+          expiresAt: safeSummary?.exp || 'unknown',
+          scopeCount: (safeSummary?.scopes || []).length,
+        }, null, 2)}
+      </div>
+
+      <div style={{ marginTop: 12, fontSize: '0.75rem', color: 'var(--text2)' }}>
+        Tokens are never rendered verbatim in the UI. Only masked metadata is shown here.
+      </div>
+    </div>
+  );
+}
+
+function SessionList({ sessions, onRevoke, onRevokeAll }) {
+  return (
+    <div>
+      <div className="btn-group" style={{ marginBottom: 12 }}>
+        <button className="btn btn-danger btn-sm" onClick={onRevokeAll} disabled={!sessions.length}>
+          Revoke All Sessions
+        </button>
+      </div>
+      {sessions.length === 0 ? (
+        <div style={{ color: 'var(--text2)', fontSize: '0.8rem' }}>No active sessions</div>
+      ) : (
+        sessions.map(s => (
+          <div key={s._id} style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '8px 12px', background: 'var(--surface2)', borderRadius: 'var(--radius)',
+            marginBottom: 6, fontSize: '0.8rem',
+          }}>
+            <div>
+              <span style={{ fontFamily: 'var(--mono)', color: 'var(--accent2)' }}>
+                {redactValue(String(s._id || ''), 6, 4)}
+              </span>
+              <span style={{ marginLeft: 8, color: 'var(--text2)' }}>
+                {s.userAgent ? 'session device' : 'unknown device'}
+              </span>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={() => onRevoke(s._id)}>Revoke</button>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function JwksViewer() {
+  const [keys, setKeys] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchJwks = async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch(`${API}/.well-known/jwks.json`);
+      const json = await res.json();
+      setKeys(json.keys || []);
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchJwks(); }, []);
+
+  return (
+    <div>
+      <div className="btn-group" style={{ marginBottom: 12 }}>
+        <button className="btn btn-ghost btn-sm" onClick={fetchJwks} disabled={loading}>
+          {loading ? 'Loading...' : 'Refresh JWKS'}
+        </button>
+      </div>
+      {error && <div className="error-msg">{error}</div>}
+      {keys && (
+        <div className="token-box" style={{ maxHeight: 300 }}>
+          {JSON.stringify({ keys }, null, 2)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PasswordChange() {
+  const [current, setCurrent] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const submit = async () => {
+    setLoading(true); setError(null);
+    try {
+      await api('/v1/auth/password/change', { method: 'POST', body: { currentPassword: current, newPassword: newPass } });
+      setResult('Password changed successfully');
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div>
+      <div className="form-row">
+        <label>Current Password</label>
+        <input type="password" value={current} onChange={e => setCurrent(e.target.value)} />
+      </div>
+      <div className="form-row">
+        <label>New Password</label>
+        <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} />
+      </div>
+      <button className="btn btn-primary btn-sm" disabled={loading} onClick={submit}>
+        {loading ? 'Changing...' : 'Change Password'}
+      </button>
+      {result && <div className="success-msg">{result}</div>}
+      {error && <div className="error-msg">{error}</div>}
+    </div>
+  );
+}
+
+function ApiLog() {
+  const [entries, setEntries] = useState([]);
+  useEffect(() => {
+    const iv = setInterval(() => setEntries([...apiLogRef.current]), 500);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <div className="log">
+      {entries.length === 0 && <div style={{ color: 'var(--text2)' }}>No API calls yet...</div>}
+      {entries.map(e => (
+        <div key={e.id} className="log-entry">
+          <span className="log-method">{e.method}</span>{' '}
+          <span className="log-url">{e.url}</span>{' '}
+          <span className={`log-status ${e.status >= 200 && e.status < 300 ? 'log-status-ok' : 'log-status-err'}`}>
+            {e.status || 'ERR'}
+          </span>{' '}
+          <span style={{ color: 'var(--text2)' }}>{e.detail}</span>
+          <span style={{ color: '#444', marginLeft: 8 }}>{e.time}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main App
+// ---------------------------------------------------------------------------
+function App() {
+  const [serverStatus, setServerStatus] = useState('checking');
+  const [authTab, setAuthTab] = useState('register');
+  const [accessToken, setAccessToken] = useState(null);
+  const [refreshToken, setRefreshToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [viewTab, setViewTab] = useState('jwt');
+  const [logTab, setLogTab] = useState('log');
+
+  useEffect(() => {
+    fetch(`${API}/.well-known/jwks.json`)
+      .then(r => r.ok ? setServerStatus('ok') : setServerStatus('error'))
+      .then(() => primeCsrf())
+      .catch(() => setServerStatus('error'));
+  }, []);
+
+  const handleAuth = (data) => {
+    setAccessToken(data.accessToken);
+    setRefreshToken(data.refreshToken);
+    setUser(data.user);
+    setGlobalToken(data.accessToken);
+    loadSessions();
+  };
+
+  const loadSessions = async () => {
+    try {
+      const data = await api('/v1/sessions');
+      setSessions(data?.sessions || []);
+    } catch { /* ok */ }
+  };
+
+  const handleRefresh = async () => {
+    if (!refreshToken) return;
+    try {
+      const data = await api('/v1/auth/refresh', { method: 'POST', body: { refreshToken } });
+      setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
+      setGlobalToken(data.accessToken);
+    } catch (err) {
+      console.error('Refresh failed:', err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try { await api('/v1/auth/logout', { method: 'POST' }); } catch {}
+    setAccessToken(null); setRefreshToken(null); setUser(null); setSessions([]);
+    setGlobalToken(null);
+  };
+
+  const handleRevoke = async (id) => {
+    try {
+      await api(`/v1/sessions/${id}/revoke`, { method: 'POST' });
+      setSessions(s => s.filter(x => x._id !== id));
+    } catch {}
+  };
+
+  const handleRevokeAll = async () => {
+    try {
+      await api('/v1/sessions/all/revoke', { method: 'POST' });
+      setSessions([]);
+    } catch {}
+  };
+
+  return (
+    <div className="app">
+      <div className="header">
+        <h1>Pezhwan</h1>
+        <div className="tagline">One identity. Every application.</div>
+        <div className="pkg-badge">@pezhwan/sdk</div>
+      </div>
+
+      <ServerStatus status={serverStatus} />
+
+      <div className="grid-2">
+        {/* Left: Auth forms */}
+        <div>
+          {!user ? (
+            <div className="card">
+              <h2>Authentication</h2>
+              <Tabs
+                tabs={[
+                  { key: 'register', label: 'Register' },
+                  { key: 'login', label: 'Login' },
+                  { key: 'otp', label: 'OTP' },
+                ]}
+                active={authTab} onChange={setAuthTab}
+              />
+              {authTab === 'register' && <RegisterForm onResult={handleAuth} />}
+              {authTab === 'login' && <LoginForm onResult={handleAuth} />}
+              {authTab === 'otp' && <OtpFlow />}
+            </div>
+          ) : (
+            <>
+              <div className="card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h2 style={{ margin: 0 }}>Dashboard</h2>
+                  <button className="btn btn-danger btn-sm" onClick={handleLogout}>Logout</button>
+                </div>
+                <h3>User Profile</h3>
+                <div className="token-box" style={{ marginBottom: 16 }}>
+                  {JSON.stringify({
+                    id: redactValue(user?._id || user?.id || ''),
+                    email: user?.email ? redactValue(user.email) : 'not set',
+                    phone: user?.phone ? redactValue(user.phone) : 'not set',
+                    tenantId: user?.tenantId || 'unknown',
+                    applicationId: user?.applicationId || 'unknown',
+                    roles: Array.isArray(user?.roles) ? user.roles.length : 0,
+                    mfaEnabled: Boolean(user?.mfaEnabled),
+                  }, null, 2)}
+                </div>
+                <div className="btn-group">
+                  <button className="btn btn-ghost btn-sm" onClick={handleRefresh}>Refresh Token</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => loadSessions()}>Reload Sessions</button>
+                </div>
+              </div>
+
+              <div className="card">
+                <h3>Sessions</h3>
+                <SessionList sessions={sessions} onRevoke={handleRevoke} onRevokeAll={handleRevokeAll} />
+              </div>
+
+              <div className="card">
+                <h3>Change Password</h3>
+                <PasswordChange />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Right: Token / JWKS / Log */}
+        <div>
+          <div className="card">
+            <Tabs
+              tabs={[
+                { key: 'jwt', label: 'Access Token' },
+                { key: 'jwks', label: 'JWKS' },
+                { key: 'pkg', label: 'SDK Packages' },
+              ]}
+              active={viewTab} onChange={setViewTab}
+            />
+            {viewTab === 'jwt' && <JwtViewer token={accessToken} />}
+            {viewTab === 'jwks' && <JwksViewer />}
+            {viewTab === 'pkg' && (
+              <div>
+                <div className="token-box" style={{ maxHeight: 320 }}>
+{`@pezhwan/shared    — Types, constants, error classes
+@pezhwan/crypto     — Argon2id, RS256 JWT, OTP gen
+@pezhwan/core       — Auth engine, models, services
+@pezhwan/node       — Node.js SDK facade
+@pezhwan/express    — Middleware + pre-built routers
+@pezhwan/react      — Provider, hooks, route guards
+
+Architecture:
+  shared → crypto → core → node
+                           → express
+                    core  → react (browser)
+
+Security:
+  • Argon2id password hashing (OWASP)
+  • RS256 asymmetric JWT + JWKS
+  • Rotating one-time-use refresh tokens
+  • Server-side RBAC enforcement
+  • Tamper-evident audit logging`}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <h3>Refresh Token</h3>
+            {refreshToken ? (
+              <div className="token-box" style={{ fontSize: '0.65rem' }}>
+                {`status: stored in memory only\nlength: ${refreshToken.length}\npreview: ${redactValue(refreshToken, 8, 6)}\nNote: raw refresh tokens are never rendered in the browser UI.`}
+              </div>
+            ) : (
+              <div style={{ color: 'var(--text2)', fontSize: '0.8rem' }}>No refresh token</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* API Log */}
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0 }}>API Request Log</h2>
+          <button className="btn btn-ghost btn-sm" onClick={() => { apiLogRef.current = []; setLogTab('log' + Date.now()); }}>
+            Clear
+          </button>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <ApiLog />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
