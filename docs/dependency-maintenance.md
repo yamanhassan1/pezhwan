@@ -80,8 +80,13 @@ These three PRs stay **open** with a documented reason and their branches are
 rebased onto current `main`. They are not merged until the integration evidence
 exists; they are then either merged or closed and their branches deleted.
 
-## Working branch note
+## Production hardening (reconciled to main)
+
+The previously-preserved auth/OAuth tenant/application boundary hardening has
+been rebased onto current `main`, verified (build, typecheck, and all workspace
+tests pass), and merged directly into `main` (`bc8ab88`). It is now part of
+`main` and the temporary working branch that held it has been deleted.
 
 Work that is not yet ready for `main` is kept on a short-lived working branch
-(e.g. `wip/production-hardening-uncommitted`) rather than as uncommitted changes
-and is reconciled onto `main` when verified.
+rather than as uncommitted changes and is reconciled onto `main` when reviewed
+and verified.
