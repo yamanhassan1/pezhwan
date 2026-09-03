@@ -17,7 +17,7 @@
     "@pezhwan/crypto": "*",
     "@pezhwan/express": "*",
     "@pezhwan/shared": "*",
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "ioredis": "^5.4.1",
     "mongoose": "^8.0.0",
