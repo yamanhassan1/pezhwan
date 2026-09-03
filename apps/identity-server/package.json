@@ -19,7 +19,7 @@
     "@pezhwan/shared": "*",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "ioredis": "^5.4.1",
+    "ioredis": "^6.0.0",
     "mongoose": "^8.0.0",
     "zod": "^4.5.4"
   },

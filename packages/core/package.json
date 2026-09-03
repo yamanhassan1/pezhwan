@@ -27,7 +27,7 @@
     "@pezhwan/shared": "*",
     "@pezhwan/crypto": "*",
     "mongoose": "^8.0.0",
-    "ioredis": "^5.4.0"
+    "ioredis": "^6.0.0"
   },
   "devDependencies": {
     "typescript": "^5.5.0",
