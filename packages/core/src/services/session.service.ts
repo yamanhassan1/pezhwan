@@ -120,7 +120,13 @@ export class SessionService {
    */
   async refresh(
     presentedRefreshToken: string,
-    ctx: { ip?: string; userAgent?: string; deviceLabel?: string },
+    ctx: {
+      ip?: string;
+      userAgent?: string;
+      deviceLabel?: string;
+      tenantId?: string;
+      applicationId?: string;
+    },
   ): Promise<CreatedSession> {
     const hash = this.tokens.hashRefreshToken(presentedRefreshToken);
 
@@ -128,7 +134,12 @@ export class SessionService {
     // `rotating` state. Only one concurrent rotation can do this for a given
     // hash; every other caller sees a non-active session below.
     const session = await SessionModel.findOneAndUpdate(
-      { currentRefreshTokenHash: hash, status: 'active' },
+      {
+        currentRefreshTokenHash: hash,
+        status: 'active',
+        ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}),
+        ...(ctx.applicationId ? { applicationId: ctx.applicationId } : {}),
+      },
       { $set: { status: 'rotating', revokedAt: new Date() } },
       { new: true },
     );
@@ -136,7 +147,11 @@ export class SessionService {
     if (!session) {
       // Either the token is unknown, or it was already consumed by a
       // concurrent rotation (status is no longer 'active').
-      const existing = await SessionModel.findOne({ currentRefreshTokenHash: hash });
+      const existing = await SessionModel.findOne({
+        currentRefreshTokenHash: hash,
+        ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}),
+        ...(ctx.applicationId ? { applicationId: ctx.applicationId } : {}),
+      });
       if (!existing) {
         throw new SessionError(
           'Refresh token is not recognized',

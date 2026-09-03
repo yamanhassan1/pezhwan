@@ -285,3 +285,28 @@ retained as open PRs with a documented reason.
   TypeScript 7.0.2 is a major toolchain change that fails on `baseUrl` removal
   and is a maintenance/performance upgrade rather than a production-readiness
   blocker. See `docs/dependency-maintenance.md`.
+
+## Authentication tenant-boundary hardening
+
+- User ID lookups and updates in the authentication engine now require the
+  authenticated tenant context, including lockout, password changes/resets,
+  MFA completion, refresh-token account resolution, and email verification.
+- MFA verification now resolves and validates the tenant-owned user before
+  checking the factor.
+- Refresh completion rejects sessions whose tenant or application context does
+  not match the running authentication context.
+- Build, typecheck, core tests (28/28), crypto tests (8/8), and secret scan
+  passed after this change.
+
+## OAuth tenant and scope-boundary hardening
+
+- OAuth client lookup and authorization-code redemption now require matching
+  tenant, application, and client identifiers.
+- Authorization codes are validated for redirect URI and PKCE before atomic
+  single-use consumption, preventing invalid requests from burning valid codes.
+- Authorization and client-credentials requests reject scopes outside the
+  registered client scope set.
+- Refresh-token rotation applies tenant and application filters inside the
+  atomic session claim, preventing cross-tenant rotation or family revocation.
+- Workspace build, typecheck, tests, and secret scan passed; live OAuth
+  interoperability and MongoDB integration evidence remain outstanding.

@@ -446,6 +446,11 @@ export class AuthEngine {
         'MFA_NOT_CONFIGURED',
       );
     }
+    const user = await this.findUser({ userId: input.userId });
+    if (!user || user.isActive === false) {
+      throw new AuthenticationError('Account disabled', 'ACCOUNT_DISABLED');
+    }
+
     const ok = await this.deps.mfa.verifyMfa(input.userId, input.code);
     if (!ok) {
       await this.audit?.log({
@@ -458,10 +463,6 @@ export class AuthEngine {
       throw new AuthenticationError('Invalid MFA code', 'INVALID_MFA_CODE');
     }
 
-    const user = await this.findUserById(input.userId);
-    if (!user || user.isActive === false) {
-      throw new AuthenticationError('Account disabled', 'ACCOUNT_DISABLED');
-    }
     const userDoc = await this.findUser({ userId: input.userId });
     if (!userDoc) {
       throw new AuthenticationError('User not found', 'USER_NOT_FOUND');
@@ -536,7 +537,7 @@ export class AuthEngine {
     const next = (user.failedLoginAttempts ?? 0) + 1;
     const lockAt = next >= 5 ? new Date(Date.now() + 15 * 60_000) : null;
     await UserModel.updateOne(
-      { _id: user._id },
+      { _id: user._id, tenantId: this.options.tenantId },
       { failedLoginAttempts: next, loginLockUntil: lockAt },
     );
     await this.audit?.log({
@@ -558,7 +559,7 @@ export class AuthEngine {
 
   private async clearFailedLogin(user: UserDoc): Promise<void> {
     await UserModel.updateOne(
-      { _id: user._id },
+      { _id: user._id, tenantId: this.options.tenantId },
       { failedLoginAttempts: 0, loginLockUntil: null },
     );
   }
@@ -576,6 +577,15 @@ export class AuthEngine {
       userAgent: device?.userAgent,
       deviceLabel: device?.deviceLabel,
     });
+    if (
+      session.tenantId !== this.options.tenantId
+      || session.applicationId !== this.options.applicationId
+    ) {
+      throw new AuthenticationError(
+        'Session context is invalid',
+        'SESSION_CONTEXT_INVALID',
+      );
+    }
 
     // Re-resolve roles/permissions for the newest access token.
     const identity = await this.deps.authorization.buildIdentityContext({
@@ -608,7 +618,10 @@ export class AuthEngine {
     if (!result.ok) {
       throw new ValidationError(result.errors.join(' '), 'PASSWORD_POLICY');
     }
-    const user = await UserModel.findById(input.userId).select('passwordHash tokenVersion isActive');
+    const user = await UserModel.findOne({
+      _id: input.userId,
+      tenantId: this.options.tenantId,
+    }).select('passwordHash tokenVersion isActive');
     if (!user) {
       throw new AuthenticationError('User not found', 'USER_NOT_FOUND');
     }
@@ -624,7 +637,7 @@ export class AuthEngine {
     const newHash = await hashPassword(input.newPassword);
     const nextVersion = (user.tokenVersion ?? 0) + 1;
     await UserModel.updateOne(
-      { _id: user._id },
+      { _id: user._id, tenantId: this.options.tenantId },
       { passwordHash: newHash, tokenVersion: nextVersion },
     );
     await this.deps.accountState.invalidate(String(user._id));
@@ -671,7 +684,7 @@ export class AuthEngine {
     const newHash = await hashPassword(input.newPassword);
     const nextVersion = (user.tokenVersion ?? 0) + 1;
     await UserModel.updateOne(
-      { _id: user._id },
+      { _id: user._id, tenantId: this.options.tenantId },
       {
         passwordHash: newHash,
         tokenVersion: nextVersion,
@@ -765,7 +778,7 @@ export class AuthEngine {
     const newHash = await hashPassword(input.newPassword);
     const nextVersion = (user.tokenVersion ?? 0) + 1;
     await UserModel.updateOne(
-      { _id: user._id },
+      { _id: user._id, tenantId: this.options.tenantId },
       {
         passwordHash: newHash,
         tokenVersion: nextVersion,
@@ -833,7 +846,10 @@ export class AuthEngine {
       throw new AuthenticationError('Invalid or expired token', 'INVALID_TOKEN');
     }
     await UserModel.updateOne(
-      { _id: redeemed.userId },
+      {
+        _id: redeemed.userId,
+        tenantId: this.options.tenantId,
+      },
       { emailVerified: true },
     );
     await this.audit?.log({
@@ -968,7 +984,7 @@ export class AuthEngine {
       throw new AuthenticationError('User not found', 'USER_NOT_FOUND');
     }
     await UserModel.updateOne(
-      { _id: user._id },
+      { _id: user._id, tenantId: this.options.tenantId },
       { emailVerified: true },
     );
     await this.audit?.log({
@@ -986,7 +1002,10 @@ export class AuthEngine {
 
   private async findUser(input: UserLookupInput): Promise<UserDoc | null> {
     if (this.deps.lookupUser) {
-      return this.deps.lookupUser(input);
+      return this.deps.lookupUser({
+        ...input,
+        tenantId: this.options.tenantId,
+      });
     }
     const query: Record<string, unknown> = { tenantId: this.options.tenantId };
     if (input.userId) {
@@ -1003,7 +1022,10 @@ export class AuthEngine {
     tokenVersion?: number;
     isActive?: boolean;
   } | null> {
-    return UserModel.findById(userId).select('tokenVersion isActive').lean();
+    return UserModel.findOne({
+      _id: userId,
+      tenantId: this.options.tenantId,
+    }).select('tokenVersion isActive').lean();
   }
 
   /** Public helper so controllers don't need to wire token logic themselves. */

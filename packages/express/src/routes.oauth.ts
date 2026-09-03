@@ -72,15 +72,8 @@ export function createOauthRouter(runtime: PezhwanRuntime): Router {
       }
       res.redirect(`${q.redirect_uri}#${params.toString()}`);
     } catch (err) {
-      const e = err as { status?: number; code?: string; message?: string };
-      const params = new URLSearchParams({
-        error: e.code ?? 'server_error',
-        error_description: e.message ?? 'Authorization failed',
-      });
-      if (q.state) {
-        params.set('state', q.state);
-      }
-      res.redirect(`${q.redirect_uri}#${params.toString()}`);
+      // Never redirect to an unvalidated URI on an authorization error.
+      bad(res, err);
     }
   });
 

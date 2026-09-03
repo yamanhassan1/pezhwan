@@ -38,8 +38,8 @@ export interface AuthorizeInput extends PkceParams {
   nonce?: string;
   userId: string;
   sessionId: string;
-  applicationId?: string;
-  tenantId?: string;
+  applicationId: string;
+  tenantId: string;
   authMethod: AuthMethod;
 }
 
@@ -97,8 +97,16 @@ export class OAuthService {
     },
   ) {}
 
-  private async findClient(clientId: string): Promise<OAuthRawClient | null> {
-    const doc = await OAuthClientModel.findOne({ clientId }).lean();
+  private async findClient(
+    clientId: string,
+    scope?: { tenantId: string; applicationId: string },
+  ): Promise<OAuthRawClient | null> {
+    const doc = await OAuthClientModel.findOne({
+      clientId,
+      ...(scope
+        ? { tenantId: scope.tenantId, applicationId: scope.applicationId }
+        : {}),
+    }).lean();
     if (!doc) {
       return null;
     }
@@ -171,8 +179,9 @@ export class OAuthService {
   private async authenticateClientAtTokenEndpoint(
     clientId: string,
     clientSecret: string | undefined,
+    scope: { tenantId: string; applicationId: string },
   ): Promise<OAuthRawClient> {
-    const client = await this.findClient(clientId);
+    const client = await this.findClient(clientId, scope);
     if (!client || client.isActive === false) {
       await this.deps.audit?.log({
         eventType: AUDIT_EVENT.OAUTH_CLIENT_AUTH_FAILED,
@@ -203,13 +212,14 @@ export class OAuthService {
    * A confirmed redirect_uri mismatch is treated as an open-redirect attempt.
    */
   async authorizeCode(input: AuthorizeInput): Promise<{ code: string; expiresIn: number }> {
-    const client = await this.findClient(input.clientId);
+    const client = await this.findClient(input.clientId, {
+      tenantId: input.tenantId,
+      applicationId: input.applicationId,
+    });
     if (!client || client.isActive === false) {
       throw new ValidationError('Unknown client', 'UNKNOWN_CLIENT');
     }
-    if (input.tenantId && input.applicationId) {
-      this.assertClientScope(client, input.tenantId, input.applicationId);
-    }
+    this.assertClientScope(client, input.tenantId, input.applicationId);
     if (!client.redirectUris.includes(input.redirectUri)) {
       await this.deps.audit?.log({
         eventType: AUDIT_EVENT.OAUTH_REDIRECT_URI_MISMATCH,
@@ -228,7 +238,10 @@ export class OAuthService {
     // Scope validation: only request scopes the client is allowed.
     const requested = input.scope ? input.scope.split(/\s+/) : ['openid'];
     const allowed = new Set(client.scopes);
-    const granted = requested.filter((s) => allowed.has(s));
+    if (requested.some((scope) => !allowed.has(scope))) {
+      throw new ValidationError('Invalid scope', 'INVALID_SCOPE');
+    }
+    const granted = requested;
 
     // PKCE: public clients (S256) are required in OAuth 2.1.
     const method = input.codeChallengeMethod ?? 'S256';
@@ -248,8 +261,8 @@ export class OAuthService {
 
     await AuthorizationCodeModel.create({
       codeHash,
-      tenantId: input.tenantId || String(client.tenantId),
-      applicationId: input.applicationId || String(client.applicationId),
+      tenantId: input.tenantId,
+      applicationId: input.applicationId,
       clientId: input.clientId,
       userId: input.userId,
       sessionId: input.sessionId,
@@ -301,6 +314,7 @@ export class OAuthService {
     const client = await this.authenticateClientAtTokenEndpoint(
       input.clientId,
       input.clientSecret,
+      { tenantId: input.tenantId, applicationId: input.applicationId },
     );
     this.assertClientScope(client, input.tenantId, input.applicationId);
 
@@ -332,17 +346,14 @@ export class OAuthService {
     }
     const codeHash = hashSecret(input.code);
 
-    // Atomically consume the code (unique index prevents double redemption).
-    let codeDoc;
-    try {
-      codeDoc = await AuthorizationCodeModel.findOneAndUpdate(
-        { codeHash, consumedAt: null },
-        { $set: { consumedAt: new Date() } },
-        { new: true },
-      );
-    } catch {
-      throw new AuthenticationError('Code already used', 'INVALID_GRANT');
-    }
+    // Validate the code before consuming it so invalid verifiers cannot burn it.
+    const codeDoc = await AuthorizationCodeModel.findOne({
+      codeHash,
+      clientId: client.clientId,
+      tenantId: input.tenantId,
+      applicationId: input.applicationId,
+      consumedAt: null,
+    });
     if (!codeDoc) {
       throw new AuthenticationError('Invalid or expired code', 'INVALID_GRANT');
     }
@@ -375,6 +386,22 @@ export class OAuthService {
         await this.deps.sessions.revoke(String(codeDoc.sessionId));
         throw new AuthenticationError('PKCE verification failed', 'INVALID_GRANT');
       }
+    }
+
+    const consumed = await AuthorizationCodeModel.findOneAndUpdate(
+      {
+        _id: codeDoc._id,
+        codeHash,
+        clientId: client.clientId,
+        tenantId: input.tenantId,
+        applicationId: input.applicationId,
+        consumedAt: null,
+      },
+      { $set: { consumedAt: new Date() } },
+      { new: true },
+    );
+    if (!consumed) {
+      throw new AuthenticationError('Code already used', 'INVALID_GRANT');
     }
 
     // Issue a new refresh-token family via the session service (rotation).
@@ -435,6 +462,8 @@ export class OAuthService {
     client: OAuthRawClient,
     input: {
       refreshToken?: string;
+      tenantId: string;
+      applicationId: string;
       device?: { ip?: string; userAgent?: string; deviceLabel?: string };
     },
   ) {
@@ -448,7 +477,11 @@ export class OAuthService {
       throw new ValidationError('refresh_token required', 'INVALID_GRANT');
     }
     // SessionService.refresh enforces rotation + reuse detection.
-    const session = await this.deps.sessions.refresh(input.refreshToken, input.device ?? {});
+    const session = await this.deps.sessions.refresh(input.refreshToken, {
+      ...input.device,
+      tenantId: input.tenantId,
+      applicationId: input.applicationId,
+    });
     const accessToken = this.deps.tokens.signAccessToken({
       userId: session.userId,
       tenantId: String(session.tenantId),
@@ -487,8 +520,12 @@ export class OAuthService {
         'UNSUPPORTED_GRANT',
       );
     }
-    // Service-to-service: no user session; mint a scoped access token.
-    const scope = (input.scope ?? 'default').trim();
+    // Service-to-service: no user session; mint only registered scopes.
+    const requested = (input.scope ?? 'default').trim().split(/\s+/);
+    if (requested.some((scope) => !client.scopes.includes(scope))) {
+      throw new ValidationError('Invalid scope', 'INVALID_SCOPE');
+    }
+    const scope = requested.join(' ');
     const accessToken = this.deps.tokens.signAccessToken({
       userId: `client:${client.clientId}`,
       tenantId: input.tenantId,
