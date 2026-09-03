@@ -27,7 +27,7 @@
     "@pezhwan/shared": "*"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
+    "typescript": "^7.0.2",
     "@types/node": "^26.4.0"
   }
 }
