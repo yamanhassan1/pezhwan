@@ -269,12 +269,14 @@ until reassessed (Phases B–N of the roadmap):
 
 - OAuth 2.0 / OIDC providers, MFA/TOTP, passkeys, magic links
 - Tenant/application bootstrap + admin console
-- Tenant-scoped API-key endpoint wiring, `users` router (`/v1/users/me` is
-  referenced by the React SDK but not yet mounted in the reference server)
 - Full client-secret lifecycle and redirect-URI management
 - Integration test suites against live MongoDB + Redis (current tests are
   unit-level/backstop; the runtime has not yet been exercised end-to-end with
   real databases)
+
+Note: the reference server now mounts the tenant-scoped `users` router
+(`GET /v1/users/me`) that the React SDK reads at bootstrap. A tenant-scoped
+API-key endpoint wiring pattern is established under `/v1/services/ping`.
 
 The transport-app project was NOT migrated to Pezhwan — that is a later,
 explicitly requested phase. It continues to run its own HS256/bcrypt auth.

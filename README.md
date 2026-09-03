@@ -155,6 +155,9 @@ Core protections include:
 - Session invalidation and replay prevention
 - RBAC checks enforced server-side
 - Strict CORS allowlists and CSRF double-submit cookies
+- Tenant/application boundary enforcement across auth, sessions, and OAuth
+  (`SESSION_CONTEXT_INVALID` on a context mismatch; `INVALID_SCOPE` on
+  out-of-scope OAuth requests)
 - Request correlation IDs and audit logging
 - Secret scanning and local security checks
 

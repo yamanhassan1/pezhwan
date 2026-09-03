@@ -31,6 +31,7 @@ import {
   createPezhwan,
   initKeyPersistence,
   createRedisManager,
+  UserModel,
   type PezhwanRuntime,
 } from '@pezhwan/core';
 import {
@@ -44,6 +45,7 @@ import {
   csrfProtection,
   corsAllowlist,
   createAuthenticateApiKey,
+  type PezhwanRequest,
 } from '@pezhwan/express';
 
 // ---------------------------------------------------------------------------
@@ -163,6 +165,62 @@ function wireApp(
   app.use('/v1/verify', routers.verification);
   app.use('/v1/sessions', requireAuth(), routers.sessions);
   app.use('/v1/oauth', routers.oauth);
+
+  // Authenticated user profile — scoped to the identity's tenant. The React
+  // SDK reads this at bootstrap via GET /v1/users/me.
+  app.get(
+    '/v1/users/me',
+    createAuthenticate(runtime),
+    requireAuth(),
+    async (req: PezhwanRequest, res) => {
+      const identity = req.pezhwan;
+      if (!identity) {
+        res.status(401).json({
+          success: false,
+          error: { code: 'UNAUTHENTICATED', message: 'Authentication required' },
+        });
+        return;
+      }
+      try {
+        const user = await UserModel.findOne({
+          _id: identity.userId,
+          tenantId: identity.tenantId,
+        })
+          .select('tenantId email phone emailVerified phoneVerified isActive')
+          .lean();
+        if (!user) {
+          res.status(404).json({
+            success: false,
+            error: { code: 'USER_NOT_FOUND', message: 'User not found' },
+          });
+          return;
+        }
+        res.json({
+          success: true,
+          data: {
+            id: String(user._id),
+            tenantId: identity.tenantId,
+            applicationId: identity.applicationId,
+            email: user.email,
+            phone: user.phone,
+            emailVerified: user.emailVerified,
+            isActive: user.isActive,
+            roles: identity.roles,
+          },
+        });
+      } catch (err) {
+        res.status(500).json({
+          success: false,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message: 'Internal server error',
+            detail: err instanceof Error ? err.message : undefined,
+          },
+        });
+      }
+    },
+  );
+
 
   // Admin-protected example + API-key-protected service example.
   app.get(

@@ -29,11 +29,20 @@ import {
 
 export interface PezhwanUser {
   id: string;
+  tenantId?: string;
+  applicationId?: string;
   email?: string;
   phone?: string;
   emailVerified?: boolean;
   isActive?: boolean;
   roles?: string[];
+}
+
+/** Structured error surfaced from the server envelope ({ code, message }). */
+export interface PezhwanError {
+  code?: string;
+  message: string;
+  status?: number;
 }
 
 export interface PezhwanConfig {
@@ -44,7 +53,7 @@ export interface PezhwanConfig {
 export interface AuthState {
   user: PezhwanUser | null;
   status: 'loading' | 'guest' | 'authenticated';
-  error: string | null;
+  error: string | PezhwanError | null;
 }
 
 export interface AuthApi {
@@ -108,6 +117,8 @@ function persistSession(user: PezhwanUser | null): void {
       STORAGE_KEY,
       JSON.stringify({
         id: user.id,
+        tenantId: user.tenantId,
+        applicationId: user.applicationId,
         email: user.email,
         phone: user.phone,
         emailVerified: user.emailVerified,
@@ -118,6 +129,31 @@ function persistSession(user: PezhwanUser | null): void {
   } catch {
     /* ignore quota errors */
   }
+}
+
+/** Error thrown on a non-2xx response, carrying the server envelope's `code`. */
+export class PezhwanApiError extends Error {
+  readonly code?: string;
+  readonly status?: number;
+
+  constructor(body: { code?: string; message?: string }, status: number) {
+    super(body.message ?? 'Request failed');
+    this.name = 'PezhwanApiError';
+    this.code = body.code;
+    this.status = status;
+  }
+}
+
+/** Normalize a caught error to a string or a structured `PezhwanError`. */
+function errorToMessage(err: unknown): string | PezhwanError {
+  if (err instanceof PezhwanApiError) {
+    return {
+      code: err.code,
+      message: err.message,
+      status: err.status,
+    };
+  }
+  return err instanceof Error ? err.message : String(err);
 }
 
 async function request(
@@ -142,27 +178,36 @@ async function request(
   });
   const body = (await res.json().catch(() => ({}))) as {
     data?: unknown;
-    error?: { message?: string };
+    error?: { code?: string; message?: string };
   };
   if (!res.ok) {
-    const message = body.error?.message ?? 'Request failed';
-    const err = new Error(message);
-    (err as Error & { status?: number }).status = res.status;
-    throw err;
+    throw new PezhwanApiError(body.error ?? {}, res.status);
   }
   return body.data;
 }
 
-/** Attempt a silent refresh (rotate refresh token) and return success. */
-async function silentRefresh(config: PezhwanConfig): Promise<boolean> {
+/**
+ * Attempt a silent refresh (rotate refresh token) and return the outcome.
+ * Returns `{ ok: true }` on success, or `{ ok: false, code?, status? }` with
+ * the structured error so callers can distinguish a recoverable failure from a
+ * tenant/application context mismatch (`SESSION_CONTEXT_INVALID`).
+ */
+async function silentRefresh(
+  config: PezhwanConfig,
+): Promise<{ ok: true } | { ok: false; code?: string; status?: number }> {
   try {
     await request(config, '/v1/auth/refresh', {
       method: 'POST',
       // Refresh uses the httpOnly refresh cookie; body intentionally empty.
     });
-    return true;
-  } catch {
-    return false;
+    return { ok: true };
+  } catch (err) {
+    const apiError = err as Partial<PezhwanApiError>;
+    return {
+      ok: false,
+      code: apiError.code,
+      status: apiError.status,
+    };
   }
 }
 
@@ -195,14 +240,27 @@ export function PezhwanProvider({
       setAuth({ user: profile, status: 'authenticated', error: null });
       persistSession(profile);
     } catch (err) {
-      const status = (err as Error & { status?: number }).status;
+      const apiError = err as Partial<PezhwanApiError>;
+      const status = apiError.status;
       if (status === 401) {
         // Token expired — try silent refresh, then re-fetch.
         const refreshed = await silentRefresh(config);
-        if (refreshed) {
+        if (refreshed.ok) {
           const profile = (await request(config, '/v1/users/me')) as PezhwanUser;
           setAuth({ user: profile, status: 'authenticated', error: null });
           persistSession(profile);
+          return;
+        }
+        // A refresh that fails because the session's tenant/application context
+        // no longer matches is not recoverable — drop the stale session and
+        // require re-authentication rather than keeping an invalid cache.
+        if (refreshed.code === 'SESSION_CONTEXT_INVALID') {
+          persistSession(null);
+          setAuth({
+            user: null,
+            status: 'guest',
+            error: { code: 'SESSION_CONTEXT_INVALID', message: 'Session context is invalid', status: 401 },
+          });
           return;
         }
       }
@@ -231,11 +289,7 @@ export function PezhwanProvider({
         setAuth({ user: data.user ?? null, status: 'authenticated', error: null });
         persistSession(data.user ?? null);
       } catch (err) {
-        setAuth((a) => ({
-          ...a,
-          status: 'guest',
-          error: (err as Error).message,
-        }));
+        setAuth((a) => ({ ...a, status: 'guest', error: errorToMessage(err) }));
         throw err;
       }
     },
@@ -253,11 +307,7 @@ export function PezhwanProvider({
         setAuth({ user: data.user ?? null, status: 'authenticated', error: null });
         persistSession(data.user ?? null);
       } catch (err) {
-        setAuth((a) => ({
-          ...a,
-          status: 'guest',
-          error: (err as Error).message,
-        }));
+        setAuth((a) => ({ ...a, status: 'guest', error: errorToMessage(err) }));
         throw err;
       }
     },
