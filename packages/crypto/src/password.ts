@@ -6,7 +6,7 @@
  * parallelism/memory/time trade-offs.
  */
 
-import argon2, { type Options as Argon2LibraryOptions } from 'argon2';
+import argon2, { type HashOptions as Argon2HashOptions } from 'argon2';
 
 export interface Argon2Options {
   /** Number of iterations. */
@@ -16,7 +16,7 @@ export interface Argon2Options {
   /** Degree of parallelism. */
   parallelism?: number;
   /** Type of Argon2 (argon2id is the default and recommended). */
-  type?: Argon2LibraryOptions['type'];
+  type?: Argon2HashOptions['type'];
 }
 
 /** Production-sensible defaults tuned for interactive login. */
