@@ -269,15 +269,19 @@ requires a **NO-GO** decision.
 6. Add lint, coverage, dependency review, license review, and container scan
    gates, then attach release evidence and alert-test results.
 
-## Dependency branch verification update
+## Dependency branch maintenance status
 
-- Argon2 0.45.1 was applied to the current main checkout with a supported
-  named type import. `npm ci`, build, typecheck, crypto tests (8/8), and core
-  security tests (28/28) passed. The old Dependabot branch is stale and should
-  not be merged directly.
-- dotenv 17 passed local build, typecheck, and workspace tests, but still
-  requires a refreshed branch and CI run.
-- Mongoose 9 and ioredis 6 remain unmerged because runtime integration tests
-  against real MongoDB and Redis are not available.
-- TypeScript, type-definition, and GitHub Actions updates remain maintenance
-  work rather than production-readiness blockers.
+The repository dependency branches have been reconciled. All verified, safe
+updates were merged and their branches deleted; high-risk major updates are
+retained as open PRs with a documented reason.
+
+- **Merged (branches deleted):** Argon2 0.45.1 (already on main, including the
+  `HashOptions` type fix), GitHub Actions (`checkout`/`setup-node`/
+  `upload-artifact` v4→v7, `gitleaks` v2→v3), dotenv 17.4.2, @types/node
+  26.4.0, @types/react 19.2.18. All pass build, typecheck, and workspace tests.
+- **Held open (blocked):** Mongoose 9.9.4 and ioredis 6.0.0 remain unmerged
+  because runtime integration tests against real MongoDB and Redis are not yet
+  available, and Mongoose 9/TypeScript 7 currently fail build/typecheck.
+  TypeScript 7.0.2 is a major toolchain change that fails on `baseUrl` removal
+  and is a maintenance/performance upgrade rather than a production-readiness
+  blocker. See `docs/dependency-maintenance.md`.
