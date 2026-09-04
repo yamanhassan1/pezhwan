@@ -11,6 +11,8 @@ code where possible and must also be verified in the deployment environment.
 - [OAuth security](./oauth.md)
 - [Multi-tenancy security](./multi-tenancy.md)
 - [Rate limiting](./rate-limiting.md)
+- [Risk-based authentication](./risk-based-authentication.md)
+- [Compliance framework](./compliance/)
 - [Incident response](./incident-response.md)
 - [Disaster recovery](./disaster-recovery.md)
 - [Production hardening](./production-hardening.md)
