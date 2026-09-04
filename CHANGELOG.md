@@ -84,6 +84,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Repository tooling: ESLint/Prettier setup, lint-staged/commit hooks,
   secret scanning, dependency auditing, release scripts, and CI workflows
   (lint, build, test, CodeQL, dependency review, compliance scan).
+- An in-process load suite (`tests/load/`, `npm run test:load`) benchmarking
+  the sign-in primitives — argon2id password hashing, JWT sign/verify under
+  key rotation, OTP/TOTP/HOTP, timing-safe bearer comparison, and SRP-6a
+  ephemeral generation — with throughput floors for regression detection.
 - Broad documentation: architecture, developer guides, migration guides,
   operations runbooks, deployment runbooks, security controls, and compliance
   references (50+ files).
@@ -117,6 +121,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Uint8Array` interop with the Web Crypto API in post-quantum modules,
   optional-vendor HSM imports, and ambiguous duplicated-export resolution
   (`WebAuthnVerificationResult` vs ZK `VerificationResult`).
+- `ChainSecretProvider.getOptionalSecret` returned `undefined` instead of
+  throwing when no provider held a secret, honouring the `SecretProvider`
+  interface contract for optional lookups (previously it delegated to
+  `getSecret`, which threw `SecretNotFoundError`).
 
 <!-- Template section for the next release:
 

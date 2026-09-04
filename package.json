@@ -22,6 +22,7 @@
     "test": "npm run build && npm run test --workspaces --if-present",
     "test:security": "node scripts/secret-scan.mjs --ci",
     "test:integration": "npm run build && node --test tests/integration/*.test.ts",
+    "test:load": "npm run build && node tests/load/auth.load.js && node tests/load/mfa.load.js && node tests/load/oauth.load.js",
     "test:coverage": "npm run build && node --experimental-test-coverage --test tests/integration/*.test.ts",
     "sbom": "npm sbom --sbom-format=cyclonedx",
     "verify:compose": "docker compose -f infrastructure/docker/docker-compose.yml config --quiet",

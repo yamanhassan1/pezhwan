@@ -126,7 +126,13 @@ export class ChainSecretProvider implements SecretProvider {
   }
 
   async getOptionalSecret(name: string): Promise<string | undefined> {
-    return this.getSecret(name);
+    for (const provider of this.providers) {
+      const value = await provider.getOptionalSecret(name);
+      if (value !== undefined) {
+        return value;
+      }
+    }
+    return undefined;
   }
 }
 
