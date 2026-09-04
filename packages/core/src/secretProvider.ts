@@ -141,9 +141,7 @@ export interface SecretProviderConfig {
   secretFileDirectory?: string;
 }
 
-export function createSecretProvider(
-  config: SecretProviderConfig = {},
-): SecretProvider {
+export function createSecretProvider(config: SecretProviderConfig = {}): SecretProvider {
   const providers: SecretProvider[] = [];
   if (config.secretFileDirectory) {
     providers.push(new FileSecretProvider(config.secretFileDirectory));

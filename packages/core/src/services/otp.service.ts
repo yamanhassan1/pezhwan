@@ -133,10 +133,7 @@ export class OtpService {
       await this.options.delivery.sendEmail(target, code, purpose);
     } else {
       if (!this.options.delivery.sendSms) {
-        throw new ValidationError(
-          'Phone OTP is not configured',
-          'PHONE_OTP_UNSUPPORTED',
-        );
+        throw new ValidationError('Phone OTP is not configured', 'PHONE_OTP_UNSUPPORTED');
       }
       await this.options.delivery.sendSms(target, code, purpose);
     }
@@ -185,10 +182,7 @@ export class OtpService {
     }
 
     if (!verifyOtp(code, doc.codeHash)) {
-      await OtpModel.updateOne(
-        { _id: doc._id },
-        { $inc: { attempts: 1 } },
-      );
+      await OtpModel.updateOne({ _id: doc._id }, { $inc: { attempts: 1 } });
       await this.cache.set(
         this.attemptsKey(channel, target),
         String(attemptCount + 1),
@@ -198,10 +192,7 @@ export class OtpService {
     }
 
     // Success: mark consumed, clear the attempt budget.
-    await OtpModel.updateOne(
-      { _id: doc._id },
-      { consumed: true, attempts: doc.attempts + 1 },
-    );
+    await OtpModel.updateOne({ _id: doc._id }, { consumed: true, attempts: doc.attempts + 1 });
     await this.cache.del(this.attemptsKey(channel, target));
     await this.cache.del(this.cooldownKey(channel, target));
     return { verified: true };

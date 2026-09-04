@@ -8,19 +8,20 @@ security picture lives in `docs/security-audit.md`.
 
 ## 1. Phase C status
 
-| Check | Result |
-|-------|--------|
-| `npm run build` (crypto, core, express, identity-server, full) | OK — clean |
-| `npm run test -w @pezhwan/core` | OK — **20/20 pass** (19 in Phase B + G5 restart round-trip) |
-| `npm run test -w @pezhwan/express` | OK — **9/9 pass** (7 in Phase B + 2 rate-limit regressions) |
-| `npm run test --workspaces --if-present` | OK — **28/28 pass** (17 in Phase B, 11 added during hardening) |
-| live-Mongo MFA-lock script | OK — 6/6 PASS lines, then script removed |
+| Check                                                          | Result                                                         |
+| -------------------------------------------------------------- | -------------------------------------------------------------- |
+| `npm run build` (crypto, core, express, identity-server, full) | OK — clean                                                     |
+| `npm run test -w @pezhwan/core`                                | OK — **20/20 pass** (19 in Phase B + G5 restart round-trip)    |
+| `npm run test -w @pezhwan/express`                             | OK — **9/9 pass** (7 in Phase B + 2 rate-limit regressions)    |
+| `npm run test --workspaces --if-present`                       | OK — **28/28 pass** (17 in Phase B, 11 added during hardening) |
+| live-Mongo MFA-lock script                                     | OK — 6/6 PASS lines, then script removed                       |
 
 Phase C leaves no `[Gap]` items open in the threat model.
 
 ## 2. What changed
 
 ### G1 — HTTP rate limiting active on every auth router
+
 - New `rateLimit()` middleware (`packages/express/src/rateLimit.ts`): consumes
   the core `RateLimitService` (atomic fixed window, Redis or in-memory), emits
   `429` `{ success:false, error:{ code:'RATE_LIMITED' } }` with
@@ -33,15 +34,17 @@ Phase C leaves no `[Gap]` items open in the threat model.
 - Verified: 2 new express tests (unit + end-to-end login-budget 429).
 
 ### G2 — MFA brute-force throttle (fail closed)
+
 - Durable per-user `mfaFailedAttempts` + `mfaLockUntil` on the user document
   (shared across instances, survives restart).
 - `verifyMfa` / `disable` reject with `MFA_LOCKED` while locked — even a
-  *correct* code is refused (fail closed); 5 failures → 15-minute lock; success
+  _correct_ code is refused (fail closed); 5 failures → 15-minute lock; success
   resets the counter.
 - Verified: live-Mongo script (wrong codes rejected, lock engages, correct code
   rejected while locked, unlock restores service) — 6/6 PASS, then deleted.
 
 ### G3 — TOTP secret at rest (accepted carve-out, documented)
+
 - `mfaSecret` remains base64 + `select:false` — the plaintext secret is required
   for TOTP recomputation, so hashing is impossible.
 - **Documented exception**: `THREAT-MODEL.md` §2 + `security-audit.md` follow-up
@@ -49,12 +52,13 @@ Phase C leaves no `[Gap]` items open in the threat model.
   outside the trust boundary. This is a deployment knob, not a code change.
 
 ### G4 — 503 vs 401 on storage-dependency failure
+
 - `createAuthenticate` now forwards `SecurityDependencyError`
-  (`FAILED_SECURITY_DEPENDENCY`) as **503** instead of collapsing to a misleading
-  401. Invalid tokens remain 401 via `requireAuth`.
+  (`FAILED_SECURITY_DEPENDENCY`) as **503** instead of collapsing to a misleading 401. Invalid tokens remain 401 via `requireAuth`.
 - Verified: updated express regression asserts 503 + no identity attached.
 
 ### G5 — Durable signing keys + rotation for the reference server
+
 - `KeyStore.clear()` added (additive) to the crypto `KeyStore`.
 - New exported `initKeyPersistence(runtime, { directory, rotationIntervalMs })`
   in core: clears the throwaway bootstrap key, restores persisted keys via
@@ -68,12 +72,14 @@ Phase C leaves no `[Gap]` items open in the threat model.
   verifies on "process 2" over the same directory (`packages/core/test/security.test.ts`).
 
 ### G6 — Explicit body-size cap + env rate-limit wiring
+
 - `express.json({ limit: config.server.bodyLimit })` with `PEZHWAN_BODY_LIMIT`
   (default `100kb`, regex-validated).
 - Rate budgets flow from env (`PEZHWAN_RATE_LIMIT_LOGIN/OTP/API`, `parseBudget`)
   through `config.rateLimit.rules` into `createPezhwan(..., rateLimits)`.
 
 ### G7 — Audit chain HA guarantee (documented best-effort)
+
 - `prevHash` SHA-256 chain remains best-effort under concurrent HA writers
   (chains can fork); this guarantee is now explicit in `THREAT-MODEL.md` §10.
 - Deployments requiring strict ordering should serialize audit writes via a

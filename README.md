@@ -25,16 +25,16 @@ MongoDB + Redis + security services
 
 ## Monorepo layout
 
-| Package | Purpose |
-| --- | --- |
-| `@pezhwan/shared` | Shared types, constants, and error definitions |
-| `@pezhwan/crypto` | Key generation, Argon2id, JWT signing, OTP/TOTP, encryption helpers |
-| `@pezhwan/oauth` | OAuth/OIDC flows and PKCE helpers |
-| `@pezhwan/core` | Runtime, auth engine, domain models, sessions, rate limiting, RBAC |
-| `@pezhwan/node` | Node.js SDK facade |
-| `@pezhwan/express` | Express middleware, auth middleware, routers, security helpers |
-| `@pezhwan/react` | Browser auth provider and route guards |
-| `@pezhwan/identity-server` | Reference identity server used for local dev and demos |
+| Package                    | Purpose                                                             |
+| -------------------------- | ------------------------------------------------------------------- |
+| `@pezhwan/shared`          | Shared types, constants, and error definitions                      |
+| `@pezhwan/crypto`          | Key generation, Argon2id, JWT signing, OTP/TOTP, encryption helpers |
+| `@pezhwan/oauth`           | OAuth/OIDC flows and PKCE helpers                                   |
+| `@pezhwan/core`            | Runtime, auth engine, domain models, sessions, rate limiting, RBAC  |
+| `@pezhwan/node`            | Node.js SDK facade                                                  |
+| `@pezhwan/express`         | Express middleware, auth middleware, routers, security helpers      |
+| `@pezhwan/react`           | Browser auth provider and route guards                              |
+| `@pezhwan/identity-server` | Reference identity server used for local dev and demos              |
 
 ## Quick start
 
@@ -99,7 +99,13 @@ await pezhwan.authorization.assignRole({
 
 ```ts
 import express from 'express';
-import { buildRouters, requireAuth, requireRole, csrfProtection, corsAllowlist } from '@pezhwan/express';
+import {
+  buildRouters,
+  requireAuth,
+  requireRole,
+  csrfProtection,
+  corsAllowlist,
+} from '@pezhwan/express';
 import { createPezhwan } from '@pezhwan/core';
 
 const runtime = createPezhwan({

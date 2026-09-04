@@ -61,8 +61,5 @@ export interface OAuthProviderAdapter {
   buildAuthorizationUrl(params: BuildAuthUrlParams): string;
   exchange(params: ExchangeParams): Promise<ExchangeResult>;
   /** Resolve a user profile from the exchanged access/id token. */
-  getProfile(
-    accessToken: string,
-    idToken?: string,
-  ): Promise<ProviderProfile>;
+  getProfile(accessToken: string, idToken?: string): Promise<ProviderProfile>;
 }

@@ -14,7 +14,6 @@ import {
   generateTotp,
   verifyTotp,
   generateBackupCodes,
-  encodeBase32,
   buildOtpauthUri,
   secretFromBase32,
 } from '@pezhwan/crypto';

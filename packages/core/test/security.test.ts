@@ -65,7 +65,11 @@ test('OAuth discovery exposes the expected OIDC endpoints', () => {
   assert.equal(d.authorization_endpoint, 'https://id.pezhwan.test/v1/oauth/authorize');
   assert.equal(d.token_endpoint, 'https://id.pezhwan.test/v1/oauth/token');
   assert.equal(d.jwks_uri, 'https://id.pezhwan.test/.well-known/jwks.json');
-  assert.deepEqual(d.grant_types_supported, ['authorization_code', 'refresh_token', 'client_credentials']);
+  assert.deepEqual(d.grant_types_supported, [
+    'authorization_code',
+    'refresh_token',
+    'client_credentials',
+  ]);
   assert.ok((d.code_challenge_methods_supported as string[]).includes('S256'));
 });
 
@@ -173,7 +177,10 @@ test('rate limiter atomic counter loses no increments under concurrency', async 
     Array.from({ length: 50 }, () => limiter.consume('api', 'shared-scope')),
   );
   assert.equal(results.length, 50);
-  assert.ok(results.every((r) => r.allowed), 'all 50 under the limit must be allowed');
+  assert.ok(
+    results.every((r) => r.allowed),
+    'all 50 under the limit must be allowed',
+  );
   // Every increment must be accounted for exactly — a racy read-modify-write
   // would lose many of the 50 concurrent increments.
   const raw = await cache.get('rl:api:shared-scope');
@@ -252,7 +259,10 @@ test('key rotation retires the previous key and revocation blocks verification',
   assert.equal(store.current.kid, second.kid);
   store.revoke(first.kid);
   assert.equal(store.byKid(first.kid), undefined);
-  assert.equal(store.jwks().some((key) => key.kid === first.kid), false);
+  assert.equal(
+    store.jwks().some((key) => key.kid === first.kid),
+    false,
+  );
 });
 
 test('KeyStore file load fails closed on a corrupt key file', async (t) => {
@@ -281,7 +291,11 @@ test('KeyStore load discards 0-byte and .pem.tmp leftovers (self-healing)', asyn
   assert.ok(store.all.length >= 1);
   // ...and the leftovers are gone (boot next time starts clean).
   const remaining = await fs.readdir(dir);
-  assert.equal(remaining.some((f) => f === 'dead.pem'), false, '0-byte file removed');
+  assert.equal(
+    remaining.some((f) => f === 'dead.pem'),
+    false,
+    '0-byte file removed',
+  );
   assert.equal(
     remaining.some((f) => f.endsWith('.pem.tmp')),
     false,
@@ -316,7 +330,7 @@ test('KeyStore concurrent save() calls serialize without racing the temp file', 
   await Promise.all(
     Array.from({ length: 64 }, async (_, i) => {
       if (i % 4 === 0) {
-        assume;
+        void assume;
       }
       await adapter.save(builder.all);
     }),
@@ -388,9 +402,9 @@ test('initKeyPersistence: tokens signed by a previous process verify after resta
   try {
     const identity = runtime2.tokens.verifyAccessToken(token);
     assert.equal(identity.userId, 'u1');
-    const header = JSON.parse(
-      Buffer.from(token.split('.')[0]!, 'base64url').toString('utf-8'),
-    ) as { kid?: string };
+    const header = JSON.parse(Buffer.from(token.split('.')[0]!, 'base64url').toString('utf-8')) as {
+      kid?: string;
+    };
     assert.ok(header.kid, 'token must carry a kid');
     assert.ok(
       runtime2.store.byKid(header.kid),

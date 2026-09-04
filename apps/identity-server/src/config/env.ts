@@ -29,9 +29,7 @@ const booleanEnv = z.preprocess((value) => {
 
 const envSchema = z.object({
   // ── Node ──────────────────────────────────────────────────────────────
-  NODE_ENV: z
-    .enum(['development', 'test', 'production'])
-    .default('development'),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 
   // ── Server ────────────────────────────────────────────────────────────
   PEZHWAN_PORT: z.coerce.number().int().min(1).max(65535).default(4011),
@@ -40,10 +38,7 @@ const envSchema = z.object({
   // express.json({ limit }) — an explicit cap defends against parser abuse.
   PEZHWAN_BODY_LIMIT: z
     .string()
-    .regex(
-      /^\d+(b|kb|mb|gb)?$/i,
-      'PEZHWAN_BODY_LIMIT must be a byte size like "100kb" or "1mb"',
-    )
+    .regex(/^\d+(b|kb|mb|gb)?$/i, 'PEZHWAN_BODY_LIMIT must be a byte size like "100kb" or "1mb"')
     .default('100kb'),
 
   // ── Issuer (REQUIRED — no default) ────────────────────────────────────
@@ -53,12 +48,8 @@ const envSchema = z.object({
     .min(1, 'PEZHWAN_ISSUER is required'),
 
   // ── Tenant / Application (REQUIRED — no default) ──────────────────────
-  PEZHWAN_TENANT_ID: z
-    .string()
-    .min(1, 'PEZHWAN_TENANT_ID is required'),
-  PEZHWAN_APPLICATION_ID: z
-    .string()
-    .min(1, 'PEZHWAN_APPLICATION_ID is required'),
+  PEZHWAN_TENANT_ID: z.string().min(1, 'PEZHWAN_TENANT_ID is required'),
+  PEZHWAN_APPLICATION_ID: z.string().min(1, 'PEZHWAN_APPLICATION_ID is required'),
 
   // ── Database ──────────────────────────────────────────────────────────
   PEZHWAN_MONGODB_URI: z
@@ -69,10 +60,7 @@ const envSchema = z.object({
   PEZHWAN_MONGO_TIMEOUT_MS: z.coerce.number().int().min(500).default(1500),
 
   // ── Redis (optional — degrades to in-memory) ─────────────────────────
-  PEZHWAN_REDIS_URL: z
-    .string()
-    .url('PEZHWAN_REDIS_URL must be a valid URL')
-    .optional(),
+  PEZHWAN_REDIS_URL: z.string().url('PEZHWAN_REDIS_URL must be a valid URL').optional(),
 
   // ── Tokens ────────────────────────────────────────────────────────────
   PEZHWAN_ACCESS_TOKEN_TTL: z.string().default('15m'),
@@ -96,13 +84,49 @@ const envSchema = z.object({
   // ── CORS ──────────────────────────────────────────────────────────────
   PEZHWAN_ALLOWED_ORIGINS: z
     .string()
-    .default('http://localhost:4011,http://127.0.0.1:4011,http://localhost:5173,http://127.0.0.1:5500'),
+    .default(
+      'http://localhost:4011,http://127.0.0.1:4011,http://localhost:5173,http://127.0.0.1:5500',
+    ),
 
   // ── OTP ───────────────────────────────────────────────────────────────
   PEZHWAN_OTP_TTL: z.coerce.number().int().min(30000).default(300000),
   PEZHWAN_OTP_MAX_ATTEMPTS: z.coerce.number().int().min(1).default(5),
   PEZHWAN_OTP_RESEND_COOLDOWN: z.coerce.number().int().min(5000).default(30000),
   PEZHWAN_OTP_LENGTH: z.coerce.number().int().min(4).max(10).default(6),
+
+  // ── OTP delivery providers ────────────────────────────────────────────
+  // email: 'console' (dev/test only) | 'smtp' | 'sendgrid' | 'ses'
+  // sms:   'mock' (dev/test only) | 'twilio'
+  PEZHWAN_OTP_EMAIL_PROVIDER: z.enum(['console', 'smtp', 'sendgrid', 'ses']).default('console'),
+  PEZHWAN_OTP_SMS_PROVIDER: z.enum(['mock', 'twilio', 'sns']).default('mock'),
+
+  // SMTP (Nodemailer)
+  PEZHWAN_SMTP_HOST: z.string().min(1).optional(),
+  PEZHWAN_SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional(),
+  PEZHWAN_SMTP_SECURE: booleanEnv.default(false),
+  PEZHWAN_SMTP_USER: z.string().optional(),
+  PEZHWAN_SMTP_PASS: z.string().optional(),
+  PEZHWAN_SMTP_FROM: z.string().min(1).optional(),
+
+  // SendGrid
+  PEZHWAN_SENDGRID_API_KEY: z.string().optional(),
+  PEZHWAN_SENDGRID_FROM: z.string().min(1).optional(),
+
+  // AWS SES
+  PEZHWAN_SES_REGION: z.string().optional(),
+  PEZHWAN_SES_ACCESS_KEY_ID: z.string().optional(),
+  PEZHWAN_SES_SECRET_ACCESS_KEY: z.string().optional(),
+  PEZHWAN_SES_FROM: z.string().min(1).optional(),
+
+  // Twilio
+  PEZHWAN_TWILIO_ACCOUNT_SID: z.string().optional(),
+  PEZHWAN_TWILIO_AUTH_TOKEN: z.string().optional(),
+  PEZHWAN_TWILIO_FROM: z.string().min(1).optional(),
+
+  // AWS SNS (SMS)
+  PEZHWAN_SNS_REGION: z.string().optional(),
+  PEZHWAN_SNS_ACCESS_KEY_ID: z.string().optional(),
+  PEZHWAN_SNS_SECRET_ACCESS_KEY: z.string().optional(),
 
   // ── Rate limiting ─────────────────────────────────────────────────────
   PEZHWAN_RATE_LIMIT_LOGIN: z.string().default('10/15m'),
@@ -179,6 +203,52 @@ function assertProductionSafety(raw: EnvConfig): void {
   if (raw.PEZHWAN_ALLOWED_ORIGINS.split(',').some((origin) => origin.trim() === '*')) {
     throw new Error('PEZHWAN_ALLOWED_ORIGINS cannot contain "*" in production');
   }
+  // Production must use real OTP transports — never the dev console/mock.
+  if (raw.PEZHWAN_OTP_EMAIL_PROVIDER === 'console') {
+    throw new Error('PEZHWAN_OTP_EMAIL_PROVIDER=console is not allowed in production');
+  }
+  if (raw.PEZHWAN_OTP_SMS_PROVIDER === 'mock') {
+    throw new Error('PEZHWAN_OTP_SMS_PROVIDER=mock is not allowed in production');
+  }
+  if (
+    raw.PEZHWAN_OTP_EMAIL_PROVIDER === 'smtp' &&
+    (!raw.PEZHWAN_SMTP_HOST || !raw.PEZHWAN_SMTP_FROM)
+  ) {
+    throw new Error(
+      'PEZHWAN_SMTP_HOST and PEZHWAN_SMTP_FROM are required when email provider is smtp',
+    );
+  }
+  if (
+    raw.PEZHWAN_OTP_EMAIL_PROVIDER === 'sendgrid' &&
+    (!raw.PEZHWAN_SENDGRID_API_KEY || !raw.PEZHWAN_SENDGRID_FROM)
+  ) {
+    throw new Error(
+      'PEZHWAN_SENDGRID_API_KEY and PEZHWAN_SENDGRID_FROM are required when email provider is sendgrid',
+    );
+  }
+  if (
+    raw.PEZHWAN_OTP_EMAIL_PROVIDER === 'ses' &&
+    (!raw.PEZHWAN_SES_REGION ||
+      !raw.PEZHWAN_SES_ACCESS_KEY_ID ||
+      !raw.PEZHWAN_SES_SECRET_ACCESS_KEY ||
+      !raw.PEZHWAN_SES_FROM)
+  ) {
+    throw new Error('PEZHWAN_SES_* credentials are required when email provider is ses');
+  }
+  if (
+    raw.PEZHWAN_OTP_SMS_PROVIDER === 'twilio' &&
+    (!raw.PEZHWAN_TWILIO_ACCOUNT_SID || !raw.PEZHWAN_TWILIO_AUTH_TOKEN || !raw.PEZHWAN_TWILIO_FROM)
+  ) {
+    throw new Error('PEZHWAN_TWILIO_* credentials are required when sms provider is twilio');
+  }
+  if (
+    raw.PEZHWAN_OTP_SMS_PROVIDER === 'sns' &&
+    (!raw.PEZHWAN_SNS_REGION ||
+      !raw.PEZHWAN_SNS_ACCESS_KEY_ID ||
+      !raw.PEZHWAN_SNS_SECRET_ACCESS_KEY)
+  ) {
+    throw new Error('PEZHWAN_SNS_* credentials are required when sms provider is sns');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -186,8 +256,7 @@ function assertProductionSafety(raw: EnvConfig): void {
 // ---------------------------------------------------------------------------
 
 function buildConfig(raw: EnvConfig) {
-  const allowedOrigins = raw.PEZHWAN_ALLOWED_ORIGINS
-    .split(',')
+  const allowedOrigins = raw.PEZHWAN_ALLOWED_ORIGINS.split(',')
     .map((o) => o.trim())
     .filter(Boolean);
 
@@ -250,6 +319,39 @@ function buildConfig(raw: EnvConfig) {
       maxAttempts: raw.PEZHWAN_OTP_MAX_ATTEMPTS,
       resendCooldownMs: raw.PEZHWAN_OTP_RESEND_COOLDOWN,
       codeLength: raw.PEZHWAN_OTP_LENGTH,
+      emailProvider: raw.PEZHWAN_OTP_EMAIL_PROVIDER,
+      smsProvider: raw.PEZHWAN_OTP_SMS_PROVIDER,
+    }),
+
+    otpProviders: Object.freeze({
+      smtp: Object.freeze({
+        host: raw.PEZHWAN_SMTP_HOST,
+        port: raw.PEZHWAN_SMTP_PORT,
+        secure: raw.PEZHWAN_SMTP_SECURE,
+        user: raw.PEZHWAN_SMTP_USER,
+        pass: raw.PEZHWAN_SMTP_PASS,
+        from: raw.PEZHWAN_SMTP_FROM,
+      }),
+      sendgrid: Object.freeze({
+        apiKey: raw.PEZHWAN_SENDGRID_API_KEY,
+        from: raw.PEZHWAN_SENDGRID_FROM,
+      }),
+      ses: Object.freeze({
+        region: raw.PEZHWAN_SES_REGION,
+        accessKeyId: raw.PEZHWAN_SES_ACCESS_KEY_ID,
+        secretAccessKey: raw.PEZHWAN_SES_SECRET_ACCESS_KEY,
+        from: raw.PEZHWAN_SES_FROM,
+      }),
+      twilio: Object.freeze({
+        accountSid: raw.PEZHWAN_TWILIO_ACCOUNT_SID,
+        authToken: raw.PEZHWAN_TWILIO_AUTH_TOKEN,
+        from: raw.PEZHWAN_TWILIO_FROM,
+      }),
+      sns: Object.freeze({
+        region: raw.PEZHWAN_SNS_REGION,
+        accessKeyId: raw.PEZHWAN_SNS_ACCESS_KEY_ID,
+        secretAccessKey: raw.PEZHWAN_SNS_SECRET_ACCESS_KEY,
+      }),
     }),
 
     rateLimit: Object.freeze({
@@ -317,14 +419,7 @@ function parseBudget(value: string): { limit: number; windowMs: number } {
   const window = Number(m[2]);
   const unit = (m[3] ?? 's').toLowerCase();
   const windowMs =
-    window *
-    (unit === 's'
-      ? 1_000
-      : unit === 'm'
-        ? 60_000
-        : unit === 'h'
-          ? 3_600_000
-          : 86_400_000);
+    window * (unit === 's' ? 1_000 : unit === 'm' ? 60_000 : unit === 'h' ? 3_600_000 : 86_400_000);
   if (limit < 1 || windowMs < 1_000) {
     throw new Error(`Invalid rate-limit budget: "${value}".`);
   }

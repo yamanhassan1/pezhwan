@@ -1,5 +1,6 @@
-# Pezhwan development stack — MongoDB (durable identity store), Redis (ephemeral
-# state: rate limits, OTP, session cache) and the reference Identity Server.
+# Pezhwan development stack — MongoDB (3-node replica set with transactions),
+# Redis (ephemeral state: rate limits, OTP, session cache) and the reference
+# Identity Server.
 #
 #   docker compose up --build
 #
@@ -7,16 +8,47 @@
 # it works both with host networking here and behind a reverse proxy.
 
 services:
-  mongodb:
+  mongo1:
     image: mongo:7
-    container_name: pezhwan-mongodb
+    container_name: pezhwan-mongo1
     restart: unless-stopped
+    command: ['--replSet', 'pezhwan-rs', '--config', '/etc/mongo/mongod.conf']
     ports:
-      - "127.0.0.1:27017:27017"
+      - '127.0.0.1:27017:27017'
     volumes:
-      - pezhwan_mongo_data:/data/db
+      - pezhwan_mongo1_data:/data/db
+      - ./mongo/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mongo2:
+    image: mongo:7
+    container_name: pezhwan-mongo2
+    restart: unless-stopped
+    command: ['--replSet', 'pezhwan-rs', '--config', '/etc/mongo/mongod.conf']
+    volumes:
+      - pezhwan_mongo2_data:/data/db
+      - ./mongo/mongod.conf:/etc/mongo/mongod.conf:ro
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mongo3:
+    image: mongo:7
+    container_name: pezhwan-mongo3
+    restart: unless-stopped
+    command: ['--replSet', 'pezhwan-rs', '--config', '/etc/mongo/mongod.conf']
+    volumes:
+      - pezhwan_mongo3_data:/data/db
+      - ./mongo/mongod.conf:/etc/mongo/mongod.conf:ro
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -26,37 +58,39 @@ services:
     container_name: pezhwan-redis
     restart: unless-stopped
     ports:
-      - "127.0.0.1:6379:6379"
+      - '127.0.0.1:6379:6379'
     volumes:
       - pezhwan_redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 20
 
   identity-server:
     build:
-      context: ../..            # monorepo root (npm workspaces)
+      context: ../.. # monorepo root (npm workspaces)
       dockerfile: apps/identity-server/Dockerfile
     container_name: pezhwan-identity-server
     restart: unless-stopped
     depends_on:
-      mongodb:
+      mongo1:
         condition: service_healthy
       redis:
         condition: service_healthy
     ports:
-      - "4011:4011"
+      - '4011:4011'
     environment:
-      PEZHWAN_PORT: "4011"
-      PEZHWAN_ISSUER: "${PEZHWAN_ISSUER_REPLACEMENT:-http://localhost:4011}"
-      PEZHWAN_TENANT_ID: "dev-tenant"
-      PEZHWAN_APPLICATION_ID: "dev-app"
-      PEZHWAN_MONGODB_URI: "mongodb://mongodb:27017/pezhwan"
-      PEZHWAN_REDIS_URL: "redis://redis:6379"
-      PEZHWAN_ALLOWED_ORIGINS: "${PEZHWAN_ALLOWED_ORIGINS:-http://localhost:4011,http://127.0.0.1:4011,http://localhost:5173,http://127.0.0.1:5500}"
+      PEZHWAN_PORT: '4011'
+      PEZHWAN_ISSUER: '${PEZHWAN_ISSUER_REPLACEMENT:-http://localhost:4011}'
+      PEZHWAN_TENANT_ID: 'dev-tenant'
+      PEZHWAN_APPLICATION_ID: 'dev-app'
+      PEZHWAN_MONGODB_URI: 'mongodb://mongo1:27017,mongo2:27017,mongo3:27017/pezhwan?replicaSet=pezhwan-rs'
+      PEZHWAN_REDIS_URL: 'redis://redis:6379'
+      PEZHWAN_ALLOWED_ORIGINS: '${PEZHWAN_ALLOWED_ORIGINS:-http://localhost:4011,http://127.0.0.1:4011,http://localhost:5173,http://127.0.0.1:5500}'
 
 volumes:
-  pezhwan_mongo_data:
+  pezhwan_mongo1_data:
+  pezhwan_mongo2_data:
+  pezhwan_mongo3_data:
   pezhwan_redis_data:

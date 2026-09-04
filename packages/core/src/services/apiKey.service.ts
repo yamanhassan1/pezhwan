@@ -7,7 +7,6 @@
  */
 
 import { randomBytes, createHash } from 'node:crypto';
-import { ValidationError } from '@pezhwan/shared';
 import { ApiKeyModel } from '../models/index.ts';
 
 const KEY_PREFIX = 'pk_live';
@@ -65,9 +64,6 @@ export class ApiKeyService {
   }
 
   async revoke(apiKeyId: string): Promise<void> {
-    await ApiKeyModel.updateOne(
-      { _id: apiKeyId },
-      { isActive: false },
-    );
+    await ApiKeyModel.updateOne({ _id: apiKeyId }, { isActive: false });
   }
 }

@@ -30,10 +30,7 @@ function defaultScope(req: Request): string {
   return req.ip ?? req.socket?.remoteAddress ?? '0.0.0.0';
 }
 
-export function rateLimit(
-  runtime: PezhwanRuntime,
-  options: RateLimitOptions,
-): RequestHandler {
+export function rateLimit(runtime: PezhwanRuntime, options: RateLimitOptions): RequestHandler {
   const scopeOf = options.scope ?? defaultScope;
   const type = options.type;
 
@@ -47,10 +44,7 @@ export function rateLimit(
       if (result.allowed) {
         return next();
       }
-      res.setHeader(
-        'Retry-After',
-        String(Math.max(1, Math.ceil(result.retryAfterMs / 1000))),
-      );
+      res.setHeader('Retry-After', String(Math.max(1, Math.ceil(result.retryAfterMs / 1000))));
       return res.status(429).json({
         success: false,
         error: {

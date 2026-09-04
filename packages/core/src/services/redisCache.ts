@@ -96,16 +96,12 @@ export class MemoryCache implements RedisCache {
     this.store.delete(key);
   }
 
-  async incrementAndExpire(
-    key: string,
-    ttlSeconds: number,
-  ): Promise<number | null> {
+  async incrementAndExpire(key: string, ttlSeconds: number): Promise<number | null> {
     // Single-threaded JS: read+write on the Map is atomic within one tick, so
     // this is a safe in-process counter for the degraded path.
     const before = Date.now();
     const entry = this.store.get(key);
-    const current =
-      entry && entry.expiresAt >= before ? Number(entry.value) : 0;
+    const current = entry && entry.expiresAt >= before ? Number(entry.value) : 0;
     const next = (Number.isFinite(current) ? current : 0) + 1;
     this.store.set(key, {
       value: String(next),
@@ -189,10 +185,7 @@ export class RedisCacheImpl implements RedisCache {
     }
   }
 
-  async incrementAndExpire(
-    key: string,
-    ttlSeconds: number,
-  ): Promise<number | null> {
+  async incrementAndExpire(key: string, ttlSeconds: number): Promise<number | null> {
     try {
       if (
         !this.client ||
@@ -219,10 +212,7 @@ export class RedisCacheImpl implements RedisCache {
   }
 }
 
-export function createRedisCache(
-  client: RedisLike | null,
-  namespace = 'pezhwan',
-): RedisCache {
+export function createRedisCache(client: RedisLike | null, namespace = 'pezhwan'): RedisCache {
   return new RedisCacheImpl(client, namespace);
 }
 
@@ -270,8 +260,7 @@ export class RedisManager {
       maxRetriesPerRequest: options.maxRetriesPerRequest ?? 2,
       retryStrategy:
         options.retryStrategy ??
-        ((times: number) =>
-          times > 10 ? null : Math.min(times * 200, 5000)),
+        ((times: number) => (times > 10 ? null : Math.min(times * 200, 5000))),
     };
     this.cache = new RedisCacheImpl(null, this.opts.namespace);
   }

@@ -10,11 +10,7 @@
  *   pezhwan.user.*
  */
 
-import {
-  createPezhwan,
-  type PezhwanConfig,
-  type PezhwanRuntime,
-} from '@pezhwan/core';
+import { createPezhwan, type PezhwanConfig, type PezhwanRuntime } from '@pezhwan/core';
 import {
   AuthenticationError,
   AuthorizationError,

@@ -6,7 +6,7 @@
  */
 
 import mongoose from 'mongoose';
-import type { Model, Types } from 'mongoose';
+import type { Model } from 'mongoose';
 
 const { Schema, model, models } = mongoose;
 
@@ -35,10 +35,7 @@ const permissionSchema = new Schema<PermissionDoc>(
   { timestamps: true, versionKey: false },
 );
 
-permissionSchema.index(
-  { tenantId: 1, applicationId: 1, name: 1 },
-  { unique: true },
-);
+permissionSchema.index({ tenantId: 1, applicationId: 1, name: 1 }, { unique: true });
 
 export const PermissionModel: Model<PermissionDoc> =
   (models.Permission as Model<PermissionDoc>) ||
@@ -69,10 +66,7 @@ const roleSchema = new Schema<RoleDoc>(
   { timestamps: true, versionKey: false },
 );
 
-roleSchema.index(
-  { tenantId: 1, applicationId: 1, name: 1 },
-  { unique: true },
-);
+roleSchema.index({ tenantId: 1, applicationId: 1, name: 1 }, { unique: true });
 
 export const RoleModel: Model<RoleDoc> =
   (models.Role as Model<RoleDoc>) || model<RoleDoc>('Role', roleSchema);

@@ -69,6 +69,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Test (integration — live MongoDB via mongodb-memory-server)
+        run: npm run test:integration
+
       - name: Generate SBOM
         run: npm run sbom > sbom.cdx.json
 

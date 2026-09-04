@@ -11,7 +11,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { ValidationError, AuthenticationError } from '@pezhwan/shared';
+import { AuthenticationError } from '@pezhwan/shared';
 import type { PezhwanRequest } from './index.ts';
 import type { PezhwanRuntime } from '@pezhwan/core';
 import { rateLimit } from './rateLimit.ts';
@@ -38,8 +38,7 @@ export function createOauthRouter(runtime: PezhwanRuntime): Router {
       ? `client:${clientId}`
       : (req.ip ?? '');
   };
-  const scopeForAuth = (req: Request) =>
-    (req as PezhwanRequest).pezhwan?.userId ?? req.ip ?? '';
+  const scopeForAuth = (req: Request) => (req as PezhwanRequest).pezhwan?.userId ?? req.ip ?? '';
 
   // Authorization endpoint. Requires an authenticated user (req.pezhwan) with
   // a valid session; issues a one-time code bound to the session + PKCE.
@@ -47,71 +46,73 @@ export function createOauthRouter(runtime: PezhwanRuntime): Router {
     '/authorize',
     rateLimit(runtime, { type: 'api', scope: scopeForAuth }),
     async (req: PezhwanRequest, res: Response) => {
-    const q = req.query as Record<string, string>;
-    if (!req.pezhwan) {
-      return bad(res, new AuthenticationError('Authentication required', 'UNAUTHENTICATED'));
-    }
-    try {
-      const { code, expiresIn } = await oauth.authorizeCode({
-        clientId: q.client_id ?? '',
-        redirectUri: q.redirect_uri ?? '',
-        scope: q.scope ?? 'openid',
-        state: q.state,
-        nonce: q.nonce,
-        userId: req.pezhwan.userId,
-        sessionId: req.pezhwan.sessionId,
-        tenantId: runtime.config.tenantId,
-        applicationId: runtime.config.applicationId,
-        authMethod: req.pezhwan.authMethod,
-        codeChallenge: q.code_challenge,
-        codeChallengeMethod: q.code_challenge_method,
-      });
-      const params = new URLSearchParams({ code, expires_in: String(expiresIn) });
-      if (q.state) {
-        params.set('state', q.state);
+      const q = req.query as Record<string, string>;
+      if (!req.pezhwan) {
+        return bad(res, new AuthenticationError('Authentication required', 'UNAUTHENTICATED'));
       }
-      res.redirect(`${q.redirect_uri}#${params.toString()}`);
-    } catch (err) {
-      // Never redirect to an unvalidated URI on an authorization error.
-      bad(res, err);
-    }
-  });
+      try {
+        const { code, expiresIn } = await oauth.authorizeCode({
+          clientId: q.client_id ?? '',
+          redirectUri: q.redirect_uri ?? '',
+          scope: q.scope ?? 'openid',
+          state: q.state,
+          nonce: q.nonce,
+          userId: req.pezhwan.userId,
+          sessionId: req.pezhwan.sessionId,
+          tenantId: runtime.config.tenantId,
+          applicationId: runtime.config.applicationId,
+          authMethod: req.pezhwan.authMethod,
+          codeChallenge: q.code_challenge,
+          codeChallengeMethod: q.code_challenge_method,
+        });
+        const params = new URLSearchParams({ code, expires_in: String(expiresIn) });
+        if (q.state) {
+          params.set('state', q.state);
+        }
+        res.redirect(`${q.redirect_uri}#${params.toString()}`);
+      } catch (err) {
+        // Never redirect to an unvalidated URI on an authorization error.
+        bad(res, err);
+      }
+    },
+  );
 
   // Token endpoint.
   router.post(
     '/token',
     rateLimit(runtime, { type: 'api', scope: scopeForToken }),
     async (req: PezhwanRequest, res: Response) => {
-    const b = req.body as Record<string, string>;
-    try {
-      const result = await oauth.exchange({
-        grantType: b.grant_type ?? '',
-        clientId: b.client_id ?? '',
-        clientSecret: b.client_secret,
-        code: b.code,
-        redirectUri: b.redirect_uri,
-        codeVerifier: b.code_verifier,
-        refreshToken: b.refresh_token,
-        scope: b.scope,
-        tenantId: runtime.config.tenantId,
-        applicationId: runtime.config.applicationId,
-        device: {
-          ip: req.ip ?? '',
-          userAgent: req.headers['user-agent'] ?? '',
-        },
-      });
-      ok(res, {
-        access_token: result.accessToken,
-        token_type: 'Bearer',
-        expires_in: result.expiresIn,
-        refresh_token: result.refreshToken,
-        id_token: result.idToken,
-        scope: result.scope || undefined,
-      });
-    } catch (err) {
-      bad(res, err);
-    }
-  });
+      const b = req.body as Record<string, string>;
+      try {
+        const result = await oauth.exchange({
+          grantType: b.grant_type ?? '',
+          clientId: b.client_id ?? '',
+          clientSecret: b.client_secret,
+          code: b.code,
+          redirectUri: b.redirect_uri,
+          codeVerifier: b.code_verifier,
+          refreshToken: b.refresh_token,
+          scope: b.scope,
+          tenantId: runtime.config.tenantId,
+          applicationId: runtime.config.applicationId,
+          device: {
+            ip: req.ip ?? '',
+            userAgent: req.headers['user-agent'] ?? '',
+          },
+        });
+        ok(res, {
+          access_token: result.accessToken,
+          token_type: 'Bearer',
+          expires_in: result.expiresIn,
+          refresh_token: result.refreshToken,
+          id_token: result.idToken,
+          scope: result.scope || undefined,
+        });
+      } catch (err) {
+        bad(res, err);
+      }
+    },
+  );
 
   // Admin: register a client (in production, gate behind ADMIN role).
   router.post(
@@ -120,30 +121,29 @@ export function createOauthRouter(runtime: PezhwanRuntime): Router {
     requireRole('ADMIN'),
     rateLimit(runtime, { type: 'api', scope: scopeForAuth }),
     async (req: PezhwanRequest, res: Response) => {
-    const b = req.body as Record<string, unknown>;
-    const redirectUris = Array.isArray(b.redirect_uris)
-      ? (b.redirect_uris as string[]).filter((u) => typeof u === 'string')
-      : [];
-    const grants = Array.isArray(b.grants)
-      ? (b.grants as string[]).filter((g) => typeof g === 'string')
-      : ['authorization_code', 'refresh_token'];
-    try {
-      const client = await oauth.registerClient({
-        tenantId: runtime.config.tenantId,
-        applicationId: runtime.config.applicationId,
-        name: (b.name as string) ?? 'untitled',
-        redirectUris,
-        grants,
-        scopes: Array.isArray(b.scopes)
-          ? (b.scopes as string[]).map(String)
-          : undefined,
-        confidential: typeof b.confidential === 'boolean' ? b.confidential : true,
-      });
-      ok(res, client, 201);
-    } catch (err) {
-      bad(res, err);
-    }
-  });
+      const b = req.body as Record<string, unknown>;
+      const redirectUris = Array.isArray(b.redirect_uris)
+        ? (b.redirect_uris as string[]).filter((u) => typeof u === 'string')
+        : [];
+      const grants = Array.isArray(b.grants)
+        ? (b.grants as string[]).filter((g) => typeof g === 'string')
+        : ['authorization_code', 'refresh_token'];
+      try {
+        const client = await oauth.registerClient({
+          tenantId: runtime.config.tenantId,
+          applicationId: runtime.config.applicationId,
+          name: (b.name as string) ?? 'untitled',
+          redirectUris,
+          grants,
+          scopes: Array.isArray(b.scopes) ? (b.scopes as string[]).map(String) : undefined,
+          confidential: typeof b.confidential === 'boolean' ? b.confidential : true,
+        });
+        ok(res, client, 201);
+      } catch (err) {
+        bad(res, err);
+      }
+    },
+  );
 
   // OIDC discovery.
   router.get('/.well-known/openid-configuration', (_req: Request, res: Response) => {

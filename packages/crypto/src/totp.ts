@@ -13,9 +13,7 @@ const DEFAULT_STEP_SECONDS = 30;
 const DEFAULT_WINDOW_STEPS = 1; // accept ±1 step (30s of skew)
 
 /** Decode a base32 string (RFC 4648, no padding) used by otpauth URIs. */
-function base32DecodeAndHexBuffer(
-  input: string,
-): { ok: true; secret: Buffer } | { ok: false } {
+function base32DecodeAndHexBuffer(input: string): { ok: true; secret: Buffer } | { ok: false } {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   const upper = input.toUpperCase().replace(/=+/g, '');
   let bits = '';

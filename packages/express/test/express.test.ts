@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import http from 'node:http';
 
 import express from 'express';
 import {
@@ -16,12 +15,7 @@ import {
   rateLimit,
 } from '@pezhwan/express';
 import type { PezhwanRequest } from '@pezhwan/express';
-import {
-  createPezhwan,
-  RateLimitService,
-  MemoryCache,
-  type PezhwanRuntime,
-} from '@pezhwan/core';
+import { createPezhwan, RateLimitService, MemoryCache, type PezhwanRuntime } from '@pezhwan/core';
 
 function mockRuntime() {
   return createPezhwan({
@@ -45,7 +39,9 @@ function req(overrides: Partial<PezhwanRequest> = {}): PezhwanRequest {
 function makeRes() {
   const headers = new Map<string, string>();
   const res: any = {
-    setHeader: (k: string, v: string) => { headers.set(k.toLowerCase(), String(v)); },
+    setHeader: (k: string, v: string) => {
+      headers.set(k.toLowerCase(), String(v));
+    },
     getHeader: (k: string) => headers.get(k.toLowerCase()),
     sendStatus: () => {},
     on: () => {},
@@ -58,14 +54,8 @@ function nextError(cb: (err: unknown) => void) {
 }
 
 test('extractToken reads Bearer header and cookie', () => {
-  assert.equal(
-    extractToken(req({ headers: { authorization: 'Bearer abc' } })),
-    'abc',
-  );
-  assert.equal(
-    extractToken(req({ cookies: { pezhwan_access: 'from-cookie' } })),
-    'from-cookie',
-  );
+  assert.equal(extractToken(req({ headers: { authorization: 'Bearer abc' } })), 'abc');
+  assert.equal(extractToken(req({ cookies: { pezhwan_access: 'from-cookie' } })), 'from-cookie');
   assert.equal(extractToken(req()), null);
 });
 
@@ -108,35 +98,19 @@ test('requireRole / requirePermission enforce RBAC', () => {
   const identity = runtime.tokens.verifyAccessToken(token);
 
   let ok = false;
-  requireRole('ADMIN')(
-    req({ pezhwan: identity }),
-    {} as never,
-    () => (ok = true),
-  );
+  requireRole('ADMIN')(req({ pezhwan: identity }), {} as never, () => (ok = true));
   assert.equal(ok, true);
 
   let denied: unknown;
-  requireRole('CAPTAIN')(
-    req({ pezhwan: identity }),
-    {} as never,
-    (e) => (denied = e),
-  );
+  requireRole('CAPTAIN')(req({ pezhwan: identity }), {} as never, (e) => (denied = e));
   assert.ok(denied instanceof Error);
 
   ok = false;
-  requirePermission('user:read')(
-    req({ pezhwan: identity }),
-    {} as never,
-    () => (ok = true),
-  );
+  requirePermission('user:read')(req({ pezhwan: identity }), {} as never, () => (ok = true));
   assert.equal(ok, true);
 
   denied = undefined;
-  requirePermission('ride:create')(
-    req({ pezhwan: identity }),
-    {} as never,
-    (e) => (denied = e),
-  );
+  requirePermission('ride:create')(req({ pezhwan: identity }), {} as never, (e) => (denied = e));
   assert.ok(denied instanceof Error);
 });
 
@@ -173,11 +147,7 @@ test('createAuthenticate fails closed AND surfaces 503 when account state cannot
   // be forwarded rather than collapsed into a 401.
   let errSent: unknown;
   let reqObj = req({ headers: { authorization: `Bearer ${token}` } });
-  await createAuthenticate(runtime)(
-    reqObj as never,
-    {} as never,
-    (e) => (errSent = e),
-  );
+  await createAuthenticate(runtime)(reqObj as never, {} as never, (e) => (errSent = e));
   const pe = errSent as { code?: string; status?: number };
   assert.ok(errSent instanceof Error, 'dependency outage must be forwarded');
   assert.equal(pe.code, 'FAILED_SECURITY_DEPENDENCY');
@@ -188,11 +158,7 @@ test('createAuthenticate fails closed AND surfaces 503 when account state cannot
   // comes from requireAuth()).
   reqObj = req({ headers: { authorization: 'Bearer no-token' } });
   let noErr: unknown = 'not-called';
-  await createAuthenticate(runtime)(
-    reqObj as never,
-    {} as never,
-    (e) => (noErr = e ?? null),
-  );
+  await createAuthenticate(runtime)(reqObj as never, {} as never, (e) => (noErr = e ?? null));
   assert.equal(noErr, null, 'invalid token must not forward a dependency error');
   assert.equal(reqObj.pezhwan, undefined);
 });
@@ -282,8 +248,7 @@ function listen(app: express.Express): Promise<{
       const port = (server.address() as { port: number }).port;
       resolve({
         port,
-        close: () =>
-          new Promise<void>((done) => server.close(() => done())),
+        close: () => new Promise<void>((done) => server.close(() => done())),
       });
     });
   });
@@ -293,15 +258,15 @@ test('rateLimit middleware: over budget → 429 with Retry-After + X-RateLimit-*
   const runtime = mockRuntime();
   const app = express();
   // A runtime with a deliberately tiny budget so the test is fast and exact.
-  (runtime as unknown as { rateLimiter: RateLimitService }).rateLimiter =
-    new RateLimitService(new MemoryCache(1000), {
+  (runtime as unknown as { rateLimiter: RateLimitService }).rateLimiter = new RateLimitService(
+    new MemoryCache(1000),
+    {
       login: { limit: 2, windowMs: 60_000 },
-    });
+    },
+  );
 
-  app.get(
-    '/login',
-    rateLimit(runtime as PezhwanRuntime, { type: 'login' }),
-    (_req, res) => res.status(200).json({ ok: true }),
+  app.get('/login', rateLimit(runtime as PezhwanRuntime, { type: 'login' }), (_req, res) =>
+    res.status(200).json({ ok: true }),
   );
 
   const { port, close } = await listen(app);

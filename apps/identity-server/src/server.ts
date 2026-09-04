@@ -47,6 +47,7 @@ import {
   createAuthenticateApiKey,
   type PezhwanRequest,
 } from '@pezhwan/express';
+import { buildOtpDelivery } from './otp.ts';
 
 // ---------------------------------------------------------------------------
 // Bootstrap: connect Mongo + construct the runtime, then wire the app
@@ -72,6 +73,11 @@ async function bootstrap(): Promise<void> {
 
   const redis = redisManager?.connectedClient ?? null;
 
+  // Build the OTP delivery chain from config. Dev/test default to
+  // console/mock providers; production fails fast at startup unless a real
+  // email + SMS transport is configured (see config/env.ts).
+  const otp = buildOtpDelivery(config);
+
   const runtime = createPezhwan({
     tenantId: config.tenantId,
     applicationId: config.applicationId,
@@ -81,20 +87,7 @@ async function bootstrap(): Promise<void> {
     redis,
     mfaEncryptionKey: config.mfaEncryptionKey,
     rateLimits: config.rateLimit.rules,
-    otpDelivery: {
-      sendEmail: async (target: string, code: string) => {
-        if (config.env === 'production') {
-          throw new Error(`Email OTP delivery is not configured for ${target}`);
-        }
-        console.log(`[pezhwan:otp] email ${target} => code ${code}`);
-      },
-      sendSms: async (target: string, code: string) => {
-        if (config.env === 'production') {
-          throw new Error(`SMS OTP delivery is not configured for ${target}`);
-        }
-        console.log(`[pezhwan:otp] sms ${target} => code ${code}`);
-      },
-    },
+    otpDelivery: otp.delivery,
   });
 
   // Durable signing keys: restore the persisted key set (or generate + persist
@@ -106,15 +99,15 @@ async function bootstrap(): Promise<void> {
   });
   console.log(`[pezhwan] signing keys ready in '${config.signingKeys.path}'`);
 
-  wireApp(runtime, redisManager);
+  wireApp(runtime, otp, redisManager);
 }
 
 function wireApp(
   runtime: PezhwanRuntime,
+  otp: ReturnType<typeof buildOtpDelivery>,
   redisManager: ReturnType<typeof createRedisManager> | null = null,
 ): void {
   const app = express();
-  let httpServer: ReturnType<typeof app.listen> | undefined;
   app.set('trust proxy', 1);
   app.use(cookieParser());
   // Explicit body cap (DO NOT remove): prevents oversized-payload/parser abuse.
@@ -123,24 +116,49 @@ function wireApp(
   // Defense-in-depth: request IDs, hardened headers, strict CORS.
   app.use(requestContext(runtime));
   app.use(securityHeaders());
-  app.use(corsAllowlist({
-    allowedOrigins: config.cors.allowedOrigins,
-    // Public, credential-free discovery metadata must be readable by any
-    // origin (browser demo, health probes) without being allowlisted.
-    publicPaths: ['/.well-known'],
-  }));
+  app.use(
+    corsAllowlist({
+      allowedOrigins: config.cors.allowedOrigins,
+      // Public, credential-free discovery metadata must be readable by any
+      // origin (browser demo, health probes) without being allowlisted.
+      publicPaths: ['/.well-known'],
+    }),
+  );
 
   app.get('/health/live', (_req, res) => {
     res.status(200).json({ ok: true });
   });
-  app.get('/health/ready', (_req, res) => {
+  app.get('/health/ready', async (_req, res) => {
     const mongoReady = mongoose.connection.readyState === 1;
     const ready = mongoReady;
+    // Probe OTP providers. Provider failure is surfaced (not hidden) but does
+    // not flip readiness: Mongo is the durable source of truth for auth; email
+    // / SMS are delivery transports whose outage is reported to operators.
+    let otpHealth: ReturnType<typeof otp.healthCheck> extends Promise<infer T> ? T : never;
+    try {
+      otpHealth = await otp.healthCheck();
+    } catch (err) {
+      otpHealth = {
+        email: { channel: 'email', available: false, providers: [] },
+        sms: { channel: 'sms', available: false, providers: [] },
+        overall: false,
+        circuitStates: {},
+      };
+      void err;
+    }
     res.status(ready ? 200 : 503).json({
       ok: ready,
       dependencies: {
         mongodb: mongoReady ? 'ready' : 'unavailable',
         redis: redisManager ? (redisManager.connectedClient ? 'ready' : 'degraded') : 'disabled',
+        otpDelivery: {
+          emailProvider: config.otp.emailProvider,
+          smsProvider: config.otp.smsProvider,
+          email: otpHealth.email.available ? 'ready' : 'unavailable',
+          sms: otpHealth.sms.available ? 'ready' : 'unavailable',
+          providers: { ...otpHealth.email.providers, ...otpHealth.sms.providers },
+          circuits: otpHealth.circuitStates,
+        },
       },
     });
   });
@@ -152,7 +170,8 @@ function wireApp(
   // Expose the double-submit CSRF token (sets the cookie if absent) so
   // cross-origin browser clients can obtain a token for state-changing calls.
   app.get('/v1/auth/csrf', (req, res) => {
-    const token = (req.cookies as Record<string, string | undefined> | undefined)?.['pezhwan_csrf'] ?? '';
+    const token =
+      (req.cookies as Record<string, string | undefined> | undefined)?.['pezhwan_csrf'] ?? '';
     res.json({ success: true, csrfToken: token });
   });
   app.use('/v1/mfa', createAuthenticate(runtime), requireAuth(), csrfProtection());
@@ -221,19 +240,12 @@ function wireApp(
     },
   );
 
-
   // Admin-protected example + API-key-protected service example.
-  app.get(
-    '/v1/admin/health',
-    requireAuth(),
-    requireRole('ADMIN'),
-    (_req, res) => res.json({ ok: true }),
+  app.get('/v1/admin/health', requireAuth(), requireRole('ADMIN'), (_req, res) =>
+    res.json({ ok: true }),
   );
-  app.get(
-    '/v1/services/ping',
-    createAuthenticateApiKey(runtime),
-    requireAuth(),
-    (_req, res) => res.json({ ok: true }),
+  app.get('/v1/services/ping', createAuthenticateApiKey(runtime), requireAuth(), (_req, res) =>
+    res.json({ ok: true }),
   );
 
   // Public JWKS + OIDC discovery.
@@ -266,7 +278,7 @@ function wireApp(
     },
   );
 
-  httpServer = app.listen(config.server.port, () => {
+  const httpServer = app.listen(config.server.port, () => {
     console.log(`[pezhwan] identity server listening on :${config.server.port}`);
     console.log(`[pezhwan] issuer ${config.issuer} — use /v1/auth/login`);
     console.log(`[pezhwan] JWKS at /.well-known/jwks.json`);
@@ -290,17 +302,23 @@ function wireApp(
         httpServer.close((err) => (err ? reject(err) : resolve()));
       });
     } catch (err) {
-      console.warn(`[pezhwan] http shutdown error: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `[pezhwan] http shutdown error: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
     try {
       await redisManager?.disconnect();
     } catch (err) {
-      console.warn(`[pezhwan] redis shutdown error: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `[pezhwan] redis shutdown error: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
     try {
       await mongoose.disconnect();
     } catch (err) {
-      console.warn(`[pezhwan] mongo shutdown error: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `[pezhwan] mongo shutdown error: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
     process.exit(0);
   };

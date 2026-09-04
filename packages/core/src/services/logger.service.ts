@@ -74,12 +74,14 @@ export interface LoggerOptions {
   exporter?: (line: Record<string, unknown>) => Promise<void> | void;
 }
 
-function redactFields(
-  value: unknown,
-  keys: Set<string>,
-  seen: WeakSet<object>,
-): unknown {
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null || value === undefined) {
+function redactFields(value: unknown, keys: Set<string>, seen: WeakSet<object>): unknown {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value === null ||
+    value === undefined
+  ) {
     return value;
   }
   if (typeof value === 'object') {
@@ -135,13 +137,10 @@ export class PezhwanLogger {
       } else {
         const json = JSON.stringify(line);
         if (level === 'error') {
-          // eslint-disable-next-line no-console
           console.error(json);
         } else if (level === 'warn') {
-          // eslint-disable-next-line no-console
           console.warn(json);
         } else {
-          // eslint-disable-next-line no-console
           console.log(json);
         }
       }

@@ -11,13 +11,8 @@
  * Never emits `Access-Control-Allow-Origin: *` with credentials.
  */
 
-import type {
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-} from 'express';
-import { SecurityEventError, ValidationError } from '@pezhwan/shared';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import { SecurityEventError } from '@pezhwan/shared';
 import { newRequestId } from '@pezhwan/core';
 
 export interface SecurityHeadersOptions {
@@ -69,9 +64,7 @@ export interface PezhwanRequestHeaders extends Request {
 /**
  * Set hardened security headers on every response.
  */
-export function securityHeaders(
-  options: SecurityHeadersOptions = {},
-): RequestHandler {
+export function securityHeaders(options: SecurityHeadersOptions = {}): RequestHandler {
   const hstsMaxAge = options.hstsMaxAge ?? 31_536_000;
   const includeSubdomains = options.includeSubdomains ?? true;
   const csp = options.csp ?? DEFAULT_CSP;
@@ -86,10 +79,7 @@ export function securityHeaders(
     res.setHeader('Content-Security-Policy', csp);
     res.setHeader('X-Frame-Options', frameOptions);
     const hsts = includeSubdomains ? 'includeSubDomains' : '';
-    res.setHeader(
-      'Strict-Transport-Security',
-      `max-age=${hstsMaxAge}; ${hsts}`.trim(),
-    );
+    res.setHeader('Strict-Transport-Security', `max-age=${hstsMaxAge}; ${hsts}`.trim());
     return next();
   };
 }
@@ -107,23 +97,29 @@ export function requestContext(
 ): RequestHandler {
   return (req: PezhwanRequestHeaders, res: Response, next: NextFunction) => {
     const inbound = req.headers[headerName] as string | undefined;
-    const requestId = typeof inbound === 'string' && inbound.length > 0
-      ? inbound
-      : newRequestId();
+    const requestId = typeof inbound === 'string' && inbound.length > 0 ? inbound : newRequestId();
     const startedAt = Date.now();
     req.requestId = requestId;
     req.correlationId = requestId;
     res.setHeader(headerName, requestId);
     if (runtime.logger) {
-      const child = (runtime.logger as { child?: (f: Record<string, unknown>) => unknown })
-        .child?.({ requestId });
+      const child = (runtime.logger as { child?: (f: Record<string, unknown>) => unknown }).child?.(
+        { requestId },
+      );
       const log = child as
-        | { info?: (m: string, f?: Record<string, unknown>) => void; warn?: (m: string, f?: Record<string, unknown>) => void; error?: (m: string, f?: Record<string, unknown>) => void }
+        | {
+            info?: (m: string, f?: Record<string, unknown>) => void;
+            warn?: (m: string, f?: Record<string, unknown>) => void;
+            error?: (m: string, f?: Record<string, unknown>) => void;
+          }
         | undefined;
       req.log = {
-        info: (m, f) => void (log?.info ?? ((_m: string, _f?: Record<string, unknown>) => {})).call(log, m, f),
-        warn: (m, f) => void (log?.warn ?? ((_m: string, _f?: Record<string, unknown>) => {})).call(log, m, f),
-        error: (m, f) => void (log?.error ?? ((_m: string, _f?: Record<string, unknown>) => {})).call(log, m, f),
+        info: (m, f) =>
+          void (log?.info ?? ((_m: string, _f?: Record<string, unknown>) => {})).call(log, m, f),
+        warn: (m, f) =>
+          void (log?.warn ?? ((_m: string, _f?: Record<string, unknown>) => {})).call(log, m, f),
+        error: (m, f) =>
+          void (log?.error ?? ((_m: string, _f?: Record<string, unknown>) => {})).call(log, m, f),
       };
     }
     // Inject X-Response-Time at the moment headers are written (patching
@@ -155,7 +151,9 @@ export function requestContext(
  * cookie is issued (if absent) and any caller can read it for future
  * state-changing calls — standard double-submit cookie pattern.
  */
-export function csrfProtection(options: { cookieName?: string; headerName?: string; secure?: boolean } = {}): RequestHandler {
+export function csrfProtection(
+  options: { cookieName?: string; headerName?: string; secure?: boolean } = {},
+): RequestHandler {
   const CSRF_COOKIE = options.cookieName ?? 'pezhwan_csrf';
   const CSRF_HEADER = options.headerName ?? 'x-csrf-token';
   const secure = options.secure ?? false;
@@ -179,18 +177,11 @@ export function csrfProtection(options: { cookieName?: string; headerName?: stri
     }
     const cookie = req.cookies?.[CSRF_COOKIE];
     const header = req.headers[CSRF_HEADER];
-    if (
-      typeof cookie !== 'string' ||
-      !cookie ||
-      typeof header !== 'string' ||
-      header !== cookie
-    ) {
+    if (typeof cookie !== 'string' || !cookie || typeof header !== 'string' || header !== cookie) {
       return next(
-        new SecurityEventError(
-          'CSRF token mismatch',
-          'CSRF_REJECTED',
-          { requestId: req.requestId },
-        ),
+        new SecurityEventError('CSRF token mismatch', 'CSRF_REJECTED', {
+          requestId: req.requestId,
+        }),
       );
     }
     return next();
@@ -204,7 +195,12 @@ export function csrfProtection(options: { cookieName?: string; headerName?: stri
  */
 export function corsAllowlist(options: CorsOptions): RequestHandler {
   const allowedMethods = options.allowedMethods ?? ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-  const allowedHeaders = options.allowedHeaders ?? ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Request-Id'];
+  const allowedHeaders = options.allowedHeaders ?? [
+    'Content-Type',
+    'Authorization',
+    'X-CSRF-Token',
+    'X-Request-Id',
+  ];
   const allowCredentials = options.allowCredentials ?? true;
   const maxAge = options.maxAge ?? 600;
   const safeMethods = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
@@ -220,7 +216,8 @@ export function corsAllowlist(options: CorsOptions): RequestHandler {
     const pathname = req.path ?? req.url ?? '';
     const isPublic = isPublicPath(pathname);
     const allowed =
-      options.allowedOrigins.includes(origin as string) || (isPublic && safeMethods.has(req.method));
+      options.allowedOrigins.includes(origin as string) ||
+      (isPublic && safeMethods.has(req.method));
 
     if (req.method === 'OPTIONS') {
       res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
@@ -251,11 +248,9 @@ export function corsAllowlist(options: CorsOptions): RequestHandler {
 
     if (!options.allowedOrigins.includes(origin)) {
       return next(
-        new SecurityEventError(
-          'Origin is not allowed',
-          'ORIGIN_REJECTED',
-          { requestId: req.requestId },
-        ),
+        new SecurityEventError('Origin is not allowed', 'ORIGIN_REJECTED', {
+          requestId: req.requestId,
+        }),
       );
     }
     res.setHeader('Access-Control-Allow-Origin', origin);

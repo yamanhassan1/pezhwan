@@ -5,6 +5,7 @@ clean; 39 unit tests pass. This document records the Phase B surface on top of
 `PHASE-A.md` and cross-links the threat model and OpenAPI spec.
 
 Complements:
+
 - `README.md` — quick start + security promises (extended in Phase B)
 - `docs/THREAT-MODEL.md` — STRIDE threats mapped to source-verified mitigations
 - `docs/OPENAPI.yaml` — OpenAPI 3.0.3 description of the full HTTP surface
@@ -13,13 +14,13 @@ Complements:
 
 ## 1. Phase B status
 
-| Check | Result |
-|-------|--------|
-| `npm run build` | OK — all workspaces (clean dist rebuilt) |
-| `npm run typecheck` | OK — clean across all workspaces |
-| `npm run test` | OK — **39/39 pass** (up from 18 in Phase A) |
-| `docker compose config` | OK — compose v5.3.1 validates (`identity-server` service added) |
-| Docker image build | BLOCKED — Docker Desktop daemon not running; Dockerfile validated syntactically only |
+| Check                   | Result                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| `npm run build`         | OK — all workspaces (clean dist rebuilt)                                             |
+| `npm run typecheck`     | OK — clean across all workspaces                                                     |
+| `npm run test`          | OK — **39/39 pass** (up from 18 in Phase A)                                          |
+| `docker compose config` | OK — compose v5.3.1 validates (`identity-server` service added)                      |
+| Docker image build      | BLOCKED — Docker Desktop daemon not running; Dockerfile validated syntactically only |
 
 The test delta vs Phase A is +21 explicit security/observability regressions:
 `createAuthenticate` fail-closed on unverifiable account state, War-of-the-Worlds
@@ -33,11 +34,11 @@ auth/edge assertions.
 
 Phase B adds the OAuth/OIDC client and reference-server containerization:
 
-| Package | Added in Phase B |
-|---------|------------------|
-| `@pezhwan/oauth` | Authorization-code + PKCE S256 engine, token endpoint (code exchange, refresh, client_credentials), OIDC discovery + JWKS. Built between `@pezhwan/crypto` and `@pezhwan/core` in the dependency chain. |
-| `apps/identity-server` | `Dockerfile` (multi-stage, non-root `pezhwan` user, HEALTHCHECK) + `.dockerignore`. |
-| `identity-server` compose service | `infrastructure/docker/docker-compose.yml` — wires Mongo/Redis + identity-server. |
+| Package                           | Added in Phase B                                                                                                                                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@pezhwan/oauth`                  | Authorization-code + PKCE S256 engine, token endpoint (code exchange, refresh, client_credentials), OIDC discovery + JWKS. Built between `@pezhwan/crypto` and `@pezhwan/core` in the dependency chain. |
+| `apps/identity-server`            | `Dockerfile` (multi-stage, non-root `pezhwan` user, HEALTHCHECK) + `.dockerignore`.                                                                                                                     |
+| `identity-server` compose service | `infrastructure/docker/docker-compose.yml` — wires Mongo/Redis + identity-server.                                                                                                                       |
 
 ---
 
@@ -73,14 +74,14 @@ envelope except OAuth/OIDC, which use RFC 6749 `{ error, error_description }`.
 
 Routers (`packages/express/src/`):
 
-| Area | Endpoints |
-|------|-----------|
-| Auth (`routes.ts`) | `POST /register /login /logout /refresh /otp/send /otp/verify /otp/login /password/change /password/reset /password/forgot /email/verify` |
+| Area                      | Endpoints                                                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth (`routes.ts`)        | `POST /register /login /logout /refresh /otp/send /otp/verify /otp/login /password/change /password/reset /password/forgot /email/verify`                |
 | Extra (`routes.extra.ts`) | `POST /v1/mfa/setup/enable/verify/disable/login`, `/v1/password/forgot`, `/v1/password/reset/confirm`, `/v1/email/verify-token`, `/v1/magic/send/redeem` |
-| Sessions | `GET /v1/sessions`, `POST /v1/sessions/all/revoke`, `POST /v1/sessions/:id/revoke` |
-| OAuth (`routes.oauth.ts`) | `GET /v1/oauth/authorize`, `POST /v1/oauth/token`, `POST /v1/oauth/clients` |
-| Well-known | `GET /.well-known/jwks.json`, `GET /.well-known/openid-configuration` |
-| Admin / services | `GET /v1/admin/health` (ADMIN role), `GET /v1/services/ping` (API key) |
+| Sessions                  | `GET /v1/sessions`, `POST /v1/sessions/all/revoke`, `POST /v1/sessions/:id/revoke`                                                                       |
+| OAuth (`routes.oauth.ts`) | `GET /v1/oauth/authorize`, `POST /v1/oauth/token`, `POST /v1/oauth/clients`                                                                              |
+| Well-known                | `GET /.well-known/jwks.json`, `GET /.well-known/openid-configuration`                                                                                    |
+| Admin / services          | `GET /v1/admin/health` (ADMIN role), `GET /v1/services/ping` (API key)                                                                                   |
 
 OIDC discovery (`oauth.service.ts:514-529`): `issuer`,
 `authorization_endpoint`, `token_endpoint`, `jwks_uri`,
@@ -100,14 +101,14 @@ scope }`.
 Phase B completes the verification and MFA flows alongside the Phase A
 password/OTP flow:
 
-| Method | Behavior |
-|--------|----------|
-| `loginOtp` | Passwordless OTP login; respects MFA (returns `mfaRequired` challenge) |
-| `changePassword` | Requires current password; bumps `tokenVersion` (invalidates outstanding access tokens); clears account-state cache |
-| `resetPassword` (OTP) / (token) | Token- or OTP-gated; bumps `tokenVersion`; revokes sessions; issues fresh session + tokens |
-| `verifyEmail` | Sets `emailVerified` (OTP- or token-gated) |
-| MFA (`mfa.service.ts`) | TOTP setup/enable/verify/disable + backup codes; login gating (`mfaRequired`) until `verifyMfaLogin` |
-| Magic links / verification tokens | `verificationToken.service.ts` token hashing + tenant-scoped redeem |
+| Method                            | Behavior                                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `loginOtp`                        | Passwordless OTP login; respects MFA (returns `mfaRequired` challenge)                                              |
+| `changePassword`                  | Requires current password; bumps `tokenVersion` (invalidates outstanding access tokens); clears account-state cache |
+| `resetPassword` (OTP) / (token)   | Token- or OTP-gated; bumps `tokenVersion`; revokes sessions; issues fresh session + tokens                          |
+| `verifyEmail`                     | Sets `emailVerified` (OTP- or token-gated)                                                                          |
+| MFA (`mfa.service.ts`)            | TOTP setup/enable/verify/disable + backup codes; login gating (`mfaRequired`) until `verifyMfaLogin`                |
+| Magic links / verification tokens | `verificationToken.service.ts` token hashing + tenant-scoped redeem                                                 |
 
 Password change/reset call `accountState.invalidate` so cached account state is
 purged — `auth/auth.engine.ts:624-630,671-683,765-777`.
@@ -140,6 +141,7 @@ tracked as the next phase.
 ## 7. Infrastructure
 
 `apps/identity-server/Dockerfile` — multi-stage:
+
 - Stage 1: install + build all workspaces (shared→crypto→oauth→core→node→express→react→identity-server).
 - Stage 2: non-root `pezhwan` user, copies workspace dist + `demo/`, HEALTHCHECK
   on `/.well-known/jwks.json`, CMD `node dist/server.js`.

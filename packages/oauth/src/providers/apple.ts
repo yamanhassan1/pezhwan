@@ -40,7 +40,10 @@ export class AppleProvider implements OAuthProviderAdapter {
     url.searchParams.set('client_id', params.clientId ?? this.options.clientId);
     url.searchParams.set('redirect_uri', params.redirectUri ?? this.options.redirectUri);
     url.searchParams.set('response_type', 'code');
-    url.searchParams.set('scope', (params.scope ?? this.options.scope ?? 'name email').replace(/,/g, ' '));
+    url.searchParams.set(
+      'scope',
+      (params.scope ?? this.options.scope ?? 'name email').replace(/,/g, ' '),
+    );
     url.searchParams.set('response_mode', 'form_post');
     url.searchParams.set('state', params.state);
     if (params.nonce) {
@@ -69,7 +72,11 @@ export class AppleProvider implements OAuthProviderAdapter {
       const text = await res.text();
       throw new Error(`Apple token exchange failed (${res.status}): ${text.slice(0, 200)}`);
     }
-    const json = (await res.json()) as ExchangeResult & { access_token: string; id_token?: string; refresh_token?: string };
+    const json = (await res.json()) as ExchangeResult & {
+      access_token: string;
+      id_token?: string;
+      refresh_token?: string;
+    };
     return {
       accessToken: json.access_token,
       idToken: json.id_token,

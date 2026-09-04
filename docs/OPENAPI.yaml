@@ -39,21 +39,21 @@ paths:
               type: object
               properties:
                 email: { type: string, example: demo@pezhwan.dev }
-                phone: { type: string, example: "+15551234567" }
-                password: { type: string, example: "Str0ng!Pass#2026" }
+                phone: { type: string, example: '+15551234567' }
+                password: { type: string, example: 'Str0ng!Pass#2026' }
                 metadata: { type: object }
               required: [email, password]
       responses:
-        "201":
+        '201':
           description: Created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/LoginTokens" }
-        "400":
+              schema: { $ref: '#/components/schemas/LoginTokens' }
+        '400':
           description: Validation error (password policy / duplicate)
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Error" }
+              schema: { $ref: '#/components/schemas/Error' }
 
   /v1/auth/login:
     post:
@@ -71,19 +71,19 @@ paths:
                 password: { type: string }
               required: [password]
       responses:
-        "200":
+        '200':
           description: Tokens (or MFA challenge when mfaRequired)
           content:
             application/json:
               schema:
                 oneOf:
-                  - { $ref: "#/components/schemas/LoginTokens" }
-                  - $ref: "#/components/schemas/MfaChallenge"
-        "401":
+                  - { $ref: '#/components/schemas/LoginTokens' }
+                  - $ref: '#/components/schemas/MfaChallenge'
+        '401':
           description: Invalid credentials / locked / disabled
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Error" }
+              schema: { $ref: '#/components/schemas/Error' }
 
   /v1/auth/logout:
     post:
@@ -92,11 +92,11 @@ paths:
         - Bearer: []
       summary: Revoke the current session
       responses:
-        "200":
+        '200':
           description: Logged out
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
   /v1/auth/refresh:
     post:
@@ -112,16 +112,16 @@ paths:
                 refreshToken: { type: string }
               required: [refreshToken]
       responses:
-        "200":
+        '200':
           description: New access + refresh token pair
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/TokenRefresh" }
-        "400":
+              schema: { $ref: '#/components/schemas/TokenRefresh' }
+        '400':
           description: Missing / invalid / reused refresh token
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Error" }
+              schema: { $ref: '#/components/schemas/Error' }
 
   /v1/auth/otp/send:
     post:
@@ -143,7 +143,7 @@ paths:
                   enum: [login, password_reset, verify_email]
               required: [channel, target, purpose]
       responses:
-        "200":
+        '200':
           description: Sent (retryAfterSeconds when throttled)
           content:
             application/json:
@@ -166,10 +166,10 @@ paths:
                 channel: { type: string, enum: [email, phone] }
                 target: { type: string }
                 purpose: { type: string, enum: [login, password_reset, verify_email] }
-                code: { type: string, example: "123456" }
+                code: { type: string, example: '123456' }
               required: [channel, target, purpose, code]
       responses:
-        "200":
+        '200':
           description: Verified
           content:
             application/json:
@@ -194,14 +194,14 @@ paths:
                 code: { type: string }
               required: [channel, target, code]
       responses:
-        "200":
+        '200':
           description: Tokens (or MFA challenge)
           content:
             application/json:
               schema:
                 oneOf:
-                  - { $ref: "#/components/schemas/LoginTokens" }
-                  - $ref: "#/components/schemas/MfaChallenge"
+                  - { $ref: '#/components/schemas/LoginTokens' }
+                  - $ref: '#/components/schemas/MfaChallenge'
 
   /v1/auth/password/change:
     post:
@@ -220,11 +220,11 @@ paths:
                 newPassword: { type: string }
               required: [currentPassword, newPassword]
       responses:
-        "200":
+        '200':
           description: Changed
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
   /v1/auth/password/reset:
     post:
@@ -243,7 +243,7 @@ paths:
                 newPassword: { type: string }
               required: [target, code, newPassword]
       responses:
-        "200":
+        '200':
           description: Rotated refresh token
           content:
             application/json:
@@ -267,7 +267,7 @@ paths:
                 redirectUri: { type: string }
               required: [email]
       responses:
-        "200":
+        '200':
           description: Token issued (enumeration-safe)
           content:
             application/json:
@@ -291,11 +291,11 @@ paths:
                 code: { type: string }
               required: [email, code]
       responses:
-        "200":
+        '200':
           description: Verified
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
   # ------------------------------------------------------------- Sessions
   /v1/sessions:
@@ -305,7 +305,7 @@ paths:
         - Bearer: []
       summary: List the user's active sessions
       responses:
-        "200":
+        '200':
           description: Active sessions
           content:
             application/json:
@@ -314,7 +314,7 @@ paths:
                 properties:
                   sessions:
                     type: array
-                    items: { $ref: "#/components/schemas/Session" }
+                    items: { $ref: '#/components/schemas/Session' }
 
   /v1/sessions/all/revoke:
     post:
@@ -323,11 +323,11 @@ paths:
         - Bearer: []
       summary: Revoke all of the user's sessions
       responses:
-        "200":
+        '200':
           description: Revoked
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
   /v1/sessions/{id}/revoke:
     post:
@@ -341,16 +341,16 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        "200":
+        '200':
           description: Revoked
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
-        "401":
+              schema: { $ref: '#/components/schemas/Ok' }
+        '401':
           description: Session not found / not owned by caller
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Error" }
+              schema: { $ref: '#/components/schemas/Error' }
 
   # ------------------------------------------------------------------ MFA
   /v1/mfa/setup:
@@ -360,7 +360,7 @@ paths:
         - Bearer: []
       summary: Begin TOTP setup (returns secret + otpauth URI + backup codes)
       responses:
-        "200":
+        '200':
           description: Setup material
           content:
             application/json:
@@ -389,11 +389,11 @@ paths:
                 code: { type: string }
               required: [code]
       responses:
-        "200":
+        '200':
           description: Enabled
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
   /v1/mfa/verify:
     post:
@@ -411,7 +411,7 @@ paths:
                 code: { type: string }
               required: [code]
       responses:
-        "200":
+        '200':
           description: Verified
           content:
             application/json:
@@ -436,11 +436,11 @@ paths:
                 code: { type: string }
               required: [code]
       responses:
-        "200":
+        '200':
           description: Disabled
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
   /v1/mfa/login:
     post:
@@ -457,11 +457,11 @@ paths:
                 code: { type: string }
               required: [userId, code]
       responses:
-        "200":
+        '200':
           description: Tokens
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/LoginTokens" }
+              schema: { $ref: '#/components/schemas/LoginTokens' }
 
   # ---------------------------------------------------------- Verification
   /v1/verify/password/forgot:
@@ -479,7 +479,7 @@ paths:
                 redirectUri: { type: string }
               required: [email]
       responses:
-        "200":
+        '200':
           description: Token issued
           content:
             application/json:
@@ -503,16 +503,16 @@ paths:
                 newPassword: { type: string }
               required: [token, newPassword]
       responses:
-        "200":
+        '200':
           description: Tokens + user
           content:
             application/json:
               schema:
                 allOf:
-                  - { $ref: "#/components/schemas/LoginTokens" }
+                  - { $ref: '#/components/schemas/LoginTokens' }
                   - type: object
                     properties:
-                      user: { $ref: "#/components/schemas/User" }
+                      user: { $ref: '#/components/schemas/User' }
 
   /v1/verify/email/verify-token:
     post:
@@ -528,11 +528,11 @@ paths:
                 token: { type: string }
               required: [token]
       responses:
-        "200":
+        '200':
           description: Verified
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
   /v1/verify/magic/send:
     post:
@@ -549,7 +549,7 @@ paths:
                 redirectUri: { type: string }
               required: [email]
       responses:
-        "200":
+        '200':
           description: Magic-link token issued
           content:
             application/json:
@@ -572,16 +572,16 @@ paths:
                 token: { type: string }
               required: [token]
       responses:
-        "200":
+        '200':
           description: Tokens + user + redirectUri
           content:
             application/json:
               schema:
                 allOf:
-                  - { $ref: "#/components/schemas/LoginTokens" }
+                  - { $ref: '#/components/schemas/LoginTokens' }
                   - type: object
                     properties:
-                      user: { $ref: "#/components/schemas/User" }
+                      user: { $ref: '#/components/schemas/User' }
                       redirectUri: { type: string }
 
   # ------------------------------------------------------------------ OAuth
@@ -619,9 +619,9 @@ paths:
           name: code_challenge_method
           schema: { type: string, enum: [S256, plain], default: S256 }
       responses:
-        "302":
+        '302':
           description: Redirect to redirect_uri with code + state (#fragment)
-        "401":
+        '401':
           description: Authentication required
 
   /v1/oauth/token:
@@ -647,12 +647,12 @@ paths:
                 scope: { type: string }
               required: [grant_type, client_id]
       responses:
-        "200":
+        '200':
           description: Token response (RFC 6749)
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/OAuthToken" }
-        "400":
+              schema: { $ref: '#/components/schemas/OAuthToken' }
+        '400':
           description: invalid_request / invalid_grant / unsupported_grant_type
           content:
             application/json:
@@ -688,7 +688,7 @@ paths:
                   items: { type: string }
                 confidential: { type: boolean, default: true }
       responses:
-        "201":
+        '201':
           description: client_id (+ client_secret for confidential clients)
           content:
             application/json:
@@ -704,7 +704,7 @@ paths:
       tags: [Well-known]
       summary: Public JSON Web Key Set for access-token verification
       responses:
-        "200":
+        '200':
           description: JWKS
           content:
             application/json:
@@ -724,7 +724,7 @@ paths:
       tags: [Well-known]
       summary: OIDC discovery metadata
       responses:
-        "200":
+        '200':
           description: Discovery document
           content:
             application/json:
@@ -754,11 +754,11 @@ paths:
         - RoleAdmin: []
       summary: Health check (requires ADMIN role)
       responses:
-        "200":
+        '200':
           description: ok
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
   /v1/services/ping:
     get:
@@ -767,11 +767,11 @@ paths:
         - ApiKey: []
       summary: Server-to-server ping via API key
       responses:
-        "200":
+        '200':
           description: ok
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Ok" }
+              schema: { $ref: '#/components/schemas/Ok' }
 
 components:
   securitySchemes:
@@ -801,7 +801,7 @@ components:
     LoginTokens:
       type: object
       properties:
-        user: { $ref: "#/components/schemas/User" }
+        user: { $ref: '#/components/schemas/User' }
         accessToken: { type: string }
         refreshToken: { type: string }
     TokenRefresh:

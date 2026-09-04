@@ -15,15 +15,11 @@ import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { AuthenticationError, ValidationError } from '@pezhwan/shared';
 import { AUDIT_EVENT } from '@pezhwan/shared';
 import { randomUUID } from 'node:crypto';
-import {
-  OAuthClientModel,
-  AuthorizationCodeModel,
-  type OAuthClientDoc,
-} from '../models/index.ts';
+import { OAuthClientModel, AuthorizationCodeModel } from '../models/index.ts';
 import type { TokenService } from './token.service.ts';
 import type { SessionService } from './session.service.ts';
 import type { AuditService } from './audit.service.ts';
-import type { AuthMethod, IdentityContext } from '@pezhwan/shared';
+import type { AuthMethod } from '@pezhwan/shared';
 
 export interface PkceParams {
   codeChallenge?: string;
@@ -103,9 +99,7 @@ export class OAuthService {
   ): Promise<OAuthRawClient | null> {
     const doc = await OAuthClientModel.findOne({
       clientId,
-      ...(scope
-        ? { tenantId: scope.tenantId, applicationId: scope.applicationId }
-        : {}),
+      ...(scope ? { tenantId: scope.tenantId, applicationId: scope.applicationId } : {}),
     }).lean();
     if (!doc) {
       return null;
@@ -125,15 +119,8 @@ export class OAuthService {
     };
   }
 
-  private assertClientScope(
-    client: OAuthRawClient,
-    tenantId: string,
-    applicationId: string,
-  ): void {
-    if (
-      String(client.tenantId) !== tenantId ||
-      String(client.applicationId) !== applicationId
-    ) {
+  private assertClientScope(client: OAuthRawClient, tenantId: string, applicationId: string): void {
+    if (String(client.tenantId) !== tenantId || String(client.applicationId) !== applicationId) {
       throw new AuthenticationError('Invalid client', 'INVALID_CLIENT');
     }
   }
@@ -163,8 +150,7 @@ export class OAuthService {
       scopes: input.scopes ?? ['openid', 'profile', 'email'],
       isActive: true,
       isConfidential: input.confidential !== false,
-      tokenEndpointAuthMethod:
-        input.confidential === false ? 'none' : 'client_secret_post',
+      tokenEndpointAuthMethod: input.confidential === false ? 'none' : 'client_secret_post',
     });
     return {
       clientId,
@@ -249,10 +235,7 @@ export class OAuthService {
       throw new ValidationError('code_challenge is required', 'PKCE_REQUIRED');
     }
     if (!client.pkceMethods.includes(method as 'S256')) {
-      throw new ValidationError(
-        'Unsupported code_challenge_method',
-        'INVALID_PKCE_METHOD',
-      );
+      throw new ValidationError('Unsupported code_challenge_method', 'INVALID_PKCE_METHOD');
     }
 
     const raw = randomBytes(32).toString('base64url');
@@ -468,10 +451,7 @@ export class OAuthService {
     },
   ) {
     if (!client.grants.includes('refresh_token')) {
-      throw new ValidationError(
-        'Client does not allow refresh_token grant',
-        'UNSUPPORTED_GRANT',
-      );
+      throw new ValidationError('Client does not allow refresh_token grant', 'UNSUPPORTED_GRANT');
     }
     if (!input.refreshToken) {
       throw new ValidationError('refresh_token required', 'INVALID_GRANT');
@@ -551,11 +531,7 @@ export class OAuthService {
   }
 
   /** Constant-time PKCE verification (S256 = base64url(sha256(verifier))). */
-  verifyPkce(
-    verifier: string,
-    challenge: string,
-    method: 'S256' | 'plain' | null,
-  ): boolean {
+  verifyPkce(verifier: string, challenge: string, method: 'S256' | 'plain' | null): boolean {
     if (method === 'S256') {
       const digest = createHash('sha256').update(verifier).digest('base64url');
       const a = Buffer.from(digest);

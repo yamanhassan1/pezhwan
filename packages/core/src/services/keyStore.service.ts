@@ -49,9 +49,7 @@ export class FileKeyStoreAdapter implements KeyStorePersistAdapter {
           await fs.unlink(full);
           continue;
         }
-        keys.push(
-          JSON.parse(await fs.readFile(full, 'utf-8')) as SigningKey,
-        );
+        keys.push(JSON.parse(await fs.readFile(full, 'utf-8')) as SigningKey);
       } catch (err) {
         // Fail closed: a present-but-corrupt key file must never be silently
         // skipped. Generating a fresh key in that case could desynchronise an
@@ -133,7 +131,7 @@ export class KeyStoreService {
       this.keyStore.addKeyWithMaterial(key);
     }
     if (this.keyStore.all.length === 0) {
-      const key = this.keyStore.addKey();
+      const _key = this.keyStore.addKey();
       await this.persist.save(this.keyStore.all);
     }
   }

@@ -138,11 +138,7 @@ export class SecurityDependencyError extends PezhwanError {
 
 /** A resource was not found (ownership/service lookups). */
 export class NotFoundError extends PezhwanError {
-  constructor(
-    message = 'Not found',
-    code = 'NOT_FOUND',
-    options?: { requestId?: string },
-  ) {
+  constructor(message = 'Not found', code = 'NOT_FOUND', options?: { requestId?: string }) {
     super(code, message, 404, options);
   }
 }

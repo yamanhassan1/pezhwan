@@ -45,7 +45,10 @@ export class MicrosoftProvider implements OAuthProviderAdapter {
     url.searchParams.set('client_id', params.clientId ?? this.options.clientId);
     url.searchParams.set('redirect_uri', params.redirectUri ?? this.options.redirectUri);
     url.searchParams.set('response_type', 'code');
-    url.searchParams.set('scope', params.scope ?? this.options.scope ?? 'openid email profile offline_access');
+    url.searchParams.set(
+      'scope',
+      params.scope ?? this.options.scope ?? 'openid email profile offline_access',
+    );
     url.searchParams.set('response_mode', 'query');
     url.searchParams.set('state', params.state);
     if (params.nonce) {

@@ -25,10 +25,7 @@ export interface OAuthClientDoc {
   scopes: string[];
   isActive: boolean;
   isConfidential: boolean;
-  tokenEndpointAuthMethod:
-    | 'client_secret_basic'
-    | 'client_secret_post'
-    | 'none';
+  tokenEndpointAuthMethod: 'client_secret_basic' | 'client_secret_post' | 'none';
   createdAt: Date;
   updatedAt: Date;
 }

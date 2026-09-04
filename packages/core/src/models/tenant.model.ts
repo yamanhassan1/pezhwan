@@ -31,5 +31,4 @@ const tenantSchema = new Schema<TenantDoc>(
 );
 
 export const TenantModel: Model<TenantDoc> =
-  (models.Tenant as Model<TenantDoc>) ||
-  model<TenantDoc>('Tenant', tenantSchema);
+  (models.Tenant as Model<TenantDoc>) || model<TenantDoc>('Tenant', tenantSchema);

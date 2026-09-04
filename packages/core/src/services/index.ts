@@ -18,3 +18,7 @@ export * from './oauth.service.ts';
 export * from './verificationToken.service.ts';
 export * from './logger.service.ts';
 export * from './metrics.service.ts';
+export * from './infrastructure/mongo-transactions.ts';
+export * from './auth/index.ts';
+export * from './security/index.ts';
+export * from './compliance/index.ts';

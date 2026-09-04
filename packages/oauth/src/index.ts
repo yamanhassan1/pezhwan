@@ -21,16 +21,8 @@ import { ProviderRegistry } from './registry.ts';
 import type { OAuthProviderAdapter } from './adapter.ts';
 
 /** Convenience: build a registry pre-loaded with the built-in providers. */
-export function createBuiltinRegistry(
-  config: Array<OAuthProviderAdapter>,
-): ProviderRegistry {
+export function createBuiltinRegistry(config: Array<OAuthProviderAdapter>): ProviderRegistry {
   return new ProviderRegistry(config);
 }
 
-export {
-  GoogleProvider,
-  AppleProvider,
-  GitHubProvider,
-  MicrosoftProvider,
-  ProviderRegistry,
-};
+export { GoogleProvider, AppleProvider, GitHubProvider, MicrosoftProvider, ProviderRegistry };

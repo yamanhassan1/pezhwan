@@ -24,13 +24,15 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@pezhwan/shared": "*",
     "@pezhwan/crypto": "*",
-    "mongoose": "^8.0.0",
-    "ioredis": "^5.4.0"
+    "@pezhwan/shared": "*",
+    "ioredis": "^5.4.0",
+    "mongoose": "^8.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
-    "@types/node": "^26.4.0"
+    "@types/node": "^26.4.0",
+    "@types/nodemailer": "^8.0.1",
+    "nodemailer": "^9.1.1",
+    "typescript": "^5.5.0"
   }
 }

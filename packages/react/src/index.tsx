@@ -57,11 +57,7 @@ export interface AuthState {
 }
 
 export interface AuthApi {
-  login: (input: {
-    email?: string;
-    phone?: string;
-    password: string;
-  }) => Promise<void>;
+  login: (input: { email?: string; phone?: string; password: string }) => Promise<void>;
   register: (input: {
     email?: string;
     phone?: string;
@@ -156,11 +152,7 @@ function errorToMessage(err: unknown): string | PezhwanError {
   return err instanceof Error ? err.message : String(err);
 }
 
-async function request(
-  config: PezhwanConfig,
-  path: string,
-  init?: RequestInit,
-): Promise<unknown> {
+async function request(config: PezhwanConfig, path: string, init?: RequestInit): Promise<unknown> {
   const method = (init?.method ?? 'GET').toUpperCase();
   const headers = new Headers(init?.headers);
   headers.set('Content-Type', 'application/json');
@@ -259,7 +251,11 @@ export function PezhwanProvider({
           setAuth({
             user: null,
             status: 'guest',
-            error: { code: 'SESSION_CONTEXT_INVALID', message: 'Session context is invalid', status: 401 },
+            error: {
+              code: 'SESSION_CONTEXT_INVALID',
+              message: 'Session context is invalid',
+              status: 401,
+            },
           });
           return;
         }
@@ -353,8 +349,7 @@ export function PezhwanProvider({
     }
     void request(config, '/v1/sessions')
       .then((d) => {
-        const list = (d as { sessions?: Array<Record<string, unknown>> })
-          ?.sessions;
+        const list = (d as { sessions?: Array<Record<string, unknown>> })?.sessions;
         if (list) {
           setSessions(list);
         }
@@ -362,10 +357,13 @@ export function PezhwanProvider({
       .catch(() => undefined);
   }, [auth.status, config]);
 
-  const can = useCallback((permission: string) => {
-    // UX-layer only — replaced by server enforcement. Deterministic here.
-    return (auth.user?.roles ?? []).length > 0;
-  }, [auth.user?.roles]);
+  const can = useCallback(
+    (_permission: string) => {
+      // UX-layer only — replaced by server enforcement. Deterministic here.
+      return (auth.user?.roles ?? []).length > 0;
+    },
+    [auth.user?.roles],
+  );
 
   const authValue = useMemo(
     () => ({
@@ -388,9 +386,7 @@ export function PezhwanProvider({
 
   return (
     <AuthContext.Provider value={authValue}>
-      <SessionContext.Provider value={sessionValue}>
-        {children}
-      </SessionContext.Provider>
+      <SessionContext.Provider value={sessionValue}>{children}</SessionContext.Provider>
     </AuthContext.Provider>
   );
 }
@@ -428,9 +424,11 @@ export function ProtectedRoute({
     return null;
   }
   if (status !== 'authenticated') {
-    const Navigate = (window as unknown as {
-      location: { href: string };
-    }).location;
+    const Navigate = (
+      window as unknown as {
+        location: { href: string };
+      }
+    ).location;
     if (Navigate) {
       Navigate.href = fallbackPath;
     }
@@ -457,7 +455,7 @@ export function RequireRole({
 }
 
 export function RequirePermission({
-  permission,
+  permission: _permission,
   children,
   fallback = null,
 }: {

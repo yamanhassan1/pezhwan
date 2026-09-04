@@ -13,27 +13,13 @@
  * req.body.role, req.body.userId, or req.body.permissions.
  */
 
-import type {
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-  Router,
-} from 'express';
+import type { NextFunction, Request, RequestHandler, Response, Router } from 'express';
 import type { IdentityContext } from '@pezhwan/shared';
 import { AuthorizationError, AuthenticationError } from '@pezhwan/shared';
 import type { PezhwanRuntime } from '@pezhwan/core';
 import { createAuthRouter, createSessionRouter } from './routes.ts';
-import { createOauthRouter, discoveryHandler } from './routes.oauth.ts';
+import { createOauthRouter } from './routes.oauth.ts';
 import { createMfaRouter, createVerificationRouter } from './routes.extra.ts';
-import { createAuthenticateApiKey, requireApiKey } from './apikey.ts';
-import { rateLimit, type RateLimitOptions } from './rateLimit.ts';
-import {
-  securityHeaders,
-  requestContext,
-  csrfProtection,
-  corsAllowlist,
-} from './security.ts';
 
 export * from './security.ts';
 export * from './apikey.ts';
@@ -79,10 +65,7 @@ export function createAuthenticate(runtime: PezhwanRuntime): RequestHandler {
     }
     let valid = false;
     try {
-      valid = await runtime.accountState.validate(
-        identity.userId,
-        identity.tokenVersion ?? 0,
-      );
+      valid = await runtime.accountState.validate(identity.userId, identity.tokenVersion ?? 0);
     } catch (err) {
       // Account state could not be checked (Mongo down). Fail closed AND
       // surface the failure as 503 (SecurityDependencyError) rather than a
@@ -103,9 +86,7 @@ export function createAuthenticate(runtime: PezhwanRuntime): RequestHandler {
 export function requireAuth(): RequestHandler {
   return (req: PezhwanRequest, _res: Response, next: NextFunction) => {
     if (!req.pezhwan) {
-      return next(
-        new AuthenticationError('Authentication required', 'UNAUTHENTICATED'),
-      );
+      return next(new AuthenticationError('Authentication required', 'UNAUTHENTICATED'));
     }
     return next();
   };
@@ -116,14 +97,10 @@ export function requireRole(roleName: string): RequestHandler {
   return (req: PezhwanRequest, _res: Response, next: NextFunction) => {
     const identity = req.pezhwan;
     if (!identity) {
-      return next(
-        new AuthenticationError('Authentication required', 'UNAUTHENTICATED'),
-      );
+      return next(new AuthenticationError('Authentication required', 'UNAUTHENTICATED'));
     }
     if (!identity.roles.includes(roleName)) {
-      return next(
-        new AuthorizationError(`Role "${roleName}" required`, 'ROLE_REQUIRED'),
-      );
+      return next(new AuthorizationError(`Role "${roleName}" required`, 'ROLE_REQUIRED'));
     }
     return next();
   };
@@ -134,16 +111,11 @@ export function requirePermission(permission: string): RequestHandler {
   return (req: PezhwanRequest, _res: Response, next: NextFunction) => {
     const identity = req.pezhwan;
     if (!identity) {
-      return next(
-        new AuthenticationError('Authentication required', 'UNAUTHENTICATED'),
-      );
+      return next(new AuthenticationError('Authentication required', 'UNAUTHENTICATED'));
     }
     if (!identity.permissions.includes(permission)) {
       return next(
-        new AuthorizationError(
-          `Permission "${permission}" required`,
-          'PERMISSION_REQUIRED',
-        ),
+        new AuthorizationError(`Permission "${permission}" required`, 'PERMISSION_REQUIRED'),
       );
     }
     return next();

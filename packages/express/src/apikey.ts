@@ -21,9 +21,7 @@ export function extractApiKey(req: PezhwanRequest): string | null {
 }
 
 /** Verify an API key and attach req.pezhwan (never throws into the handler). */
-export function createAuthenticateApiKey(
-  runtime: PezhwanRuntime,
-): RequestHandler {
+export function createAuthenticateApiKey(runtime: PezhwanRuntime): RequestHandler {
   return (req: PezhwanRequest, _res: Response, next: NextFunction) => {
     const raw = extractApiKey(req);
     if (!raw) {
@@ -64,12 +62,7 @@ export function createAuthenticateApiKey(
 export function requireApiKey(): RequestHandler {
   return (req: PezhwanRequest, _res: Response, next: NextFunction) => {
     if (!req.pezhwan || req.pezhwan.authMethod !== 'api_key') {
-      return next(
-        new AuthenticationError(
-          'A valid API key is required',
-          'API_KEY_REQUIRED',
-        ),
-      );
+      return next(new AuthenticationError('A valid API key is required', 'API_KEY_REQUIRED'));
     }
     return next();
   };

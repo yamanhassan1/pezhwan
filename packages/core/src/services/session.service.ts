@@ -13,8 +13,9 @@
  */
 
 import { randomUUID } from 'node:crypto';
+import mongoose from 'mongoose';
+import type { ClientSession } from 'mongoose';
 import { SessionError } from '@pezhwan/shared';
-import type { AuthMethod } from '@pezhwan/shared';
 import { SessionModel, type SessionDoc } from '../models/index.ts';
 import { TokenService } from './token.service.ts';
 import type { RedisCache } from './redisCache.ts';
@@ -153,16 +154,19 @@ export class SessionService {
         ...(ctx.applicationId ? { applicationId: ctx.applicationId } : {}),
       });
       if (!existing) {
-        throw new SessionError(
-          'Refresh token is not recognized',
-          'REFRESH_TOKEN_UNKNOWN',
-        );
+        throw new SessionError('Refresh token is not recognized', 'REFRESH_TOKEN_UNKNOWN');
       }
-      // A token in any non-active state presented again is the signature of a
-      // stolen or replayed token — including a `rotating` parent (a concurrent
-      // duplicate presentation during an in-flight rotation): revoke the whole
-      // family. Fail closed.
-      await this.revokeFamily(existing.familyId);
+      // A token in a settled non-active state presented again is the signature
+      // of a stolen or replayed token — revoke the whole family. However, the
+      // transient `rotating` state means a genuine rotation is still in-flight
+      // (with transactions the commit takes longer). Revoking the family at
+      // this point would kill the genuine winner, so a duplicate presented
+      // while the parent is in `rotating` simply fails closed without revoking
+      // the family — the loser gets no token and the winner completes safely.
+      const isSettled = ['replaced', 'revoked', 'expired'].includes(existing.status);
+      if (isSettled) {
+        await this.revokeFamily(existing.familyId);
+      }
       throw new SessionError(
         'Refresh token reuse detected — session revoked',
         'REFRESH_TOKEN_REUSE',
@@ -174,11 +178,12 @@ export class SessionService {
     const familyId = session.familyId;
     const expiresAt = new Date(Date.now() + this.refreshTokenTtlMs);
     const newPair = this.tokens.createRefreshToken();
-    const newSession = await SessionModel.create({
+
+    const childData = {
       userId: session.userId,
       tenantId: session.tenantId,
       applicationId: session.applicationId,
-      status: 'active',
+      status: 'active' as const,
       familyId,
       currentRefreshTokenHash: newPair.refreshTokenHash,
       device: {
@@ -188,53 +193,145 @@ export class SessionService {
       },
       lastActiveAt: new Date(),
       expiresAt,
-    });
+    };
 
-    // A concurrent replay may have revoked the family while the child was
-    // being created. Never leave that child active after such a revocation.
-    const parentState = await SessionModel.findById(session._id)
-      .select('status')
-      .lean();
-    if (!parentState || parentState.status !== 'rotating') {
+    const parentId = session._id;
+
+    // The child creation and parent finalization are wrapped in a MongoDB
+    // transaction so there is NO window in which a child exists but the parent
+    // is not yet marked `replaced`. If the process crashes (or the transaction
+    // rolls back) between these steps, neither effect persists — the rotation
+    // is atomic. The parent slot was already atomically claimed `active →
+    // rotating` above, which is what makes concurrent presentations serialize
+    // to exactly one winner.
+    //
+    // Replica-set requirement: multi-document transactions require MongoDB to
+    // run as a replica set (standalone servers do not support them). When
+    // transactions are unavailable we degrade to the previous do-two-steps
+    // behaviour (still protected by the atomic claim + replay re-check) so
+    // development and test environments without a replica set keep working.
+    const txBody = async (
+      txSession: ClientSession | null,
+    ): Promise<{ sessionId: string; expiresAt: Date }> => {
+      const [newSession] = await SessionModel.create([childData], {
+        ...(txSession ? { session: txSession } : {}),
+      });
+      const childId = newSession?._id;
+
+      // A concurrent replay may have revoked the family while the child was
+      // being created. Never leave that child active after such a revocation —
+      // abort the transaction so neither effect persists.
+      const parentState = await SessionModel.findById(parentId)
+        .select('status')
+        .session(txSession ?? null)
+        .lean();
+      if (!parentState || parentState.status !== 'rotating') {
+        throw new SessionError(
+          'Refresh token reuse detected — session revoked',
+          'REFRESH_TOKEN_REUSE',
+        );
+      }
+
       await SessionModel.updateOne(
-        { _id: newSession._id },
-        { status: 'revoked', revokedAt: new Date() },
+        { _id: parentId },
+        {
+          status: 'replaced',
+          replacedBySessionId: childId,
+          revokedAt: new Date(),
+        },
+        { ...(txSession ? { session: txSession } : {}) },
       );
-      throw new SessionError(
-        'Refresh token reuse detected — session revoked',
-        'REFRESH_TOKEN_REUSE',
-      );
-    }
 
-    await SessionModel.updateOne(
-      { _id: session._id },
-      {
-        status: 'replaced',
-        replacedBySessionId: newSession._id,
-        revokedAt: new Date(),
-      },
+      return { sessionId: String(childId), expiresAt };
+    };
+
+    const result = await this.withTransaction(
+      txBody,
+      // Reuse detection throws a SessionError we must NOT retry.
+      (err) => err instanceof SessionError,
     );
 
-    await this.cacheLiveness(String(session._id));
-    await this.cacheLiveness(String(newSession._id));
+    if (!result) {
+      throw new SessionError('Refresh rotation could not be committed', 'REFRESH_ROTATION_FAILED');
+    }
+
+    await this.cacheLiveness(String(parentId));
+    await this.cacheLiveness(result.sessionId);
 
     return {
-      sessionId: String(newSession._id),
-      userId: String(newSession.userId),
-      tenantId: String(newSession.tenantId),
-      applicationId: String(newSession.applicationId),
+      sessionId: result.sessionId,
+      userId: String(session.userId),
+      tenantId: String(session.tenantId),
+      applicationId: String(session.applicationId),
       familyId,
       refreshToken: newPair.refreshToken,
       refreshTokenHash: newPair.refreshTokenHash,
-      expiresAt,
+      expiresAt: result.expiresAt,
     };
   }
 
+  /**
+   * Run `work` inside a MongoDB transaction when the connected server supports
+   * them (replica set / sharded cluster). Falls back to running `work` without
+   * an explicit session on standalone servers and other unsupported topologies.
+   *
+   * `isNonRetryable` lets callers mark domain errors (e.g. reuse detection) that
+   * must not be re-run, avoiding accidentally re-executing a security decision
+   * after a transient write conflict. Transient errors (write conflicts,
+   * deadlocks, network blips, snapshot/vote failures) are retried a bounded
+   * number of times with backoff.
+   */
+  private async withTransaction<T>(
+    work: (session: ClientSession | null) => Promise<T>,
+    isNonRetryable?: (err: unknown) => boolean,
+  ): Promise<T> {
+    const conn = mongoose.connection;
+    const MAX_ATTEMPTS = 3;
+    const baseDelayMs = 25;
+
+    // Standalone MongoDB (the dev/test topology) cannot run multi-document
+    // transactions. Detect this early and fall back to a no-session run so the
+    // SDK degrades gracefully instead of failing.
+    if (!transactionsSupported(conn)) {
+      return work(null);
+    }
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      let session: ClientSession | null = null;
+      try {
+        session = await conn.startSession();
+        let out: T | undefined;
+        await session.withTransaction(async (txSession) => {
+          out = await work(txSession);
+          return txSession;
+        });
+        return out as T;
+      } catch (err) {
+        if (isNonRetryable?.(err)) {
+          throw err;
+        }
+        if (attempt >= MAX_ATTEMPTS || !isTransientTransactionError(err)) {
+          // A non-transient failure (or out of retries): if the topology cannot
+          // support transactions after all, degrade to a no-session run rather
+          // than surfacing a hard error in a dev/test topology.
+          if (attempt >= MAX_ATTEMPTS && !isTransientTransactionError(err)) {
+            return work(null);
+          }
+          throw err;
+        }
+      } finally {
+        session?.endSession().catch(() => {
+          /* best effort */
+        });
+      }
+      await sleep(baseDelayMs * 2 ** (attempt - 1));
+    }
+    // Unreachable: the loop either returns, throws, or falls back above.
+    return work(null);
+  }
+
   /** Enforce a cap on concurrently active sessions per user+application. */
-  private async enforceSessionLimit(
-    userId: string,
-    applicationId: string,
-  ): Promise<void> {
+  private async enforceSessionLimit(userId: string, applicationId: string): Promise<void> {
     const count = await SessionModel.countDocuments({
       userId,
       applicationId,
@@ -256,10 +353,7 @@ export class SessionService {
   /** Revoke the entire refresh-token family (reuse/theft or mass logout). */
   async revokeFamily(familyId: string): Promise<void> {
     const sessions = await SessionModel.find({ familyId });
-    await SessionModel.updateMany(
-      { familyId },
-      { status: 'revoked', revokedAt: new Date() },
-    );
+    await SessionModel.updateMany({ familyId }, { status: 'revoked', revokedAt: new Date() });
     for (const s of sessions) {
       await this.cache.del(this.cacheKey(String(s._id)));
     }
@@ -267,19 +361,12 @@ export class SessionService {
 
   /** Revoke a single session. */
   async revoke(sessionId: string): Promise<void> {
-    await SessionModel.updateOne(
-      { _id: sessionId },
-      { status: 'revoked', revokedAt: new Date() },
-    );
+    await SessionModel.updateOne({ _id: sessionId }, { status: 'revoked', revokedAt: new Date() });
     await this.cache.del(this.cacheKey(sessionId));
   }
 
   /** Revoke ALL sessions for a user (optionally scoped to an application). */
-  async revokeAll(
-    userId: string,
-    applicationId?: string,
-    tenantId?: string,
-  ): Promise<void> {
+  async revokeAll(userId: string, applicationId?: string, tenantId?: string): Promise<void> {
     const filter: Record<string, unknown> = { userId, status: 'active' };
     if (applicationId) {
       filter.applicationId = applicationId;
@@ -298,10 +385,7 @@ export class SessionService {
   }
 
   /** List active sessions for a user (session-management UI). */
-  async listActive(
-    userId: string,
-    applicationId?: string,
-  ): Promise<SessionDoc[]> {
+  async listActive(userId: string, applicationId?: string): Promise<SessionDoc[]> {
     const filter: Record<string, unknown> = { userId, status: 'active' };
     if (applicationId) {
       filter.applicationId = applicationId;
@@ -315,9 +399,7 @@ export class SessionService {
     if (cached === '1') {
       return true;
     }
-    const doc = await SessionModel.findById(sessionId)
-      .select('status expiresAt')
-      .lean();
+    const doc = await SessionModel.findById(sessionId).select('status expiresAt').lean();
     if (!doc) {
       return false;
     }
@@ -330,10 +412,64 @@ export class SessionService {
 
   /** Re-issue a session's liveness marker (used after any successful action). */
   async touch(sessionId: string): Promise<void> {
-    await SessionModel.updateOne(
-      { _id: sessionId },
-      { lastActiveAt: new Date() },
-    );
+    await SessionModel.updateOne({ _id: sessionId }, { lastActiveAt: new Date() });
     await this.cacheLiveness(sessionId);
   }
+}
+
+/**
+ * Best-effort detection of whether the connected MongoDB topology supports
+ * multi-document transactions. Standalone mongod instances do not; replica
+ * sets and sharded clusters do.
+ */
+function transactionsSupported(conn: mongoose.Connection): boolean {
+  try {
+    const client = conn.getClient() as unknown as {
+      topology?: { description?: { type?: string } };
+    };
+    const type = client.topology?.description?.type ?? '';
+    // ReplicaSetWithPrimary / ReplicaSetNoPrimary / Sharded describe
+    // transaction-capable topologies. Standalone and single (direct
+    // connection to one mongod without replica-set options) do not.
+    return /replicaset|sharded/i.test(type);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * MongoDB error codes that are safe to retry on a write conflict / transient
+ * transaction failure. See the driver's `MongoServerError` code reference.
+ */
+function isTransientTransactionError(err: unknown): boolean {
+  if (err && typeof err === 'object' && 'code' in err) {
+    const code = (err as { code?: number }).code;
+    // 112 WriteConflict · 245 Deadlock · 262 snapshot too old ·
+    // 24 LockTimeout · 103/116/133 network-ish · 251 NoSuchTransaction
+    switch (code) {
+      case 112:
+      case 245:
+      case 262:
+      case 249:
+      case 251:
+      case 24:
+      case 103:
+      case 116:
+      case 133:
+      case 13:
+        return true;
+      default:
+        return false;
+    }
+  }
+  // Transport/connection-level errors (e.g. "session was already ended",
+  // topology closed during retry) are transient by default.
+  if (err instanceof Error && /session|topology|close|network|socket/i.test(err.message)) {
+    return true;
+  }
+  return false;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

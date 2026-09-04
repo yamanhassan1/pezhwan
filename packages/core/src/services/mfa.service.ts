@@ -62,7 +62,13 @@ export class MfaService {
     }
   }
 
-  private protectSecret(secret: Buffer): string {
+  /**
+   * Wrap a TOTP secret in an AES-256-GCM envelope with a `v2:` version prefix.
+   * The prefix lets the migration window distinguish the current envelope from
+   * any legacy unprefixed format, so the service can decrypt BOTH while an
+   * operator migrates old records (see operations/mfa-migration.md).
+   */
+  private wrapV2(secret: Buffer): string {
     if (!this.encryptionKey) {
       throw new ValidationError(
         'MFA encryption is not configured',
@@ -75,10 +81,16 @@ export class MfaService {
     const iv = randomBytes(12);
     const cipher = createCipheriv('aes-256-gcm', key, iv);
     const ciphertext = Buffer.concat([cipher.update(secret), cipher.final()]);
-    return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString('base64');
+    const envelope = Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString('base64');
+    return `v2:${envelope}`;
   }
 
-  private revealSecret(value: string): Buffer {
+  /**
+   * Decrypt a wrapped secret. Accepts the current `v2:` prefixed envelope AND
+   * a legacy unprefixed envelope (migration window). Fails closed on anything
+   * that is not a valid AES-256-GCM envelope under the configured key.
+   */
+  private unwrapV2(value: string): Buffer {
     if (!this.encryptionKey) {
       throw new ValidationError(
         'MFA encryption is not configured',
@@ -88,16 +100,31 @@ export class MfaService {
     const key = Buffer.isBuffer(this.encryptionKey)
       ? this.encryptionKey
       : Buffer.from(this.encryptionKey, 'base64');
-    const payload = Buffer.from(value, 'base64');
+    const raw = value.startsWith('v2:') ? value.slice(3) : value;
+    const payload = Buffer.from(raw, 'base64');
     if (payload.length < 28) {
       throw new ValidationError('Invalid MFA secret', 'INVALID_MFA_SECRET');
     }
     const decipher = createDecipheriv('aes-256-gcm', key, payload.subarray(0, 12));
     decipher.setAuthTag(payload.subarray(12, 28));
-    return Buffer.concat([
-      decipher.update(payload.subarray(28)),
-      decipher.final(),
-    ]);
+    return Buffer.concat([decipher.update(payload.subarray(28)), decipher.final()]);
+  }
+
+  /**
+   * Re-wrap a raw secret under the configured key. Public so the MFA migration
+   * utility can persist upgraded envelopes at batch time.
+   */
+  encryptSecret(secret: Buffer): string {
+    return this.wrapV2(secret);
+  }
+
+  /**
+   * Decrypt a wrapped secret under the configured key. Public so the MFA
+   * migration utility can (a) validate migration and (b) detect legacy records.
+   * Throws INVALID_MFA_SECRET when the value is not a valid envelope.
+   */
+  decryptSecret(value: string): Buffer {
+    return this.unwrapV2(value);
   }
 
   private hashBackupCode(code: string): string {
@@ -132,7 +159,7 @@ export class MfaService {
     await UserModel.updateOne(
       { _id: userId },
       {
-        mfaSecret: this.protectSecret(secret),
+        mfaSecret: this.wrapV2(secret),
         mfaSecretVerifiedAt: null,
       },
     );
@@ -168,7 +195,7 @@ export class MfaService {
     if (user.mfaEnabled) {
       throw new ValidationError('MFA is already enabled', 'MFA_ALREADY_ENABLED');
     }
-    const secret = this.revealSecret(user.mfaSecret);
+    const secret = this.unwrapV2(user.mfaSecret);
     if (!this.verify(secret, code)) {
       throw new AuthenticationError('Invalid authenticator code', 'INVALID_TOTP');
     }
@@ -191,13 +218,11 @@ export class MfaService {
     if (await this.mfaLocked(userId)) {
       return false;
     }
-    const user = await UserModel.findById(userId)
-      .select('mfaEnabled mfaSecret')
-      .lean();
+    const user = await UserModel.findById(userId).select('mfaEnabled mfaSecret').lean();
     if (!user?.mfaEnabled || !user.mfaSecret) {
       return false;
     }
-    const secret = this.revealSecret(user.mfaSecret);
+    const secret = this.unwrapV2(user.mfaSecret);
     if (this.verify(secret, code)) {
       await this.touchVerified(userId);
       await this.resetMfaFailures(userId);
@@ -215,10 +240,7 @@ export class MfaService {
   }
 
   private async touchVerified(userId: string): Promise<void> {
-    await UserModel.updateOne(
-      { _id: userId },
-      { mfaSecretVerifiedAt: Date.now() },
-    );
+    await UserModel.updateOne({ _id: userId }, { mfaSecretVerifiedAt: Date.now() });
   }
 
   /**
@@ -228,9 +250,7 @@ export class MfaService {
    * survive restarts and are shared across instances.
    */
   private async mfaLocked(userId: string): Promise<boolean> {
-    const user = await UserModel.findById(userId)
-      .select('mfaFailedAttempts mfaLockUntil')
-      .lean();
+    const user = await UserModel.findById(userId).select('mfaFailedAttempts mfaLockUntil').lean();
     if (!user) {
       return false;
     }
@@ -243,10 +263,7 @@ export class MfaService {
     }
     if (until > 0) {
       // Lock expired — reset so the user gets a fresh budget.
-      await UserModel.updateOne(
-        { _id: userId },
-        { mfaFailedAttempts: 0, mfaLockUntil: null },
-      );
+      await UserModel.updateOne({ _id: userId }, { mfaFailedAttempts: 0, mfaLockUntil: null });
     }
     return false;
   }
@@ -281,10 +298,7 @@ export class MfaService {
     }).select('codeHash _id');
     for (const row of hashes) {
       if (this.matchHashes(row.codeHash, code)) {
-        await BackupCodeModel.updateOne(
-          { _id: row._id },
-          { usedAt: new Date() },
-        );
+        await BackupCodeModel.updateOne({ _id: row._id }, { usedAt: new Date() });
         await this.audit?.log({
           eventType: AUDIT_EVENT.BACKUP_CODE_USED,
           tenantId: this.tenantId,
@@ -315,9 +329,7 @@ export class MfaService {
 
   /** Disable MFA (requires a valid current code to prevent lockout bypass). */
   async disable(userId: string, code: string): Promise<void> {
-    const user = await UserModel.findById(userId)
-      .select('mfaEnabled mfaSecret')
-      .lean();
+    const user = await UserModel.findById(userId).select('mfaEnabled mfaSecret').lean();
     if (!user?.mfaEnabled) {
       throw new ValidationError('MFA is not enabled', 'MFA_NOT_ENABLED');
     }
@@ -326,7 +338,7 @@ export class MfaService {
     if (await this.mfaLocked(userId)) {
       throw new AuthenticationError('Invalid code', 'INVALID_TOTP');
     }
-    const secret = user.mfaSecret ? this.revealSecret(user.mfaSecret) : null;
+    const secret = user.mfaSecret ? this.unwrapV2(user.mfaSecret) : null;
     let ok = false;
     if (secret) {
       ok = this.verify(secret, code);

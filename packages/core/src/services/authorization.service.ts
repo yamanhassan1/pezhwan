@@ -7,7 +7,7 @@
  */
 
 import { AuthorizationError } from '@pezhwan/shared';
-import type { AuthorizationContext, IdentityContext } from '@pezhwan/shared';
+import type { IdentityContext } from '@pezhwan/shared';
 import {
   RoleModel,
   UserRoleAssignmentModel,
@@ -67,11 +67,7 @@ export class AuthorizationService {
     await this.accountState?.invalidate(userId);
   }
 
-  private asKey(context: {
-    userId: string;
-    tenantId: string;
-    applicationId: string;
-  }) {
+  private asKey(context: { userId: string; tenantId: string; applicationId: string }) {
     return `${context.userId}:${context.tenantId}:${context.applicationId}`;
   }
 
@@ -169,9 +165,7 @@ export class AuthorizationService {
     applicationId: string;
   }): Promise<string[]> {
     const roles = await this.getUserRoles(context);
-    const permissionIds = new Set(
-      roles.flatMap((r) => r.permissionIds.map(String)),
-    );
+    const permissionIds = new Set(roles.flatMap((r) => r.permissionIds.map(String)));
     if (permissionIds.size === 0) {
       return [];
     }
@@ -206,9 +200,7 @@ export class AuthorizationService {
    * By default a permission grant deems the request authorized; ownership
    * hooks are intentional future ABAC extension points.
    */
-  async can(
-    input: AuthorizationInput & { permission: string },
-  ): Promise<boolean> {
+  async can(input: AuthorizationInput & { permission: string }): Promise<boolean> {
     const context = {
       userId: input.userId,
       tenantId: input.tenantId,

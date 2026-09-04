@@ -8,23 +8,16 @@
  * Applications never implement auth logic themselves — they call the engine.
  */
 
-import {
-  AuthenticationError,
-  ValidationError,
-  AUDIT_EVENT,
-} from '@pezhwan/shared';
+import { AuthenticationError, ValidationError, AUDIT_EVENT } from '@pezhwan/shared';
 import type { AuthMethod, IdentityContext, OtpChannel, OtpPurpose } from '@pezhwan/shared';
-import {
-  hashPassword,
-  verifyPassword,
-  generateOtp,
-  hashOtp,
-  verifyOtp as verifyOtpCode,
-  isArgon2Hash,
-} from '@pezhwan/crypto';
+import { hashPassword, verifyPassword, isArgon2Hash } from '@pezhwan/crypto';
 import type { RedisCache } from '../services/redisCache.ts';
-import type { TokenService, TokenPair } from '../services/token.service.ts';
-import type { SessionService, CreatedSession, SessionContext } from '../services/session.service.ts';
+import type { TokenService } from '../services/token.service.ts';
+import type {
+  SessionService,
+  CreatedSession,
+  SessionContext,
+} from '../services/session.service.ts';
 import type { OtpService } from '../services/otp.service.ts';
 import type { AccountStateService } from '../services/accountState.service.ts';
 import type { AuthorizationService } from '../services/authorization.service.ts';
@@ -89,11 +82,9 @@ export interface AuthEngineOptions {
 }
 
 /** How the engine finds the account for a given identity handle. */
-export type LookupUserFn = (
-  input: UserLookupInput,
-) => Promise<UserDoc | null>;
+export type LookupUserFn = (input: UserLookupInput) => Promise<UserDoc | null>;
 
-const DEFAULT_LOOKUP: LookupUserFn = async (input) => {
+const _DEFAULT_LOOKUP: LookupUserFn = async (input) => {
   let query: Record<string, unknown> = { tenantId: input.tenantId };
   if (input.userId) {
     query = { ...query, _id: input.userId };
@@ -130,9 +121,11 @@ export class AuthEngine {
     this.passwordPolicy = options.passwordPolicy ?? DEFAULT_PASSWORD_POLICY;
   }
 
-  private deviceFrom(
-    ctx: { ip?: string; userAgent?: string; deviceLabel?: string },
-  ): SessionContext {
+  private deviceFrom(ctx: {
+    ip?: string;
+    userAgent?: string;
+    deviceLabel?: string;
+  }): SessionContext {
     return {
       userId: this.options.applicationId, // placeholder; overridden by callers with user context
       tenantId: this.options.tenantId,
@@ -164,12 +157,7 @@ export class AuthEngine {
     applicationId: string,
     authMethod: AuthMethod,
   ): Promise<IssuedTokens> {
-    const identity = await this.buildIdentity(
-      user,
-      session.sessionId,
-      authMethod,
-      applicationId,
-    );
+    const identity = await this.buildIdentity(user, session.sessionId, authMethod, applicationId);
     const accessToken = this.deps.tokens.signAccessToken({
       ...identity,
       tokenVersion: user.tokenVersion ?? 0,
@@ -201,21 +189,13 @@ export class AuthEngine {
     if (input.password) {
       const result = evaluatePassword(input.password, this.passwordPolicy);
       if (!result.ok) {
-        throw new ValidationError(
-          result.errors.join(' '),
-          'PASSWORD_POLICY',
-        );
+        throw new ValidationError(result.errors.join(' '), 'PASSWORD_POLICY');
       }
     } else if (!input.phone) {
-      throw new ValidationError(
-        'Password is required for email registration',
-        'PASSWORD_REQUIRED',
-      );
+      throw new ValidationError('Password is required for email registration', 'PASSWORD_REQUIRED');
     }
 
-    const passwordHash = input.password
-      ? await hashPassword(input.password)
-      : null;
+    const passwordHash = input.password ? await hashPassword(input.password) : null;
 
     const doc = await UserModel.create({
       tenantId: input.tenantId,
@@ -272,43 +252,29 @@ export class AuthEngine {
       phone: input.phone,
     });
     if (!user) {
-      throw new AuthenticationError(
-        'Invalid credentials',
-        'INVALID_CREDENTIALS',
-      );
+      throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
     if (user.loginLockUntil && new Date(user.loginLockUntil) > new Date()) {
-      throw new AuthenticationError(
-        'Account temporarily locked',
-        'ACCOUNT_LOCKED',
-        { details: { retryAfterMs: +user.loginLockUntil - Date.now() } },
-      );
+      throw new AuthenticationError('Account temporarily locked', 'ACCOUNT_LOCKED', {
+        details: { retryAfterMs: +user.loginLockUntil - Date.now() },
+      });
     }
     if (!user.passwordHash || !isArgon2Hash(user.passwordHash)) {
-      throw new AuthenticationError(
-        'Invalid credentials',
-        'INVALID_CREDENTIALS',
-      );
+      throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
     const ok = await verifyPassword(input.password, user.passwordHash);
     if (!ok) {
       await this.recordFailedLogin(user);
-      throw new AuthenticationError(
-        'Invalid credentials',
-        'INVALID_CREDENTIALS',
-      );
+      throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
     if (!user.isActive) {
-      throw new AuthenticationError(
-        'Account disabled',
-        'ACCOUNT_DISABLED',
-      );
+      throw new AuthenticationError('Account disabled', 'ACCOUNT_DISABLED');
     }
     await this.clearFailedLogin(user);
 
     // MFA gateway: if the user has TOTP enabled, the password is valid but we
     // do NOT issue tokens until a second factor is presented.
-    if (this.deps.mfa && await this.deps.mfa.isEnabled(String(user._id))) {
+    if (this.deps.mfa && (await this.deps.mfa.isEnabled(String(user._id)))) {
       await this.audit?.log({
         eventType: AUDIT_EVENT.LOGIN_SUCCESS,
         userId: String(user._id),
@@ -322,12 +288,7 @@ export class AuthEngine {
 
     return {
       mfaRequired: false,
-      ...(await this.completeLogin(
-        user,
-        'password',
-        input.applicationId,
-        input.device,
-      )),
+      ...(await this.completeLogin(user, 'password', input.applicationId, input.device)),
     };
   }
 
@@ -386,27 +347,21 @@ export class AuthEngine {
       code: input.code,
     });
     if (!verification.verified) {
-      throw new AuthenticationError(
-        'Invalid or expired code',
-        'INVALID_OTP',
-      );
+      throw new AuthenticationError('Invalid or expired code', 'INVALID_OTP');
     }
     const user = await this.findUser({
       email: input.email,
       phone: input.phone,
     });
     if (!user) {
-      throw new AuthenticationError(
-        'Invalid or expired code',
-        'INVALID_OTP',
-      );
+      throw new AuthenticationError('Invalid or expired code', 'INVALID_OTP');
     }
     if (!user.isActive) {
       throw new AuthenticationError('Account disabled', 'ACCOUNT_DISABLED');
     }
 
     // MFA gateway for passwordless OTP login too.
-    if (this.deps.mfa && await this.deps.mfa.isEnabled(String(user._id))) {
+    if (this.deps.mfa && (await this.deps.mfa.isEnabled(String(user._id)))) {
       await this.audit?.log({
         eventType: AUDIT_EVENT.LOGIN_SUCCESS,
         userId: String(user._id),
@@ -420,12 +375,7 @@ export class AuthEngine {
 
     return {
       mfaRequired: false,
-      ...(await this.completeLogin(
-        user,
-        'email_otp',
-        input.applicationId,
-        input.device,
-      )),
+      ...(await this.completeLogin(user, 'email_otp', input.applicationId, input.device)),
     };
   }
 
@@ -441,10 +391,7 @@ export class AuthEngine {
     device?: { ip?: string; userAgent?: string; deviceLabel?: string };
   }): Promise<{ user: UserDoc; tokens: IssuedTokens }> {
     if (!this.deps.mfa) {
-      throw new AuthenticationError(
-        'MFA is not configured on this server',
-        'MFA_NOT_CONFIGURED',
-      );
+      throw new AuthenticationError('MFA is not configured on this server', 'MFA_NOT_CONFIGURED');
     }
     const user = await this.findUser({ userId: input.userId });
     if (!user || user.isActive === false) {
@@ -476,12 +423,7 @@ export class AuthEngine {
       userAgent: input.device?.userAgent,
       deviceLabel: input.device?.deviceLabel,
     });
-    const tokens = await this.mintTokens(
-      userDoc,
-      session,
-      input.applicationId,
-      'mfa_totp',
-    );
+    const tokens = await this.mintTokens(userDoc, session, input.applicationId, 'mfa_totp');
 
     await this.audit?.log({
       eventType: AUDIT_EVENT.MFA_CHALLENGE_SUCCESS,
@@ -578,13 +520,10 @@ export class AuthEngine {
       deviceLabel: device?.deviceLabel,
     });
     if (
-      session.tenantId !== this.options.tenantId
-      || session.applicationId !== this.options.applicationId
+      session.tenantId !== this.options.tenantId ||
+      session.applicationId !== this.options.applicationId
     ) {
-      throw new AuthenticationError(
-        'Session context is invalid',
-        'SESSION_CONTEXT_INVALID',
-      );
+      throw new AuthenticationError('Session context is invalid', 'SESSION_CONTEXT_INVALID');
     }
 
     // Re-resolve roles/permissions for the newest access token.
@@ -629,10 +568,7 @@ export class AuthEngine {
       ? await verifyPassword(input.currentPassword, user.passwordHash)
       : false;
     if (!ok) {
-      throw new AuthenticationError(
-        'Current password is incorrect',
-        'INVALID_CURRENT_PASSWORD',
-      );
+      throw new AuthenticationError('Current password is incorrect', 'INVALID_CURRENT_PASSWORD');
     }
     const newHash = await hashPassword(input.newPassword);
     const nextVersion = (user.tokenVersion ?? 0) + 1;
@@ -669,10 +605,7 @@ export class AuthEngine {
       code: input.code,
     });
     if (!verification.verified) {
-      throw new AuthenticationError(
-        'Invalid or expired code',
-        'INVALID_OTP',
-      );
+      throw new AuthenticationError('Invalid or expired code', 'INVALID_OTP');
     }
     const user = await this.findUser({
       email: input.channel === 'email' ? input.target : undefined,
@@ -703,12 +636,7 @@ export class AuthEngine {
       userAgent: input.device?.userAgent,
       deviceLabel: input.device?.deviceLabel,
     });
-    const tokens = await this.mintTokens(
-      user,
-      session,
-      input.applicationId,
-      'password',
-    );
+    const tokens = await this.mintTokens(user, session, input.applicationId, 'password');
 
     await this.audit?.log({
       eventType: AUDIT_EVENT.PASSWORD_RESET,
@@ -737,7 +665,8 @@ export class AuthEngine {
     const user = await this.findUser({
       email: input.email.toLowerCase(),
     });
-    const redirectUri = input.redirectUri ?? `${this.options.issuer}/v1/auth/password/reset/confirm`;
+    const redirectUri =
+      input.redirectUri ?? `${this.options.issuer}/v1/auth/password/reset/confirm`;
     if (!user) {
       // Burn the flow for unknown accounts (no-signal).
       return { token: this.decoysFor(input.email), expiresIn: 900 };
@@ -766,10 +695,7 @@ export class AuthEngine {
     }
     const redeemed = await this.deps.verificationTokens.redeem(input.token);
     if (redeemed.kind !== 'password_reset') {
-      throw new AuthenticationError(
-        'Invalid or expired token',
-        'INVALID_TOKEN',
-      );
+      throw new AuthenticationError('Invalid or expired token', 'INVALID_TOKEN');
     }
     const user = await this.findUser({ userId: redeemed.userId });
     if (!user) {
@@ -797,12 +723,7 @@ export class AuthEngine {
       userAgent: input.device?.userAgent,
       deviceLabel: input.device?.deviceLabel,
     });
-    const tokens = await this.mintTokens(
-      user,
-      session,
-      input.applicationId,
-      'email_otp',
-    );
+    const tokens = await this.mintTokens(user, session, input.applicationId, 'email_otp');
 
     await this.audit?.log({
       eventType: AUDIT_EVENT.PASSWORD_RESET,
@@ -837,10 +758,7 @@ export class AuthEngine {
   }
 
   /** Complete email verification with a verification token. */
-  async verifyEmailToken(input: {
-    applicationId: string;
-    token: string;
-  }): Promise<void> {
+  async verifyEmailToken(input: { applicationId: string; token: string }): Promise<void> {
     const redeemed = await this.deps.verificationTokens.redeem(input.token);
     if (redeemed.kind !== 'email_verification') {
       throw new AuthenticationError('Invalid or expired token', 'INVALID_TOKEN');
@@ -949,21 +867,14 @@ export class AuthEngine {
       pad[i] = (target.charCodeAt(i % target.length) ?? 0x41) & 0xff;
     }
     void raw;
-    return Buffer.concat([
-      pad,
-      Buffer.from(String(Date.now())) as Buffer,
-    ]).toString('base64url');
+    return Buffer.concat([pad, Buffer.from(String(Date.now())) as Buffer]).toString('base64url');
   }
 
   // -------------------------------------------------------------------------
   // Email verification
   // -------------------------------------------------------------------------
 
-  async verifyEmail(input: {
-    applicationId: string;
-    email: string;
-    code: string;
-  }): Promise<void> {
+  async verifyEmail(input: { applicationId: string; email: string; code: string }): Promise<void> {
     const verification = await this.deps.otp.verifyOtp({
       channel: 'email',
       target: input.email,
@@ -971,10 +882,7 @@ export class AuthEngine {
       code: input.code,
     });
     if (!verification.verified) {
-      throw new AuthenticationError(
-        'Invalid or expired code',
-        'INVALID_OTP',
-      );
+      throw new AuthenticationError('Invalid or expired code', 'INVALID_OTP');
     }
     const user = await UserModel.findOne({
       tenantId: this.options.tenantId,
@@ -1025,7 +933,9 @@ export class AuthEngine {
     return UserModel.findOne({
       _id: userId,
       tenantId: this.options.tenantId,
-    }).select('tokenVersion isActive').lean();
+    })
+      .select('tokenVersion isActive')
+      .lean();
   }
 
   /** Public helper so controllers don't need to wire token logic themselves. */

@@ -94,5 +94,4 @@ userSchema.index({ tenantId: 1, 'identities.provider': 1, 'identities.subject': 
 userSchema.index({ tenantId: 1, isActive: 1 });
 
 export const UserModel: Model<UserDoc> =
-  (models.User as Model<UserDoc>) ||
-  model<UserDoc>('User', userSchema);
+  (models.User as Model<UserDoc>) || model<UserDoc>('User', userSchema);

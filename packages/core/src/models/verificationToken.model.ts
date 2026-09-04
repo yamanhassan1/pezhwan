@@ -30,13 +30,7 @@ const verificationTokenSchema = new Schema<VerificationTokenDoc>(
   {
     kind: {
       type: String,
-      enum: [
-        'email_verification',
-        'password_reset',
-        'magic_link',
-        'email_change',
-        'phone_change',
-      ],
+      enum: ['email_verification', 'password_reset', 'magic_link', 'email_change', 'phone_change'],
       required: true,
     },
     tenantId: { type: String, required: true },

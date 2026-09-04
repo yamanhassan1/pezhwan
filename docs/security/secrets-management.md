@@ -127,12 +127,12 @@ interface SecretProvider {
 
 Provided implementations:
 
-| Provider | Use case |
-|----------|----------|
-| `EnvSecretProvider` | Development / simple production (env vars) |
-| `FileSecretProvider` | Docker/Kubernetes mounted secret files |
-| `ChainSecretProvider` | Try providers in order, e.g. file then env |
-| `createSecretProvider()` | Convenience factory |
+| Provider                 | Use case                                   |
+| ------------------------ | ------------------------------------------ |
+| `EnvSecretProvider`      | Development / simple production (env vars) |
+| `FileSecretProvider`     | Docker/Kubernetes mounted secret files     |
+| `ChainSecretProvider`    | Try providers in order, e.g. file then env |
+| `createSecretProvider()` | Convenience factory                        |
 
 **Production options (choose one, no code change needed):**
 
@@ -293,7 +293,7 @@ Rules:
   keys, cookies, Authorization headers, connection strings, etc.).
 - Production error responses never expose stack traces, connection strings,
   or internal paths — they return a safe `{ success:false, error:{ code,
-  message, requestId } }` shape; details go only to server-side logs.
+message, requestId } }` shape; details go only to server-side logs.
 
 ## 16. Secret scanning
 
@@ -305,6 +305,7 @@ Rules:
   Protection**, **TruffleHog**, and `npm audit` for dependencies.
 
 Review these files manually (they contain authorized test-only dummy values):
+
 - `packages/core/test/security.test.ts`
 - `tests/security/backstop-security.test.ts`
 - `packages/oauth/test/oauth.test.ts`

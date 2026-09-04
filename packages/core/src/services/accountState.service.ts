@@ -44,15 +44,11 @@ export class AccountStateService {
       tokenVersion?: number;
     } | null;
     try {
-      doc = await UserModel.findById(userId)
-        .select('isActive tokenVersion')
-        .lean();
+      doc = await UserModel.findById(userId).select('isActive tokenVersion').lean();
     } catch {
-      throw new SecurityDependencyError(
-        'Account state could not be verified',
-        undefined,
-        { requestId: undefined },
-      );
+      throw new SecurityDependencyError('Account state could not be verified', undefined, {
+        requestId: undefined,
+      });
     }
 
     const state: AccountState = {
@@ -60,11 +56,7 @@ export class AccountStateService {
       isActive: doc?.isActive ?? false,
       tokenVersionMatch: Boolean(doc && doc.tokenVersion === tokenVersion),
     };
-    await this.cache.set(
-      this.cacheKey(userId),
-      JSON.stringify(state),
-      CACHE_TTL_SECONDS,
-    );
+    await this.cache.set(this.cacheKey(userId), JSON.stringify(state), CACHE_TTL_SECONDS);
 
     return state.exists && state.isActive && state.tokenVersionMatch;
   }

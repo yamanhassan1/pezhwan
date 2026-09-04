@@ -9,13 +9,8 @@
  * Consumption is atomic (unique hash index) so a token can never be replayed.
  */
 
-import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
-import {
-  NotFoundError,
-  TokenError,
-  ValidationError,
-  AUDIT_EVENT,
-} from '@pezhwan/shared';
+import { randomBytes, createHash } from 'node:crypto';
+import { NotFoundError, TokenError, AUDIT_EVENT } from '@pezhwan/shared';
 import type { VerificationTokenKind } from '@pezhwan/shared';
 import { VerificationTokenModel } from '../models/index.ts';
 import type { AuditService } from './audit.service.ts';
@@ -43,17 +38,6 @@ const DEFAULT_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('base64');
-}
-
-function matchHash(a: string, b: string): boolean {
-  const lhs = Buffer.from(a, 'base64');
-  let rhs: Buffer;
-  try {
-    rhs = Buffer.from(b, 'base64');
-  } catch {
-    return false;
-  }
-  return lhs.length === rhs.length && timingSafeEqual(lhs, rhs);
 }
 
 export class VerificationTokenService {
@@ -147,10 +131,7 @@ export class VerificationTokenService {
   }
 
   /** Convenience verifier without consuming (e.g. pre-flight checks). */
-  async existsActive(
-    kind: VerificationTokenKind,
-    userId: string,
-  ): Promise<boolean> {
+  async existsActive(kind: VerificationTokenKind, userId: string): Promise<boolean> {
     const count = await VerificationTokenModel.countDocuments({
       tenantId: this.tenantId,
       applicationId: this.applicationId,

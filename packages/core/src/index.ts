@@ -19,3 +19,6 @@ export * from './auth/index.ts';
 
 // The main builder/entry used by framework adapters
 export * from './pezhwan.ts';
+
+// OTP delivery providers & manager (email / SMS transports)
+export * from './adapters/index.ts';

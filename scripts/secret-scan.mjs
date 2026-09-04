@@ -119,8 +119,19 @@ const PATTERNS = [
 // ---------------------------------------------------------------------------
 
 const SKIP_EXT = new Set([
-  '.map', '.lock', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico',
-  '.woff', '.woff2', '.ttf', '.eot', '.otf',
+  '.map',
+  '.lock',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.svg',
+  '.ico',
+  '.woff',
+  '.woff2',
+  '.ttf',
+  '.eot',
+  '.otf',
 ]);
 
 const SKIP_PATH = /(^|\/)(node_modules|dist|build|\.git|\.husky|coverage|scripts)(\/|$)/;
@@ -179,7 +190,10 @@ function stagedFiles() {
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return out.split('\n').map((l) => l.trim()).filter(Boolean);
+    return out
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
   } catch {
     return [];
   }
@@ -187,11 +201,14 @@ function stagedFiles() {
 
 function allFiles() {
   try {
-    const out = execSync(
-      "git ls-files --cached --others --exclude-standard",
-      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] },
-    );
-    return out.split('\n').map((l) => l.trim()).filter(Boolean);
+    const out = execSync('git ls-files --cached --others --exclude-standard', {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return out
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
   } catch {
     return [];
   }

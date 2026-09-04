@@ -13,12 +13,7 @@
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { TokenError } from '@pezhwan/shared';
-import type {
-  AuthMethod,
-  IdentityContext,
-  JwtAlgorithm,
-  TokenClaims,
-} from '@pezhwan/shared';
+import type { AuthMethod, IdentityContext, JwtAlgorithm, TokenClaims } from '@pezhwan/shared';
 import { signJwt, verifyJwt, type KeyStore } from '@pezhwan/crypto';
 import type { RedisCache } from './redisCache.ts';
 
@@ -131,13 +126,9 @@ export class TokenService {
       // Email claim is resolved by the caller (needs a User lookup); left
       // undefined here so the caller may spread additional claims.
     }
-    return signJwt(
-      claims,
-      key.privateKey,
-      key.kid,
-      this.algorithm,
-      { algorithm: this.algorithm as jwt.Algorithm },
-    );
+    return signJwt(claims, key.privateKey, key.kid, this.algorithm, {
+      algorithm: this.algorithm as jwt.Algorithm,
+    });
   }
 
   /** Verify an access token against the signing key denoted by its kid. */
@@ -148,9 +139,7 @@ export class TokenService {
       if (!encodedHeader) {
         throw new Error('malformed token');
       }
-      header = JSON.parse(
-        Buffer.from(encodedHeader, 'base64url').toString('utf-8'),
-      );
+      header = JSON.parse(Buffer.from(encodedHeader, 'base64url').toString('utf-8'));
     } catch {
       throw new TokenError('Malformed access token', 'INVALID_JWT');
     }

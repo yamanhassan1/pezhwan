@@ -7,7 +7,7 @@
  */
 
 import mongoose from 'mongoose';
-import type { Model, Types } from 'mongoose';
+import type { Model } from 'mongoose';
 import type { ApplicationPlatform } from '@pezhwan/shared';
 
 const { Schema, model, models } = mongoose;

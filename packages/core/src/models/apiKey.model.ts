@@ -6,7 +6,7 @@
  */
 
 import mongoose from 'mongoose';
-import type { Model, Types } from 'mongoose';
+import type { Model } from 'mongoose';
 
 const { Schema, model, models } = mongoose;
 
@@ -45,5 +45,4 @@ apiKeySchema.index({ tenantId: 1 });
 apiKeySchema.index({ keyHash: 1 }, { unique: true });
 
 export const ApiKeyModel: Model<ApiKeyDoc> =
-  (models.ApiKey as Model<ApiKeyDoc>) ||
-  model<ApiKeyDoc>('ApiKey', apiKeySchema);
+  (models.ApiKey as Model<ApiKeyDoc>) || model<ApiKeyDoc>('ApiKey', apiKeySchema);

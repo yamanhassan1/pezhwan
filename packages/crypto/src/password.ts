@@ -48,10 +48,7 @@ export async function hashPassword(
  * Returns false (never throws) for a malformed hash so callers can treat
  * unknown/legacy credentials as a generic auth failure.
  */
-export async function verifyPassword(
-  plaintext: string,
-  hash: string,
-): Promise<boolean> {
+export async function verifyPassword(plaintext: string, hash: string): Promise<boolean> {
   try {
     return await argon2.verify(hash, plaintext);
   } catch {

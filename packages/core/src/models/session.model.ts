@@ -76,5 +76,4 @@ sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 sessionSchema.index({ currentRefreshTokenHash: 1 }, { unique: true });
 
 export const SessionModel: Model<SessionDoc> =
-  (models.Session as Model<SessionDoc>) ||
-  model<SessionDoc>('Session', sessionSchema);
+  (models.Session as Model<SessionDoc>) || model<SessionDoc>('Session', sessionSchema);

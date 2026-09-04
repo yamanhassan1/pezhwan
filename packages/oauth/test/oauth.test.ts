@@ -79,11 +79,15 @@ test('registry throws ProviderError for unknown providers', () => {
 test('registry round-trips a custom adapter', () => {
   const custom: OAuthProviderAdapter = {
     name: 'acme',
-    buildAuthorizationUrl: (p) => `https://acme.example/authorize?state=${encodeURIComponent(p.state)}`,
+    buildAuthorizationUrl: (p) =>
+      `https://acme.example/authorize?state=${encodeURIComponent(p.state)}`,
     exchange: async () => ({ accessToken: 'at' }),
     getProfile: async () => ({ subject: 'sub-1' }),
   };
   const registry = new ProviderRegistry([custom]);
   assert.equal(registry.names().join(','), 'acme');
-  assert.equal(registry.get('acme').buildAuthorizationUrl({ state: 'x' }), 'https://acme.example/authorize?state=x');
+  assert.equal(
+    registry.get('acme').buildAuthorizationUrl({ state: 'x' }),
+    'https://acme.example/authorize?state=x',
+  );
 });

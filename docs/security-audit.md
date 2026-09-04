@@ -30,39 +30,39 @@ package layering:
 
 ### Trust boundaries
 
-| Boundary | Policy |
-|---|---|
+| Boundary                  | Policy                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------ |
 | Client ⇄ Express handlers | Server never trusts client-supplied identity; all auth via verified JWTs or API keys |
-| Express ⇄ `@pezhwan/core` | Identity comes from `verifyAccessToken` + `accountState.validate` (fail closed) |
-| Core ⇄ Mongo | Redis never authoritative; Mongo is the durable source |
-| Signing keys | RS256, JWKS published; private keys never leave the KeyStore |
+| Express ⇄ `@pezhwan/core` | Identity comes from `verifyAccessToken` + `accountState.validate` (fail closed)      |
+| Core ⇄ Mongo              | Redis never authoritative; Mongo is the durable source                               |
+| Signing keys              | RS256, JWKS published; private keys never leave the KeyStore                         |
 
 ---
 
 ## 2. Security controls verified
 
-| Control | Where | Status |
-|---|---|---|
-| Argon2id password hashing (never plaintext) | `@pezhwan/crypto` | ✅ tests |
-| Refresh tokens stored as SHA-256 hash only | `session.service.ts` | ✅ tests |
-| Constant-time hash comparison | `token.service.ts` | ✅ tests |
-| JWT algorithm pinned (no `alg:none`, no key confusion) | `jwt.ts` `algorithms:[...]` | ✅ tests |
-| Fail-closed account state (Mongo error throws) | `accountState.service.ts` | ✅ tests |
-| CORS strict allowlist (never wildcard w/ credentials) | `security.ts` | ✅ tests |
-| CSRF double-submit (cookie + header) | `security.ts` | ✅ tests |
-| Secret redaction in structured logs | `logger` | ✅ tests |
-| Rate limiting (atomic fixed-window) | `rateLimit.service.ts` | ✅ tests |
-| Rate limiting exposed & mounted on all auth routers | `rateLimit.ts` (G1) | ✅ tests (429 on budget exhaustion) |
-| MFA brute-force throttle (durable counter + 15-min lock, fail closed) | `mfa.service.ts`, `user.model.ts` (G2) | ✅ live-Mongo |
-| MFA/TOTP secret at-rest carve-out documented | `THREAT-MODEL.md` §2 (G3) | ✅ documented |
-| 503 vs 401 on storage-dependency failure | `express/index.ts` (G4) | ✅ tests |
-| Durable signing keys across restarts + scheduled rotation | `initKeyPersistence()` (G5) | ✅ tests (restart round-trip) |
-| Explicit body-size cap (`PEZHWAN_BODY_LIMIT`) | `server.ts` (G6) | ✅ verified |
-| Audit `prevHash` chain — best-effort HA guarantee documented | `THREAT-MODEL.md` §10 (G7) | ✅ documented |
-| Atomic refresh-token rotation (reuse detection) | `session.service.ts` | ✅ live-Mongo |
-| Token-version invalidation on password/role changes | `accountState` + auth engine | ✅ live-Mongo |
-| PKCE S256 / plain verification (OAuth 2.1) | `OAuthService` | ✅ tests |
-| OIDC discovery advertises S256 + openid | `OAuthService` | ✅ tests |
+| Control                                                               | Where                                  | Status                              |
+| --------------------------------------------------------------------- | -------------------------------------- | ----------------------------------- |
+| Argon2id password hashing (never plaintext)                           | `@pezhwan/crypto`                      | ✅ tests                            |
+| Refresh tokens stored as SHA-256 hash only                            | `session.service.ts`                   | ✅ tests                            |
+| Constant-time hash comparison                                         | `token.service.ts`                     | ✅ tests                            |
+| JWT algorithm pinned (no `alg:none`, no key confusion)                | `jwt.ts` `algorithms:[...]`            | ✅ tests                            |
+| Fail-closed account state (Mongo error throws)                        | `accountState.service.ts`              | ✅ tests                            |
+| CORS strict allowlist (never wildcard w/ credentials)                 | `security.ts`                          | ✅ tests                            |
+| CSRF double-submit (cookie + header)                                  | `security.ts`                          | ✅ tests                            |
+| Secret redaction in structured logs                                   | `logger`                               | ✅ tests                            |
+| Rate limiting (atomic fixed-window)                                   | `rateLimit.service.ts`                 | ✅ tests                            |
+| Rate limiting exposed & mounted on all auth routers                   | `rateLimit.ts` (G1)                    | ✅ tests (429 on budget exhaustion) |
+| MFA brute-force throttle (durable counter + 15-min lock, fail closed) | `mfa.service.ts`, `user.model.ts` (G2) | ✅ live-Mongo                       |
+| MFA/TOTP secret at-rest carve-out documented                          | `THREAT-MODEL.md` §2 (G3)              | ✅ documented                       |
+| 503 vs 401 on storage-dependency failure                              | `express/index.ts` (G4)                | ✅ tests                            |
+| Durable signing keys across restarts + scheduled rotation             | `initKeyPersistence()` (G5)            | ✅ tests (restart round-trip)       |
+| Explicit body-size cap (`PEZHWAN_BODY_LIMIT`)                         | `server.ts` (G6)                       | ✅ verified                         |
+| Audit `prevHash` chain — best-effort HA guarantee documented          | `THREAT-MODEL.md` §10 (G7)             | ✅ documented                       |
+| Atomic refresh-token rotation (reuse detection)                       | `session.service.ts`                   | ✅ live-Mongo                       |
+| Token-version invalidation on password/role changes                   | `accountState` + auth engine           | ✅ live-Mongo                       |
+| PKCE S256 / plain verification (OAuth 2.1)                            | `OAuthService`                         | ✅ tests                            |
+| OIDC discovery advertises S256 + openid                               | `OAuthService`                         | ✅ tests                            |
 
 ---
 
@@ -70,20 +70,20 @@ package layering:
 
 ### Critical / high — fixed & verified
 
-| # | Finding | Fix | Verification |
-|---|---|---|---|
-| F1 | Every model typed `tenantId`/`applicationId` (and internal ids) as `Schema.Types.ObjectId` while the whole stack uses strings → `Cast to ObjectId failed for "dev-tenant"` 500 on register | String identifiers across all models + new `identifier-policy.ts` | live-Mongo create + query round-trip |
-| F2 | Unique `(tenantId, phone)` / `(tenantId, email)` indexes used `sparse`, which indexes `null` → email-only users collided | `partialFilterExpression` (`{$type:'string'}`) | live-Mongo multi-register |
-| F3 | Concurrent refresh of same token could mint two live pairs (non-atomic rotate) | Atomic claim `active→rotating` via `findOneAndUpdate` | live-Mongo 8×concurrent → exactly 1 success |
-| F4 | Rate-limiter read-modify-write lost increments under concurrency | Atomic `INCR`+`EXPIRE` (`incrementAndExpire`) | 50 concurrent consumes → exactly 50 |
-| F5 | Redis client: unbounded retry, unhandled `error` event crashes process, no shutdown | `RedisManager` (bounded retry, connect timeout, error listener, `disconnect`) + SIGINT/SIGTERM wiring | tests: lazy/bounded/fail-fast; no unhandled events |
-| F6 | `MemoryCache` in-memory fallback unbounded | Capacity-capped (10k) + TTL sweep + FIFO eviction | bounded-cache test |
-| F7 | Hollow access tokens accepted (missing required claims) | `verifyAccessToken` requires `sub/tenantId/applicationId/sessionId/iat` | hollow-token test |
-| F8 | Corrupt signing-key file silently ignored → HA desync / tamper-masking | FileKeystore `load()` throws on corrupt file | corrupt-file test |
-| F9 | Role revoke didn't invalidate existing tokens (revocation latency) | `assignRole`/`removeRole` bump `tokenVersion` + drop account-state cache | live-Mongo: tokenVersion 0→1, old token rejected |
-| F10 | Production boolean parsing accepted the string `false` as truthy, allowing insecure cookie configuration | Explicit boolean environment parser plus HTTPS, secure-cookie, rotation, and wildcard-origin production invariants | production configuration fixture: valid accepted; each insecure variant rejected |
-| F11 | OAuth client registration route was reachable without the documented admin gate; token exchange trusted caller tenant/application values | `requireAuth` + `requireRole('ADMIN')` on registration and client-scope validation during exchange | build + Express/OAuth tests |
-| F12 | Reference server lacked explicit unauthenticated liveness/readiness probes and did not drain the HTTP listener before dependency shutdown | `/health/live`, Mongo-backed `/health/ready`, and HTTP server close during SIGINT/SIGTERM shutdown | build + Docker Compose configuration validation |
+| #   | Finding                                                                                                                                                                                    | Fix                                                                                                                | Verification                                                                     |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| F1  | Every model typed `tenantId`/`applicationId` (and internal ids) as `Schema.Types.ObjectId` while the whole stack uses strings → `Cast to ObjectId failed for "dev-tenant"` 500 on register | String identifiers across all models + new `identifier-policy.ts`                                                  | live-Mongo create + query round-trip                                             |
+| F2  | Unique `(tenantId, phone)` / `(tenantId, email)` indexes used `sparse`, which indexes `null` → email-only users collided                                                                   | `partialFilterExpression` (`{$type:'string'}`)                                                                     | live-Mongo multi-register                                                        |
+| F3  | Concurrent refresh of same token could mint two live pairs (non-atomic rotate)                                                                                                             | Atomic claim `active→rotating` via `findOneAndUpdate`                                                              | live-Mongo 8×concurrent → exactly 1 success                                      |
+| F4  | Rate-limiter read-modify-write lost increments under concurrency                                                                                                                           | Atomic `INCR`+`EXPIRE` (`incrementAndExpire`)                                                                      | 50 concurrent consumes → exactly 50                                              |
+| F5  | Redis client: unbounded retry, unhandled `error` event crashes process, no shutdown                                                                                                        | `RedisManager` (bounded retry, connect timeout, error listener, `disconnect`) + SIGINT/SIGTERM wiring              | tests: lazy/bounded/fail-fast; no unhandled events                               |
+| F6  | `MemoryCache` in-memory fallback unbounded                                                                                                                                                 | Capacity-capped (10k) + TTL sweep + FIFO eviction                                                                  | bounded-cache test                                                               |
+| F7  | Hollow access tokens accepted (missing required claims)                                                                                                                                    | `verifyAccessToken` requires `sub/tenantId/applicationId/sessionId/iat`                                            | hollow-token test                                                                |
+| F8  | Corrupt signing-key file silently ignored → HA desync / tamper-masking                                                                                                                     | FileKeystore `load()` throws on corrupt file                                                                       | corrupt-file test                                                                |
+| F9  | Role revoke didn't invalidate existing tokens (revocation latency)                                                                                                                         | `assignRole`/`removeRole` bump `tokenVersion` + drop account-state cache                                           | live-Mongo: tokenVersion 0→1, old token rejected                                 |
+| F10 | Production boolean parsing accepted the string `false` as truthy, allowing insecure cookie configuration                                                                                   | Explicit boolean environment parser plus HTTPS, secure-cookie, rotation, and wildcard-origin production invariants | production configuration fixture: valid accepted; each insecure variant rejected |
+| F11 | OAuth client registration route was reachable without the documented admin gate; token exchange trusted caller tenant/application values                                                   | `requireAuth` + `requireRole('ADMIN')` on registration and client-scope validation during exchange                 | build + Express/OAuth tests                                                      |
+| F12 | Reference server lacked explicit unauthenticated liveness/readiness probes and did not drain the HTTP listener before dependency shutdown                                                  | `/health/live`, Mongo-backed `/health/ready`, and HTTP server close during SIGINT/SIGTERM shutdown                 | build + Docker Compose configuration validation                                  |
 
 ### Material — determined already correct (no change required)
 
@@ -114,16 +114,19 @@ package layering:
 
 All runs below are from this engagement (Windows, PowerShell shell):
 
-| Run | Result |
-|---|---|
-| `npm run build` (all workspaces) | ✅ no errors |
-| `npm run test -w @pezhwan/core` | ✅ 19/19 → 20/20 |
-| `npm run test -w @pezhwan/express` | ✅ 7/7 → 9/9 |
-| `packages/core` and `packages/crypto` workspace tests | ✅ 17/17 → 28/28 |
-| live-Mongo cast-fix script (user + session create with string IDs) | ✅ PASS |
-| live-Mongo rotation script (8 concurrent refreshes, same token) | ✅ 1 ok / 7 reuse-rejected |
-| live-Mongo role script (assignRole bumps tokenVersion; old token rejected) | ✅ PASS |
-| live-Mongo MFA-lock script (5 attempts → lock; correct code rejected while locked) | ✅ PASS |
+| Run                                                                                | Result                                                                                                                    |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `npm run build` (all workspaces)                                                   | ✅ no errors                                                                                                              |
+| `npm run test -w @pezhwan/core`                                                    | ✅ 19/19 → 20/20                                                                                                          |
+| `npm run test -w @pezhwan/express`                                                 | ✅ 7/7 → 9/9                                                                                                              |
+| `packages/core` and `packages/crypto` workspace tests                              | ✅ 17/17 → 28/28                                                                                                          |
+| live-Mongo cast-fix script (user + session create with string IDs)                 | ✅ PASS                                                                                                                   |
+| live-Mongo rotation script (8 concurrent refreshes, same token)                    | ✅ 1 ok / 7 reuse-rejected                                                                                                |
+| live-Mongo role script (assignRole bumps tokenVersion; old token rejected)         | ✅ PASS                                                                                                                   |
+| live-Mongo MFA-lock script (5 attempts → lock; correct code rejected while locked) | ✅ PASS                                                                                                                   |
+| `npm run test:integration` (mongodb-memory-server live-Mongo suite)                | ✅ 34/34: refresh-rotation atomicity, auth lifecycle, tenant isolation, MFA, audit ordering, rate-limit failure + durable |
+| Durable rate limit (Option C: Redis → MongoDB counter fallback)                    | ✅ 3/3 durable + 4/4 failure-mode integration tests                                                                       |
+| Audit strict ordering (`sequence` + hash chain + TTL retention)                    | ✅ 3/3 integration tests                                                                                                  |
 
 ---
 
@@ -139,5 +142,9 @@ All runs below are from this engagement (Windows, PowerShell shell):
 4. **Field-level envelope encryption of `mfaSecret`** (and the persisted signing
    PEMs) for deployments that put the DB / key files outside the trust boundary —
    this is the deliberately-documented G3 carve-out, not yet implemented.
-5. **Audit retention policy knob + writing audits behind a single-writer shard**
-   in HA so the `prevHash` chain is strictly ordered rather than best-effort (G7).
+5. **Single-writer audit shard for strictly-ordered hash chaining under HA.**
+   The audit retention knob and distributed `sequence` counter ARE now
+   implemented (`AuditService.setRetentionDays`, `audit-sequences`; unique
+   sequence prevents ordering forks). What remains is full strict _hash-link_
+   ordering under concurrent multi-writer HA, which still requires a
+   single-writer shard (documented G7 carve-out; best-effort today).

@@ -1,6 +1,6 @@
 # PEZHWAN — Architecture & Design Reference
 
-*One Identity. Every Application.* A universal Identity & Access Management
+_One Identity. Every Application._ A universal Identity & Access Management
 (IAM) SDK. This document explains the architecture, the data flow, the
 functional surface, the security model, and the operational properties
 (optimization, reliability, scalability) of the SDK.
@@ -31,16 +31,16 @@ strictly one-way: lower layer knowledge never leaks upward.
 
 ### Layer responsibilities
 
-| Layer | Responsibilities |
-|-------|------------------|
-| `@pezhwan/shared` | Framework-independent contracts: types, `AUDIT_EVENT`, default TTL / rate-limit / lockout / OTP policy, `DEFAULT_COOKIE`, error classes (`ValidationError`, `AuthenticationError`, `AuthorizationError`, `SessionError`, `SecurityEventError`). |
-| `@pezhwan/crypto` | Cryptographic primitives: `hashPassword`/`verifyPassword` (Argon2id), JWT sign/verify + JWKS, key generation/rotation, `generateOtp`/`hashOtp`/`verifyOtp`, TOTP (RFC 6238). Secrets handled here, never above. |
-| `@pezhwan/core` | The domain. `KeyStore`, `TokenService`, `SessionService`, `AuthEngine`, `OtpService`, `MfaService`, `AuthorizationService`, `AccountStateService`, `AuditService`, `RateLimitService`, `ApiKeyService`, Mongoose models, `PezhwanLogger`, `MetricsRegistry`. Exposes `createPezhwan()` → `PezhwanRuntime`. |
-| `@pezhwan/oauth` | OAuth 2.1 / OIDC engine backed by core services. |
-| `@pezhwan/express` | `authenticate()`, `requireAuth()`, `requireRole()`, `requirePermission()`, `corsAllowlist()`, `csrfProtection()`, `securityHeaders()`, `requestContext()`, pre-built routers (auth / sessions / oauth / mfa / verification), API-key auth, JWKS handler. |
-| `@pezhwan/react` | React provider + hooks + route guards wrapping the browser HTTP client (auto-attaches `Authorization` and `X-CSRF-Token`). |
-| `@pezhwan/node` | Convenience facade over core for non-HTTP Node services. |
-| `@pezhwan/identity-server` | Reference host: wires the runtime + middlewares into a runnable Express server with OIDC discovery and a browser demo. |
+| Layer                      | Responsibilities                                                                                                                                                                                                                                                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@pezhwan/shared`          | Framework-independent contracts: types, `AUDIT_EVENT`, default TTL / rate-limit / lockout / OTP policy, `DEFAULT_COOKIE`, error classes (`ValidationError`, `AuthenticationError`, `AuthorizationError`, `SessionError`, `SecurityEventError`).                                                            |
+| `@pezhwan/crypto`          | Cryptographic primitives: `hashPassword`/`verifyPassword` (Argon2id), JWT sign/verify + JWKS, key generation/rotation, `generateOtp`/`hashOtp`/`verifyOtp`, TOTP (RFC 6238). Secrets handled here, never above.                                                                                            |
+| `@pezhwan/core`            | The domain. `KeyStore`, `TokenService`, `SessionService`, `AuthEngine`, `OtpService`, `MfaService`, `AuthorizationService`, `AccountStateService`, `AuditService`, `RateLimitService`, `ApiKeyService`, Mongoose models, `PezhwanLogger`, `MetricsRegistry`. Exposes `createPezhwan()` → `PezhwanRuntime`. |
+| `@pezhwan/oauth`           | OAuth 2.1 / OIDC engine backed by core services.                                                                                                                                                                                                                                                           |
+| `@pezhwan/express`         | `authenticate()`, `requireAuth()`, `requireRole()`, `requirePermission()`, `corsAllowlist()`, `csrfProtection()`, `securityHeaders()`, `requestContext()`, pre-built routers (auth / sessions / oauth / mfa / verification), API-key auth, JWKS handler.                                                   |
+| `@pezhwan/react`           | React provider + hooks + route guards wrapping the browser HTTP client (auto-attaches `Authorization` and `X-CSRF-Token`).                                                                                                                                                                                 |
+| `@pezhwan/node`            | Convenience facade over core for non-HTTP Node services.                                                                                                                                                                                                                                                   |
+| `@pezhwan/identity-server` | Reference host: wires the runtime + middlewares into a runnable Express server with OIDC discovery and a browser demo.                                                                                                                                                                                     |
 
 ### Runtime object graph (`createPezhwan` → `PezhwanRuntime`)
 
@@ -70,6 +70,7 @@ sessions, tokens, account state and audit.
 ## 2. Functional surface (what the SDK does)
 
 ### Authentication
+
 - **Register** — password (email) or phone + OTP passwordless.
 - **Login** — password, OTP (email/phone), magic-link, OAuth/OIDC.
 - **MFA gateway** — when TOTP is enabled, valid password does **not** mint
@@ -78,32 +79,38 @@ sessions, tokens, account state and audit.
   reuse detection.
 
 ### Session management
+
 - Rotating refresh-token **families** (a chain of replaced sessions).
 - Reuse of an already-rotated token ⇒ the **whole family** is revoked.
 - Session list / revoke / revoke-all, per-user+application active caps.
 
 ### Authorization (RBAC)
+
 - Roles / permissions scoped to tenant+application.
 - `requireRole`, `requirePermission` gate middleware.
 - Identity is **always** derived from the verified access token, never from
   client-supplied body fields.
 
 ### MFA / OTP
+
 - TOTP (RFC 6238) setup/enable/verify/disable.
 - Hashed, single-use backup codes.
 - OTP send/verify with rate-limit, cooldown, attempt caps.
 
 ### Password & account
+
 - Password change/reset with policy enforcement and `tokenVersion` bump (which
   invalidates all outstanding access tokens).
 - Email/phone verification; magic links; verification tokens.
 - Enumeration-safe flows (unknown accounts burn a decoy token / OTP).
 
 ### OAuth 2.1 / OIDC
+
 - Authorization-code + PKCE S256, client registration, refresh grant,
   client_credentials, JWKS + OpenID discovery.
 
 ### Developer/dev ops
+
 - API keys (only hashes stored), audit log, structured logging, metrics,
   request-id correlation.
 
@@ -179,6 +186,7 @@ Request with `Authorization: Bearer <access>`
 ## 4. Security model
 
 ### 4.1 Cryptographic posture
+
 - **Argon2id** for password hashing (mem-hard, OWASP recommended).
 - **Asymmetric JWT** (`RS256`, also `ES256`/`EdDSA`) with `kid` + **key
   rotation**; public keys published via **JWKS**.
@@ -188,6 +196,7 @@ Request with `Authorization: Bearer <access>`
   API keys, OAuth client secrets, and authorization codes are stored.
 
 ### 4.2 Session/theft defense
+
 - Refresh token **reuse detection** — a replayed already-rotated token revokes
   the entire family.
 - `tokenVersion` invalidates all outstanding access tokens on password
@@ -195,11 +204,13 @@ Request with `Authorization: Bearer <access>`
 - Per-user+application active-session cap (LRU eviction by `lastActiveAt`).
 
 ### 4.3 Authorization (never trust the client)
+
 - Roles/permissions come only from the verified `IdentityContext` (inside the
   signed JWT / derived server-side), never from `req.body.role` etc.
 - Every authorization decision is scoped by `tenantId` (+ `applicationId`).
 
 ### 4.4 Transport & browser hardening
+
 - `securityHeaders`: CSP, HSTS (+subdomains), `nosniff`, `X-Frame-Options`,
   Referrer-Policy, Permissions-Policy.
 - `corsAllowlist`: **exact** origin allowlist; never `Access-Control-Allow-Origin: *`
@@ -209,21 +220,25 @@ Request with `Authorization: Bearer <access>`
 - `requestContext`: requestId/correlationId propagation + `X-Response-Time`.
 
 ### 4.5 Abuse / brute-force
+
 - Per-endpoint **rate limiting** (login, register, OTP, refresh, API).
 - Account **lockout** after N failed attempts (15-min window).
 - OTP **cooldown**, **attempt caps**, short TTL.
 - **Enumeration-safe** flows: unknown emails still burn a token-shaped decoy.
 
 ### 4.6 Audit & observability
+
 - **Tamper-evident** audit log (append-only `prevHash` chain).
 - **Never log** passwords, tokens, OTP codes, client secrets (`[REDACTED]`).
 - Structured logger with child `requestId` context; metrics registry.
 
 ### 4.7 Fail-closed default
+
 - Security-critical dependency failure (e.g. account state cannot be verified)
   results in **no identity** being attached → 401/503, never silent allow.
 
 ### 4.8 Known gaps / notes (see `problems.md`)
+
 - **Persistence type mismatch (unfixed):** Mongoose models type
   `tenantId`/`applicationId` as **ObjectID** while the SDK config, JWTs and
   domain types use **strings**. Any real persistence (`UserModel.create`,
@@ -253,7 +268,7 @@ Request with `Authorization: Bearer <access>`
 ## 6. Reliability
 
 - **Fail-closed** authentication: a drained Redis or an unverifiable account
-  state never *grants* access.
+  state never _grants_ access.
 - **Rotating tokens** bound token lifetime and detect replay/theft early.
 - **External sink isolation:** audit sink failures are swallowed so a broken
   analytics pipeline cannot break authentication.
@@ -270,6 +285,7 @@ Request with `Authorization: Bearer <access>`
 
 Because authorization is largely **stateless** (signed access tokens with
 encapsulated `IdentityContext`), the hot path scales horizontally:
+
 - Multiple IdP instances can share MongoDB + Redis; access-token verification
   needs only the JWKS, not a shared session store.
 - **Stateless verification:** `authenticate` verifies the JWT signature + kid
@@ -282,6 +298,7 @@ encapsulated `IdentityContext`), the hot path scales horizontally:
   vertical scale-out without being per-process.
 
 ### Horizontal scaling recommendations
+
 - Run the IdP behind an LB; keep `trust proxy = 1` (already set) so `req.ip`
   is the real client IP (correct audit + rate-limiting).
 - Use the optional `redis` client for distributed rate/cache state across
@@ -304,9 +321,15 @@ import { createPezhwan } from '@pezhwan/core';
 import { buildRouters, securityHeaders, corsAllowlist } from '@pezhwan/express';
 
 const runtime = createPezhwan({
-  tenantId: '...', applicationId: '...',
-  issuer: 'https://id.example.com', audience: 'pezhwan.clients',
-  otpDelivery: { sendEmail: async (to, code) => { /* send */ } },
+  tenantId: '...',
+  applicationId: '...',
+  issuer: 'https://id.example.com',
+  audience: 'pezhwan.clients',
+  otpDelivery: {
+    sendEmail: async (to, code) => {
+      /* send */
+    },
+  },
 });
 ```
 

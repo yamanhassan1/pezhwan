@@ -19,3 +19,8 @@ export * from './oauthClient.model.ts';
 export * from './authorizationCode.model.ts';
 export * from './verificationToken.model.ts';
 export * from './backupCode.model.ts';
+export * from './rateLimitCounter.model.ts';
+export * from './webauthn-credential.model.ts';
+export * from './risk-event.model.ts';
+export * from './breach-record.model.ts';
+export * from './decoy-user.model.ts';

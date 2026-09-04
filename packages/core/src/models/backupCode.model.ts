@@ -6,7 +6,7 @@
  */
 
 import mongoose from 'mongoose';
-import type { Model, Types } from 'mongoose';
+import type { Model } from 'mongoose';
 
 const { Schema, model, models } = mongoose;
 

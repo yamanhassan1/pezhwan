@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Pezhwan, PezhwanClient, FileKeyStoreAdapter, MemoryKeyStoreAdapter, TokenError } from '@pezhwan/node';
+import {
+  Pezhwan,
+  PezhwanClient,
+  FileKeyStoreAdapter,
+  MemoryKeyStoreAdapter,
+  TokenError,
+} from '@pezhwan/node';
 
 const baseConfig = {
   tenantId: 't1',
@@ -48,7 +54,21 @@ test('node SDK rejects a tampered access token', () => {
   const token = runtime.tokens.signAccessToken(identity);
   const parts = token.split('.');
   parts[1] = Buffer.from(
-    JSON.stringify({ sub: 'u1', tenantId: 't1', applicationId: 'a1', sessionId: 's1', roles: ['ADMIN'], permissions: ['ride:read'], authMethod: 'password', kid: '', iss: 'https://id.pezhwan.test', aud: 'pezhwan.clients', iat: 0, exp: 9999999999, jti: 'x' }),
+    JSON.stringify({
+      sub: 'u1',
+      tenantId: 't1',
+      applicationId: 'a1',
+      sessionId: 's1',
+      roles: ['ADMIN'],
+      permissions: ['ride:read'],
+      authMethod: 'password',
+      kid: '',
+      iss: 'https://id.pezhwan.test',
+      aud: 'pezhwan.clients',
+      iat: 0,
+      exp: 9999999999,
+      jti: 'x',
+    }),
   ).toString('base64url');
   const tampered = parts.join('.');
   assert.throws(

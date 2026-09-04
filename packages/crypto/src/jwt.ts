@@ -7,12 +7,7 @@
  * secret.
  */
 
-import {
-  generateKeyPairSync,
-  createPublicKey,
-  createPrivateKey,
-  randomUUID,
-} from 'node:crypto';
+import { generateKeyPairSync, createPublicKey, createPrivateKey, randomUUID } from 'node:crypto';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import type { JwtAlgorithm } from '@pezhwan/shared';
 
@@ -55,9 +50,10 @@ export interface JwkJson {
  * Generate an RSA key pair suitable for RS256 JWT signing.
  * @param modulusLength default 2048 bits.
  */
-export function generateRsaKeyPair(
-  modulusLength = 2048,
-): { publicKey: string; privateKey: string } {
+export function generateRsaKeyPair(modulusLength = 2048): {
+  publicKey: string;
+  privateKey: string;
+} {
   const { publicKey, privateKey } = generateKeyPairSync('rsa', {
     modulusLength,
     publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -117,12 +113,8 @@ export class KeyStore {
 
   /** The currently active signing key (for new tokens). */
   get current(): SigningKey {
-    const all = [...this.keys.values()].sort(
-      (a, b) => b.createdAt - a.createdAt,
-    );
-    const active = all.find(
-      (k) => k.status === 'ACTIVE' && k.expiresAt > Date.now(),
-    );
+    const all = [...this.keys.values()].sort((a, b) => b.createdAt - a.createdAt);
+    const active = all.find((k) => k.status === 'ACTIVE' && k.expiresAt > Date.now());
     if (active) {
       return active;
     }
@@ -133,9 +125,7 @@ export class KeyStore {
   /** Look up a key by kid (for verification). Returns undefined if unknown. */
   byKid(kid: string): SigningKey | undefined {
     const key = this.keys.get(kid);
-    return key && key.status !== 'REVOKED' && key.expiresAt > Date.now()
-      ? key
-      : undefined;
+    return key && key.status !== 'REVOKED' && key.expiresAt > Date.now() ? key : undefined;
   }
 
   /**
@@ -192,11 +182,7 @@ export class KeyStore {
   jwks(): JwkJson[] {
     const now = Date.now();
     return [...this.keys.values()]
-      .filter(
-        (k) =>
-          k.expiresAt > now &&
-          (k.status === 'ACTIVE' || k.status === 'VERIFY-ONLY'),
-      )
+      .filter((k) => k.expiresAt > now && (k.status === 'ACTIVE' || k.status === 'VERIFY-ONLY'))
       .map((k) => publicKeyToJwk(k.publicKey, k.kid));
   }
 

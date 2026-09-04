@@ -49,9 +49,7 @@ export function evaluatePassword(
   const errors: string[] = [];
 
   if (byteLength(password) > policy.maxBytes) {
-    errors.push(
-      `Password must be at most ${policy.maxBytes} bytes (UTF-8).`,
-    );
+    errors.push(`Password must be at most ${policy.maxBytes} bytes (UTF-8).`);
   }
   if (password.length < policy.minLength) {
     errors.push(`Password must be at least ${policy.minLength} characters.`);

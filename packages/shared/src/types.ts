@@ -39,12 +39,7 @@ export type Severity = 'info' | 'warning' | 'critical';
  * immediately to `replaced` (or, on a crashed rotation, is treated as
  * consumed/reuse by subsequent requests).
  */
-export type SessionStatus =
-  | 'active'
-  | 'rotating'
-  | 'replaced'
-  | 'revoked'
-  | 'expired';
+export type SessionStatus = 'active' | 'rotating' | 'replaced' | 'revoked' | 'expired';
 
 /** MIME or generic media types used to describe application registration. */
 export type ApplicationPlatform = 'web' | 'mobile' | 'api' | 'service' | 'admin';
@@ -211,10 +206,7 @@ export interface TokenClaims {
 // ---------------------------------------------------------------------------
 
 /** Grants supported by the OAuth/OIDC authorization server. */
-export type OAuthGrant =
-  | 'authorization_code'
-  | 'refresh_token'
-  | 'client_credentials';
+export type OAuthGrant = 'authorization_code' | 'refresh_token' | 'client_credentials';
 
 /** Response modes / flows Pezhwan implements. */
 export type OAuthResponseType = 'code';
@@ -283,11 +275,7 @@ export interface MfaSettings {
 // ---------------------------------------------------------------------------
 
 export type VerificationTokenKind =
-  | 'email_verification'
-  | 'password_reset'
-  | 'magic_link'
-  | 'email_change'
-  | 'phone_change';
+  'email_verification' | 'password_reset' | 'magic_link' | 'email_change' | 'phone_change';
 
 /** A short-lived, single-use token bound to a user + tenant + application. */
 export interface VerificationToken {

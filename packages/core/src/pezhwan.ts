@@ -6,16 +6,9 @@
  * the auth engine. Framework adapters (@pezhwan/express, etc.) wrap this.
  */
 
-import {
-  KeyStore,
-  type KeyStore as CryptoKeyStore,
-} from '@pezhwan/crypto';
+import { KeyStore, type KeyStore as CryptoKeyStore } from '@pezhwan/crypto';
 import type { JwtAlgorithm } from '@pezhwan/shared';
-import {
-  createRedisCache,
-  type RedisCache,
-  type RedisLike,
-} from './services/redisCache.ts';
+import { createRedisCache, type RedisCache, type RedisLike } from './services/redisCache.ts';
 import { TokenService } from './services/token.service.ts';
 import { SessionService } from './services/session.service.ts';
 import { AccountStateService } from './services/accountState.service.ts';
@@ -30,7 +23,11 @@ import { RateLimitService } from './services/rateLimit.service.ts';
 import type { RateLimitRule, RateLimitType } from './services/rateLimit.service.ts';
 import { PezhwanLogger, newRequestId } from './services/logger.service.ts';
 import { MetricsRegistry } from './services/metrics.service.ts';
-import { KeyStoreService, MemoryKeyStoreAdapter, FileKeyStoreAdapter } from './services/keyStore.service.ts';
+import {
+  KeyStoreService,
+  MemoryKeyStoreAdapter,
+  FileKeyStoreAdapter,
+} from './services/keyStore.service.ts';
 import {
   AuthEngine,
   type AuthEngineOptions,
@@ -119,9 +116,7 @@ export interface PezhwanRuntime {
  *
  * @throws ConfigurationError when required settings are missing.
  */
-export function createPezhwan(
-  config: PezhwanConfig,
-): PezhwanRuntime {
+export function createPezhwan(config: PezhwanConfig): PezhwanRuntime {
   if (!config.issuer || !config.audience) {
     throw new Error('Pezhwan requires issuer and audience');
   }
@@ -134,10 +129,7 @@ export function createPezhwan(
 
   // Keystore (RS256). In-memory + optional persistence adapter via service.
   const cryptoStore = new KeyStore(config.jwtAlgorithm ?? 'RS256');
-  const keyStoreService = new KeyStoreService(
-    cryptoStore,
-    new MemoryKeyStoreAdapter(),
-  );
+  const keyStoreService = new KeyStoreService(cryptoStore, new MemoryKeyStoreAdapter());
   // Seed at least one signing key so startup is immediately usable (JWKS + sign).
   keyStoreService.ensureKey();
 
@@ -166,12 +158,7 @@ export function createPezhwan(
   const audit = new AuditService();
   const authorization = new AuthorizationService(audit, accountState);
 
-  const mfa = new MfaService(
-    config.tenantId,
-    config.applicationId,
-    audit,
-    config.mfaEncryptionKey,
-  );
+  const mfa = new MfaService(config.tenantId, config.applicationId, audit, config.mfaEncryptionKey);
   const verificationTokens = new VerificationTokenService(
     config.tenantId,
     config.applicationId,
@@ -221,7 +208,14 @@ export function createPezhwan(
   };
   const auth = new AuthEngine(engineDeps, engineOptions);
 
-  const rateLimiter = new RateLimitService(cache, config.rateLimits);
+  const rateLimiter = new RateLimitService(
+    cache,
+    config.rateLimits,
+    // Durable Mongo fallback engages only when Redis is CONFIGURED (so a Redis
+    // outage degrades to a shared MongoDB counter). A never-configured
+    // deployment keeps the process-local fallback.
+    config.redis != null,
+  );
 
   const oauth = new OAuthService({
     tokens,
