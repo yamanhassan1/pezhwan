@@ -167,7 +167,9 @@ export class TokenService {
           ? err.code
           : (err as Error).name === 'TokenExpiredError'
             ? 'TOKEN_EXPIRED'
-            : 'INVALID_SIGNATURE';
+            : (err as Error).name === 'NotBeforeError'
+              ? 'TOKEN_NOT_ACTIVE'
+              : 'INVALID_SIGNATURE';
       throw new TokenError('Invalid access token', reason);
     }
 

@@ -144,7 +144,16 @@ export class PezhwanLogger {
           console.log(json);
         }
       }
-      void this.options.exporter?.(line);
+      // SYNC portion of an exporter is covered by the try above. An ASYNC
+      // exporter rejection must never surface as an unhandledRejection, so the
+      // returned promise gets a no-op catch instead of being fire-and-forgotten.
+      const exported = this.options.exporter?.(line);
+      if (exported && typeof (exported as Promise<void>).then === 'function') {
+        (exported as Promise<void>).catch(() => {
+          // Exporter failures are best-effort: logging must never crash the
+          // process or the request path.
+        });
+      }
     } catch {
       // Logging must never crash the process.
     }

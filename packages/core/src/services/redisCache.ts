@@ -208,7 +208,18 @@ export class RedisCacheImpl implements RedisCache {
   }
 
   async ready(): Promise<boolean> {
-    return Boolean(this.client && this.client.status === 'ready');
+    if (!this.client || this.client.status !== 'ready') {
+      return false;
+    }
+    try {
+      // A client can report `status === 'ready'` while the server is actually
+      // unreachable (network partition or wedged backend). Probe a real command
+      // so `ready()` reflects command health, not just the handshake state.
+      await this.client.get(this.key('__ready_probe__'));
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

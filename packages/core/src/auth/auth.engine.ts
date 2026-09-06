@@ -8,7 +8,13 @@
  * Applications never implement auth logic themselves — they call the engine.
  */
 
-import { AuthenticationError, ValidationError, AUDIT_EVENT } from '@pezhwan/shared';
+import {
+  AuthenticationError,
+  ValidationError,
+  PezhwanError,
+  SecurityDependencyError,
+  AUDIT_EVENT,
+} from '@pezhwan/shared';
 import type { AuthMethod, IdentityContext, OtpChannel, OtpPurpose } from '@pezhwan/shared';
 import { hashPassword, verifyPassword, isArgon2Hash } from '@pezhwan/crypto';
 import type { RedisCache } from '../services/redisCache.ts';
@@ -247,10 +253,12 @@ export class AuthEngine {
     password: string;
     device?: { ip?: string; userAgent?: string; deviceLabel?: string };
   }): Promise<LoginResult> {
-    const user = await this.findUser({
-      email: input.email,
-      phone: input.phone,
-    });
+    const user = await this.withAccountStore(() =>
+      this.findUser({
+        email: input.email,
+        phone: input.phone,
+      }),
+    );
     if (!user) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
@@ -264,17 +272,20 @@ export class AuthEngine {
     }
     const ok = await verifyPassword(input.password, user.passwordHash);
     if (!ok) {
-      await this.recordFailedLogin(user);
+      await this.withAccountStore(() => this.recordFailedLogin(user));
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
     if (!user.isActive) {
       throw new AuthenticationError('Account disabled', 'ACCOUNT_DISABLED');
     }
-    await this.clearFailedLogin(user);
+    await this.withAccountStore(() => this.clearFailedLogin(user));
 
     // MFA gateway: if the user has TOTP enabled, the password is valid but we
     // do NOT issue tokens until a second factor is presented.
-    if (this.deps.mfa && (await this.deps.mfa.isEnabled(String(user._id)))) {
+    if (
+      this.deps.mfa &&
+      (await this.withAccountStore(() => this.deps.mfa!.isEnabled(String(user._id))))
+    ) {
       await this.audit?.log({
         eventType: AUDIT_EVENT.LOGIN_SUCCESS,
         userId: String(user._id),
@@ -907,6 +918,26 @@ export class AuthEngine {
   // -------------------------------------------------------------------------
   // Helpers
   // -------------------------------------------------------------------------
+
+  /**
+   * Fail-closed boundary around account-store (Mongo) operations.
+   *
+   * A down/unresponsive account store must NEVER leak as a raw mongoose error:
+   * from the caller's perspective that would look like a generic 500 instead of
+   * the typed, retryable 503 the API contract promises for infrastructure
+   * failures. Genuine Pezhwan errors (validation, invalid credentials, ...) pass
+   * through untouched; only unexpected/untyped store failures are mapped.
+   */
+  private async withAccountStore<T>(op: () => Promise<T>): Promise<T> {
+    try {
+      return await op();
+    } catch (err) {
+      if (err instanceof PezhwanError) {
+        throw err;
+      }
+      throw new SecurityDependencyError('Account store unavailable', 'FAILED_SECURITY_DEPENDENCY');
+    }
+  }
 
   private async findUser(input: UserLookupInput): Promise<UserDoc | null> {
     if (this.deps.lookupUser) {

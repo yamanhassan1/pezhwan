@@ -169,6 +169,22 @@ export class KeyStore {
     ) {
       throw new Error('Cannot restore an incomplete signing key');
     }
+    try {
+      // PEM validity is enforced at ADOPTION time, not lazily at sign/verify.
+      // Garbage key material must be rejected here (fail closed) rather than
+      // adopted as the ACTIVE key and only blowing up when a token is signed.
+      createPublicKey(key.publicKey);
+      createPrivateKey(key.privateKey);
+      if (
+        createPublicKey(key.privateKey)
+          .export({ format: 'der', type: 'spki' })
+          .equals(createPublicKey(key.publicKey).export({ format: 'der', type: 'spki' })) === false
+      ) {
+        throw new Error('public/private key material do not match');
+      }
+    } catch {
+      throw new Error(`Cannot restore an incomplete signing key (invalid ${key.kid} key material)`);
+    }
     const restored: SigningKey = {
       ...key,
       status: key.status ?? 'ACTIVE',
