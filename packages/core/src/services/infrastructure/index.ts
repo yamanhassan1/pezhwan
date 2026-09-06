@@ -40,3 +40,20 @@ export {
   type KeyDoc,
   type KeyDocStatus,
 } from './key-store.service.ts';
+export {
+  RegionManager,
+  createRegionManager,
+  LocalRegionEventTransport,
+  unconfiguredProbe,
+  type RegionManagerOptions,
+  type RegionConfig,
+  type RegionGeoPoint,
+  type UserLocation,
+  type RegionEvent,
+  type RegionEventHandler,
+  type RegionProbe,
+  type RegionProbeResult,
+  type RegionHealth,
+  type RegionEventTransport,
+  type RegionContext,
+} from './region-manager.ts';

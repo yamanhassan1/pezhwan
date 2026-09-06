@@ -19,6 +19,23 @@ export * from './verificationToken.service.ts';
 export * from './logger.service.ts';
 export * from './metrics.service.ts';
 export * from './infrastructure/mongo-transactions.ts';
+export {
+  RegionManager,
+  createRegionManager,
+  LocalRegionEventTransport,
+  unconfiguredProbe,
+  type RegionManagerOptions,
+  type RegionConfig,
+  type RegionGeoPoint,
+  type UserLocation,
+  type RegionEvent,
+  type RegionEventHandler,
+  type RegionProbe,
+  type RegionProbeResult,
+  type RegionHealth,
+  type RegionEventTransport,
+  type RegionContext,
+} from './infrastructure/region-manager.ts';
 export * from './auth/index.ts';
 export * from './security/index.ts';
 export * from './compliance/index.ts';

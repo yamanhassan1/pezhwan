@@ -88,6 +88,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the sign-in primitives — argon2id password hashing, JWT sign/verify under
   key rotation, OTP/TOTP/HOTP, timing-safe bearer comparison, and SRP-6a
   ephemeral generation — with throughput floors for regression detection.
+- **Multi-region active-active** (`services/infrastructure/region-manager.ts`):
+  geo-aware nearest-region routing, latency-aware best-region selection via
+  pluggable probes (cached 15 s), per-region connection context and health,
+  and global session/identity invalidation over an injectable transport with
+  idempotent, deduplicated delivery (`id`, `sourceRegion`, `issuedAt`
+  stamping; `PRIMARY_CHANGED` fan-out on `switchPrimary`). Defaults to an
+  in-process bus so single-node deployments degrade gracefully. See
+  `docs/operations/multi-region.md`.
 - Broad documentation: architecture, developer guides, migration guides,
   operations runbooks, deployment runbooks, security controls, and compliance
   references (50+ files).

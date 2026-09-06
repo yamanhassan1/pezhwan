@@ -1819,7 +1819,7 @@ scripts/security-audit.mjs            # Final security audit
 - [x] Event sourcing & CQRS
 - [x] GraphQL federation
 - [x] WebSocket/SSE real-time events
-- [ ] Multi-region active-active
+- [x] Multi-region active-active
 - [x] Teams & organizations
 - [x] Billing & subscriptions
 - [x] SCIM 2.0 provisioning
