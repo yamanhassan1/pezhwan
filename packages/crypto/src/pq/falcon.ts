@@ -51,8 +51,18 @@ export interface FalconParams {
 // ---------------------------------------------------------------------------
 
 export const FALCON_PARAMS: Record<string, FalconParams> = {
-  'Falcon-512': { publicKeyBytes: 897, privateKeyBytes: 1281, signatureBytes: 666, securityLevel: 1 },
-  'Falcon-1024': { publicKeyBytes: 1793, privateKeyBytes: 2305, signatureBytes: 1280, securityLevel: 5 },
+  'Falcon-512': {
+    publicKeyBytes: 897,
+    privateKeyBytes: 1281,
+    signatureBytes: 666,
+    securityLevel: 1,
+  },
+  'Falcon-1024': {
+    publicKeyBytes: 1793,
+    privateKeyBytes: 2305,
+    signatureBytes: 1280,
+    securityLevel: 5,
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -74,7 +84,7 @@ export class FalconSigner {
    * Generate a new Falcon key pair.
    */
   async generateKeyPair(): Promise<FalconKeyPair> {
-    const { publicKeyBytes, privateKeyBytes } = this.params;
+    const { privateKeyBytes } = this.params;
     const seed = randomBytes(64);
 
     const publicKey = await this.derivePublicKey(seed);
@@ -131,10 +141,19 @@ export class FalconSigner {
   private async derivePublicKey(seed: Buffer): Promise<Buffer> {
     const { publicKeyBytes } = this.params;
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', seed.slice(0, 32), { name: 'HKDF', hash: 'SHA-512' }, false, ['deriveBits'],
+      'raw',
+      seed.slice(0, 32),
+      { name: 'HKDF', hash: 'SHA-512' },
+      false,
+      ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-512', salt: new Uint8Array(64), info: new TextEncoder().encode('falcon-pk') },
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt: new Uint8Array(64),
+        info: new TextEncoder().encode('falcon-pk'),
+      },
       keyMaterial,
       publicKeyBytes * 8,
     );
@@ -146,10 +165,19 @@ export class FalconSigner {
     const nonce = randomBytes(40);
     const combined = Buffer.concat([privateKey.slice(0, 48), msgHash, nonce]);
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', combined, { name: 'HKDF', hash: 'SHA-512' }, false, ['deriveBits'],
+      'raw',
+      combined,
+      { name: 'HKDF', hash: 'SHA-512' },
+      false,
+      ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-512', salt: new Uint8Array(64), info: new TextEncoder().encode('falcon-sig') },
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt: new Uint8Array(64),
+        info: new TextEncoder().encode('falcon-sig'),
+      },
       keyMaterial,
       signatureBytes * 8,
     );

@@ -79,7 +79,8 @@ export class DecoyService {
     const doc = await DecoyUserModel.create({
       tenantId: params.tenantId,
       handle: params.handle,
-      passwordHash: params.passwordHash ?? `decoy-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      passwordHash:
+        params.passwordHash ?? `decoy-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       description: params.description,
       isActive: true,
       hitCount: 0,
@@ -88,15 +89,19 @@ export class DecoyService {
   }
 
   /** List active decoys for a tenant (operator console). */
-  async listDecoys(tenantId: string): Promise<Array<{
-    id: string;
-    handle: string;
-    description?: string;
-    hitCount: number;
-    lastAttemptAt?: Date | null;
-    lastAttemptIp?: string;
-  }>> {
-    const docs = await DecoyUserModel.find({ tenantId, isActive: true }).sort({ createdAt: -1 }).lean();
+  async listDecoys(tenantId: string): Promise<
+    Array<{
+      id: string;
+      handle: string;
+      description?: string;
+      hitCount: number;
+      lastAttemptAt?: Date | null;
+      lastAttemptIp?: string;
+    }>
+  > {
+    const docs = await DecoyUserModel.find({ tenantId, isActive: true })
+      .sort({ createdAt: -1 })
+      .lean();
     return docs.map((d) => ({
       id: String(d._id),
       handle: d.handle,
@@ -109,9 +114,6 @@ export class DecoyService {
 
   /** Deactivate a decoy (stops triggering but keeps history). */
   async deactivate(tenantId: string, decoyId: string): Promise<void> {
-    await DecoyUserModel.updateOne(
-      { _id: decoyId, tenantId },
-      { $set: { isActive: false } },
-    );
+    await DecoyUserModel.updateOne({ _id: decoyId, tenantId }, { $set: { isActive: false } });
   }
 }

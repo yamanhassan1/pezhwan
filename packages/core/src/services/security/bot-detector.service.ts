@@ -59,7 +59,11 @@ export class BotDetector {
     if (input.interaction === 'none' || !input.interaction) {
       score += 0.35;
       reasons.push('no interaction detected');
-    } else if (input.interaction === 'mouse_move' || input.interaction === 'key_press' || input.interaction === 'touch') {
+    } else if (
+      input.interaction === 'mouse_move' ||
+      input.interaction === 'key_press' ||
+      input.interaction === 'touch'
+    ) {
       score += 0.05;
       reasons.push('human-like interaction present');
     }
@@ -96,11 +100,8 @@ export class BotDetector {
     }
 
     score = Math.min(1, Math.max(0, score));
-    const verdict: BotDecision['verdict'] = score >= BOT_THRESHOLD
-      ? 'bot'
-      : score >= SUSPECT_THRESHOLD
-        ? 'suspect'
-        : 'human';
+    const verdict: BotDecision['verdict'] =
+      score >= BOT_THRESHOLD ? 'bot' : score >= SUSPECT_THRESHOLD ? 'suspect' : 'human';
 
     return { score, verdict, reasons };
   }
@@ -113,7 +114,7 @@ export class BotDetector {
 export function isSuspiciousUserAgent(ua: string | undefined | null): boolean {
   if (!ua) return true; // Missing UA is itself suspicious.
   const lower = ua.toLowerCase();
-  return (
-    /headless|phantomjs|puppeteer|selenium|playwright|curl|wget|python-requests|go-http-client|aws-sdk|okhttp|axios/i.test(lower)
+  return /headless|phantomjs|puppeteer|selenium|playwright|curl|wget|python-requests|go-http-client|aws-sdk|okhttp|axios/i.test(
+    lower,
   );
 }

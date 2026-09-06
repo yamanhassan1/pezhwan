@@ -10,14 +10,14 @@ challenge (step up to MFA), or block.
 Pezhwan's account-takeover (ATO) stack lives in
 `packages/core/src/services/security/`:
 
-| Service | File | Purpose |
-| ------- | ---- | ------- |
-| Risk engine | `risk.service.ts` | Blends signals into a 0-100 score and an allow/challenge/block/monitor verdict. |
-| Breach detection | `breach-detector.service.ts` | Checks passwords against known breach corpora and reacts to matches. |
-| HIBP integration | `hibp.service.ts` | HaveIBeenPwned k-anonymity lookups with a local range cache. |
-| Bot detection | `bot-detector.service.ts` | Detects automation with probabilistic scoring. |
-| Decoy users | `decoy.service.ts` | Honeypot accounts that trip security alerts on any attempted login. |
-| CAPTCHA | `captcha.service.ts` | Verifies hCaptcha, Cloudflare Turnstile, and reCAPTCHA tokens. |
+| Service          | File                         | Purpose                                                                         |
+| ---------------- | ---------------------------- | ------------------------------------------------------------------------------- |
+| Risk engine      | `risk.service.ts`            | Blends signals into a 0-100 score and an allow/challenge/block/monitor verdict. |
+| Breach detection | `breach-detector.service.ts` | Checks passwords against known breach corpora and reacts to matches.            |
+| HIBP integration | `hibp.service.ts`            | HaveIBeenPwned k-anonymity lookups with a local range cache.                    |
+| Bot detection    | `bot-detector.service.ts`    | Detects automation with probabilistic scoring.                                  |
+| Decoy users      | `decoy.service.ts`           | Honeypot accounts that trip security alerts on any attempted login.             |
+| CAPTCHA          | `captcha.service.ts`         | Verifies hCaptcha, Cloudflare Turnstile, and reCAPTCHA tokens.                  |
 
 ## How the risk engine thinks
 
@@ -30,26 +30,32 @@ import { RiskService } from '@pezhwan/core';
 const risk = new RiskService(tenantId, applicationId, audit);
 
 const assessment = risk.assess({
-  userId, ip, country: 'DE', latitude: 52.52, longitude: 13.40,
-  loginVelocityMs,         // time since this user's last sign-in
-  breachedPassword: true,  // a HIBP range hit for this password
-  isTor: true, isProxy: false,
-  botScore: 0.8, ipFailureCount: 6,
+  userId,
+  ip,
+  country: 'DE',
+  latitude: 52.52,
+  longitude: 13.4,
+  loginVelocityMs, // time since this user's last sign-in
+  breachedPassword: true, // a HIBP range hit for this password
+  isTor: true,
+  isProxy: false,
+  botScore: 0.8,
+  ipFailureCount: 6,
 });
 // → { score, verdict: 'challenge' | 'block' | 'allow', signals, requireMfa }
 ```
 
 Weights are additive and capped at 100:
 
-| Signal | Weight | Why it matters |
-| ------ | ------ | -------------- |
-| Impossible travel | up to 45 | >500 km within 6 h of a previous login is nearly uncompromisable by a human. |
-| Breached password | 60 | Anyone who already owns the password can sign in; force re-proof. |
-| Tor exit node | 40 | Strong anonymity signal. |
-| Proxy / VPN | 25 | Neutral on its own, meaningful in combination. |
-| Login velocity | up to 35 | Rapid re-logins across locations are scripted. |
-| IP failure reputation | up to 50 | 10+ recent failures from one IP is a stuffing pattern. |
-| Bot behaviour | 40 | Automation fingerprint on the request itself. |
+| Signal                | Weight   | Why it matters                                                               |
+| --------------------- | -------- | ---------------------------------------------------------------------------- |
+| Impossible travel     | up to 45 | >500 km within 6 h of a previous login is nearly uncompromisable by a human. |
+| Breached password     | 60       | Anyone who already owns the password can sign in; force re-proof.            |
+| Tor exit node         | 40       | Strong anonymity signal.                                                     |
+| Proxy / VPN           | 25       | Neutral on its own, meaningful in combination.                               |
+| Login velocity        | up to 35 | Rapid re-logins across locations are scripted.                               |
+| IP failure reputation | up to 50 | 10+ recent failures from one IP is a stuffing pattern.                       |
+| Bot behaviour         | 40       | Automation fingerprint on the request itself.                                |
 
 Verdict thresholds: `challenge` at ≥ 40, `block` at ≥ 75. Any evidence of a
 compromised password forces MFA even below the challenge threshold — the
@@ -84,7 +90,7 @@ breaks when the network hiccups. `BreachDetectorService` sits on top: it
 per-password rate-limits checks and turns a match into a risk-rule input.
 
 **When not to check.** Never block on this in the hot path for every login —
-check at registration and password *change* (where the user can pick a better
+check at registration and password _change_ (where the user can pick a better
 one), and only opportunistically at login.
 
 ## Bot detection

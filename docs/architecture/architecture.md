@@ -745,13 +745,13 @@ PEZHWAN is a **universal Identity & Access Management (IAM) SDK** built as a **m
 
 ## Architecture Summary
 
-| Aspect | Design Choice | Rationale |
-|--------|--------------|-----------|
-| **Modular Monorepo** | npm workspaces | Code sharing, versioning, single build |
-| **Package Layering** | Strict dependency direction | Clear boundaries, testability |
-| **Stateless Core** | JWT with local verification | Horizontal scaling, no session lookup |
-| **Stateful Operations** | MongoDB as source of truth | Durability, auditability, transactions |
-| **Redis as Cache** | Performance accelerator | Reduces database load, distributed limits |
-| **Fail-Closed Security** | No identity on uncertainty | Security over availability |
-| **Multi-Language SDKs** | 7+ languages | Developer adoption, ecosystem |
-| **Enterprise Features** | ABAC, SCIM, SAML, Webhooks | Enterprise requirements |
+| Aspect                   | Design Choice               | Rationale                                 |
+| ------------------------ | --------------------------- | ----------------------------------------- |
+| **Modular Monorepo**     | npm workspaces              | Code sharing, versioning, single build    |
+| **Package Layering**     | Strict dependency direction | Clear boundaries, testability             |
+| **Stateless Core**       | JWT with local verification | Horizontal scaling, no session lookup     |
+| **Stateful Operations**  | MongoDB as source of truth  | Durability, auditability, transactions    |
+| **Redis as Cache**       | Performance accelerator     | Reduces database load, distributed limits |
+| **Fail-Closed Security** | No identity on uncertainty  | Security over availability                |
+| **Multi-Language SDKs**  | 7+ languages                | Developer adoption, ecosystem             |
+| **Enterprise Features**  | ABAC, SCIM, SAML, Webhooks  | Enterprise requirements                   |

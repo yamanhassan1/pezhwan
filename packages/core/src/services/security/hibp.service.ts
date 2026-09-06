@@ -70,7 +70,7 @@ export class HibpService {
       return { breached: false, count: 0, prefix, cached: false };
     }
 
-    const match = range.find(([s, count]) => s === suffix);
+    const match = range.find(([s]) => s === suffix);
     if (match) {
       return { breached: true, count: match[1], prefix, cached: true };
     }
@@ -147,7 +147,12 @@ export function createHibpRangeFetcher(options: {
   userAgent?: string;
   timeoutMs?: number;
 }): HibpRangeFetcher {
-  const { baseUrl = 'https://api.pwnedpasswords.com', apiKey, userAgent = 'pezhwan', timeoutMs = 8000 } = options;
+  const {
+    baseUrl = 'https://api.pwnedpasswords.com',
+    apiKey,
+    userAgent = 'pezhwan',
+    timeoutMs = 8000,
+  } = options;
   return async (prefix: string): Promise<string> => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);

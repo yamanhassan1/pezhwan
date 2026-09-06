@@ -81,20 +81,29 @@ export class AwsKmsClient {
    */
   async initialize(): Promise<void> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // @ts-ignore -- optional peer dependency
+      // @ts-expect-error -- optional peer dependency
       const awsKms: any = await import('@aws-sdk/client-kms').catch(() => null);
       if (!awsKms) return;
 
-      const { KMSClient, EncryptCommand, DecryptCommand, GenerateDataKeyCommand,
-        CreateKeyCommand, DescribeKeyCommand, CreateAliasCommand, EnableKeyRotationCommand,
-        ListKeysCommand, ScheduleKeyDeletionCommand } = awsKms;
-      
+      const {
+        KMSClient,
+        EncryptCommand,
+        DecryptCommand,
+        GenerateDataKeyCommand,
+        CreateKeyCommand,
+        DescribeKeyCommand,
+        CreateAliasCommand,
+        EnableKeyRotationCommand,
+        ListKeysCommand,
+        ScheduleKeyDeletionCommand,
+      } = awsKms;
+
       this.kmsClient = new KMSClient({
         region: this.config.region,
-        credentials: this.config.accessKeyId && this.config.secretAccessKey
-          ? { accessKeyId: this.config.accessKeyId, secretAccessKey: this.config.secretAccessKey }
-          : undefined,
+        credentials:
+          this.config.accessKeyId && this.config.secretAccessKey
+            ? { accessKeyId: this.config.accessKeyId, secretAccessKey: this.config.secretAccessKey }
+            : undefined,
         endpoint: this.config.endpoint,
       });
 
@@ -119,9 +128,10 @@ export class AwsKmsClient {
   /**
    * Encrypt plaintext using a KMS key.
    */
-  async encrypt(plaintext: Buffer, encryptionContext?: Record<string, string>): Promise<AwsKmsEncryptResult> {
-    const start = Date.now();
-    
+  async encrypt(
+    plaintext: Buffer,
+    encryptionContext?: Record<string, string>,
+  ): Promise<AwsKmsEncryptResult> {
     if (!this.kmsClient) {
       return this.simulateEncrypt(plaintext);
     }
@@ -130,7 +140,7 @@ export class AwsKmsClient {
       const { EncryptCommand } = this._commands as {
         EncryptCommand: new (input: Record<string, unknown>) => { input: Record<string, unknown> };
       };
-      
+
       const command = new EncryptCommand({
         KeyId: this.config.keyArn ?? this.config.keyAlias,
         Plaintext: plaintext,
@@ -138,21 +148,28 @@ export class AwsKmsClient {
         EncryptionAlgorithm: 'SYMMETRIC_DEFAULT',
       });
 
-      const result = await (this.kmsClient as { send: (cmd: unknown) => Promise<Record<string, unknown>> }).send(command);
+      const result = await (
+        this.kmsClient as { send: (cmd: unknown) => Promise<Record<string, unknown>> }
+      ).send(command);
       return {
         ciphertext: Buffer.from(result.CiphertextBlob as Uint8Array),
         keyArn: result.KeyId as string,
         encryptionAlgorithm: result.EncryptionAlgorithm as string,
       };
     } catch (err) {
-      throw new Error(`AWS KMS encrypt failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `AWS KMS encrypt failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
   /**
    * Decrypt ciphertext using a KMS key.
    */
-  async decrypt(ciphertext: Buffer, encryptionContext?: Record<string, string>): Promise<AwsKmsDecryptResult> {
+  async decrypt(
+    ciphertext: Buffer,
+    encryptionContext?: Record<string, string>,
+  ): Promise<AwsKmsDecryptResult> {
     if (!this.kmsClient) {
       return this.simulateDecrypt(ciphertext);
     }
@@ -168,14 +185,18 @@ export class AwsKmsClient {
         EncryptionAlgorithm: 'SYMMETRIC_DEFAULT',
       });
 
-      const result = await (this.kmsClient as { send: (cmd: unknown) => Promise<Record<string, unknown>> }).send(command);
+      const result = await (
+        this.kmsClient as { send: (cmd: unknown) => Promise<Record<string, unknown>> }
+      ).send(command);
       return {
         plaintext: Buffer.from(result.Plaintext as Uint8Array),
         keyArn: result.KeyId as string,
         encryptionAlgorithm: result.EncryptionAlgorithm as string,
       };
     } catch (err) {
-      throw new Error(`AWS KMS decrypt failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `AWS KMS decrypt failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -194,7 +215,9 @@ export class AwsKmsClient {
 
     try {
       const { GenerateDataKeyCommand } = this._commands as {
-        GenerateDataKeyCommand: new (input: Record<string, unknown>) => { input: Record<string, unknown> };
+        GenerateDataKeyCommand: new (input: Record<string, unknown>) => {
+          input: Record<string, unknown>;
+        };
       };
 
       const command = new GenerateDataKeyCommand({
@@ -203,14 +226,18 @@ export class AwsKmsClient {
         EncryptionContext: encryptionContext,
       });
 
-      const result = await (this.kmsClient as { send: (cmd: unknown) => Promise<Record<string, unknown>> }).send(command);
+      const result = await (
+        this.kmsClient as { send: (cmd: unknown) => Promise<Record<string, unknown>> }
+      ).send(command);
       return {
         plaintext: Buffer.from(result.Plaintext as Uint8Array),
         encrypted: Buffer.from(result.CiphertextBlob as Uint8Array),
         keyArn: result.KeyId as string,
       };
     } catch (err) {
-      throw new Error(`AWS KMS generateDataKey failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `AWS KMS generateDataKey failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 

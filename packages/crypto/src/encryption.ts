@@ -7,7 +7,7 @@
  * and integrity.
  */
 
-import { randomBytes, createCipheriv, createDecipheriv, createHash } from 'node:crypto';
+import { randomBytes, createCipheriv, createDecipheriv } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Types

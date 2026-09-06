@@ -24,18 +24,13 @@
  */
 
 import mongoose from 'mongoose';
-import {
-  createCipheriv,
-  createDecipheriv,
-  randomBytes,
-} from 'node:crypto';
+import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
-const MONGODB_URI =
-  process.env.PEZHWAN_MONGODB_URI ?? 'mongodb://127.0.0.1:27017/pezhwan';
+const MONGODB_URI = process.env.PEZHWAN_MONGODB_URI ?? 'mongodb://127.0.0.1:27017/pezhwan';
 
 // Parse command-line flags
 const args = process.argv.slice(2);
@@ -98,8 +93,14 @@ function unwrapEnvelope(value: string, key: Buffer): Buffer {
  *   - 'corrupt'   → looks like an envelope but cannot be decrypted under the key
  *   - 'unrecognized' → neither (never modified)
  */
-function classify(value: unknown, key: Buffer):
-  { kind: 'current' } | { kind: 'legacy'; secret: Buffer } | { kind: 'corrupt' } | { kind: 'unrecognized' } {
+function classify(
+  value: unknown,
+  key: Buffer,
+):
+  | { kind: 'current' }
+  | { kind: 'legacy'; secret: Buffer }
+  | { kind: 'corrupt' }
+  | { kind: 'unrecognized' } {
   if (value == null || typeof value !== 'string' || value.length === 0) {
     return { kind: 'unrecognized' };
   }
@@ -135,7 +136,13 @@ function classify(value: unknown, key: Buffer):
 // Migration logic
 // ---------------------------------------------------------------------------
 
-interface Counters { current: number; upgraded: number; corrupt: number; unrecognized: number; failed: number; }
+interface Counters {
+  current: number;
+  upgraded: number;
+  corrupt: number;
+  unrecognized: number;
+  failed: number;
+}
 
 async function main(): Promise<void> {
   if (ROLLBACK) {
@@ -153,8 +160,8 @@ async function main(): Promise<void> {
   const cursor = users.find({ mfaSecret: { $exists: true, $ne: null } });
 
   let processed = 0;
-  let skippedCorrupt: string[] = [];
-  let skippedUnrecognized: string[] = [];
+  const skippedCorrupt: string[] = [];
+  const skippedUnrecognized: string[] = [];
 
   while (true) {
     const batch = await cursor.limit(BATCH_SIZE).toArray();
@@ -193,10 +200,7 @@ async function main(): Promise<void> {
                 if (!ok) {
                   counters.failed += 1;
                   // Restore on validation failure.
-                  await users.updateOne(
-                    { _id: userId },
-                    { $set: { mfaSecret: stored } },
-                  );
+                  await users.updateOne({ _id: userId }, { $set: { mfaSecret: stored } });
                   skippedCorrupt.push(String(userId));
                   break;
                 }
@@ -269,10 +273,7 @@ async function runRollback(): Promise<void> {
     const batch = await cursor.limit(BATCH_SIZE).toArray();
     if (batch.length === 0) break;
     for (const row of batch) {
-      const res = await users.updateOne(
-        { _id: row.userId },
-        { $set: { mfaSecret: row.secret } },
-      );
+      const res = await users.updateOne({ _id: row.userId }, { $set: { mfaSecret: row.secret } });
       if (res.modifiedCount === 1) {
         await backup.deleteOne({ _id: row._id });
         restored += 1;

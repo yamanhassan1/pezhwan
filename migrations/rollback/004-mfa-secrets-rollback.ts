@@ -14,8 +14,7 @@
 
 import mongoose from 'mongoose';
 
-const MONGODB_URI =
-  process.env.PEZHWAN_MONGODB_URI ?? 'mongodb://127.0.0.1:27017/pezhwan';
+const MONGODB_URI = process.env.PEZHWAN_MONGODB_URI ?? 'mongodb://127.0.0.1:27017/pezhwan';
 const BATCH_SIZE = Number(process.env.PEZHWAN_MIGRATION_BATCH ?? 1000);
 
 async function run(): Promise<void> {
@@ -32,10 +31,7 @@ async function run(): Promise<void> {
     if (batch.length === 0) break;
 
     for (const row of batch) {
-      const res = await users.updateOne(
-        { _id: row.userId },
-        { $set: { mfaSecret: row.secret } },
-      );
+      const res = await users.updateOne({ _id: row.userId }, { $set: { mfaSecret: row.secret } });
       if (res.modifiedCount === 1 || res.matchedCount === 1) {
         await backup.deleteOne({ _id: row._id });
         restored += 1;

@@ -7,7 +7,7 @@
  * @module
  */
 
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -83,7 +83,6 @@ const G = 2n;
 
 const ZERO = 0n;
 const ONE = 1n;
-const TWO = 2n;
 
 const params: SRPParams = {
   N: BigInt('0x' + N_HEX.replace(/\s/g, '')),
@@ -113,11 +112,6 @@ function sha256(data: Buffer): Buffer {
   return createHash('sha256').update(data).digest();
 }
 
-/** HMAC-SHA-256 */
-function hmacSha256(key: Buffer, data: Buffer): Buffer {
-  return createHmac('sha256', key).update(data).digest();
-}
-
 /**
  * Calculate H(N || g || H(salt || H(username || ":" || password)))
  *
@@ -128,18 +122,11 @@ function calculatePasswordHash(
   password: string,
   salt: Buffer,
   N: bigint,
-  g: bigint
+  g: bigint,
 ): Buffer {
-  const innerHash = sha256(
-    Buffer.from(username + ':' + password, 'utf-8')
-  );
+  const innerHash = sha256(Buffer.from(username + ':' + password, 'utf-8'));
   return sha256(
-    Buffer.concat([
-      hexToBuffer(bigIntToHex(N)),
-      hexToBuffer(bigIntToHex(g, 1)),
-      salt,
-      innerHash,
-    ])
+    Buffer.concat([hexToBuffer(bigIntToHex(N)), hexToBuffer(bigIntToHex(g, 1)), salt, innerHash]),
   );
 }
 
@@ -167,11 +154,6 @@ function modPow(base: bigint, exp: bigint, mod: bigint): bigint {
   return result;
 }
 
-/** Modular inverse using Fermat's little theorem */
-function modInverse(a: bigint, mod: bigint): bigint {
-  return modPow(a, mod - TWO, mod);
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -184,7 +166,7 @@ function modInverse(a: bigint, mod: bigint): bigint {
 export function generateVerifier(
   username: string,
   password: string,
-  saltBytes = 16
+  saltBytes = 16,
 ): { verifier: string; salt: string } {
   const salt = randomBytes(saltBytes);
   const x = bytesToBigInt(calculatePasswordHash(username, password, salt, params.N, params.g));
@@ -202,7 +184,7 @@ export function generateVerifier(
  */
 export function generateServerChallenge(
   salt: string,
-  sessionId?: string
+  sessionId?: string,
 ): {
   challenge: SRPServerChallenge;
   secret: { b: bigint; B: bigint };
@@ -231,7 +213,7 @@ export function processClientChallenge(
   serverSecret: { b: bigint; B: bigint },
   username: string,
   salt: string,
-  sessionId: string
+  _sessionId: string,
 ): SRPServerProof {
   const { b, B } = serverSecret;
   const N = params.N;
@@ -246,7 +228,7 @@ export function processClientChallenge(
 
   // u = H(A || B)
   const u = bytesToBigInt(
-    sha256(Buffer.concat([hexToBuffer(bigIntToHex(A)), hexToBuffer(bigIntToHex(B))]))
+    sha256(Buffer.concat([hexToBuffer(bigIntToHex(A)), hexToBuffer(bigIntToHex(B))])),
   );
 
   if (u === ZERO) {
@@ -254,7 +236,7 @@ export function processClientChallenge(
   }
 
   // S = (A * v^u)^b mod N
-  const S = modPow(A * modPow(v, u, N) % N, b, N);
+  const S = modPow((A * modPow(v, u, N)) % N, b, N);
 
   // K = H(S)
   const K = sha256(hexToBuffer(bigIntToHex(S)));
@@ -270,23 +252,11 @@ export function processClientChallenge(
   }
 
   const M1 = sha256(
-    Buffer.concat([
-      NhXorGh,
-      saltHash,
-      hexToBuffer(bigIntToHex(A)),
-      hexToBuffer(bigIntToHex(B)),
-      K,
-    ])
+    Buffer.concat([NhXorGh, saltHash, hexToBuffer(bigIntToHex(A)), hexToBuffer(bigIntToHex(B)), K]),
   );
 
   // M2 = H(A || M1 || K)
-  const M2 = sha256(
-    Buffer.concat([
-      hexToBuffer(bigIntToHex(A)),
-      M1,
-      K,
-    ])
-  );
+  const M2 = sha256(Buffer.concat([hexToBuffer(bigIntToHex(A)), M1, K]));
 
   return {
     M2: M2.toString('hex'),
@@ -303,7 +273,7 @@ export function verifyServerProof(
   clientA: string,
   clientM1: string,
   serverM2: string,
-  sessionKey: string
+  sessionKey: string,
 ): boolean {
   const A = hexToBuffer(clientA);
   const M1 = hexToBuffer(clientM1);
@@ -329,7 +299,7 @@ export function computeClientProof(
   salt: string,
   clientA: string,
   serverB: string,
-  sessionKey: string
+  sessionKey: string,
 ): string {
   const N = params.N;
   const g = params.g;
@@ -347,9 +317,7 @@ export function computeClientProof(
     NhXorGh[i] = Nhash[i]! ^ ghash[i]!;
   }
 
-  const M1 = sha256(
-    Buffer.concat([NhXorGh, saltHash, A, B, K])
-  );
+  const M1 = sha256(Buffer.concat([NhXorGh, saltHash, A, B, K]));
 
   return M1.toString('hex');
 }
@@ -391,7 +359,7 @@ export function deriveClientSession(
   username: string,
   password: string,
   salt: string,
-  serverB: string
+  serverB: string,
 ): { M1: string; sessionKey: string } {
   const N = params.N;
   const g = params.g;
@@ -404,15 +372,12 @@ export function deriveClientSession(
   }
 
   const u = bytesToBigInt(
-    sha256(Buffer.concat([hexToBuffer(bigIntToHex(A)), hexToBuffer(bigIntToHex(B))]))
+    sha256(Buffer.concat([hexToBuffer(bigIntToHex(A)), hexToBuffer(bigIntToHex(B))])),
   );
 
-  const x = bytesToBigInt(
-    calculatePasswordHash(username, password, saltBuf, N, g)
-  );
+  const x = bytesToBigInt(calculatePasswordHash(username, password, saltBuf, N, g));
 
-  const v = modPow(g, x, N);
-  const S = modPow(B - modPow(g, x, N) * u % N, a + u * x, N);
+  const S = modPow(B - ((modPow(g, x, N) * u) % N), a + u * x, N);
   const K = sha256(hexToBuffer(bigIntToHex(S)));
 
   session.sessionKey = K.toString('hex');
@@ -430,10 +395,7 @@ export function deriveClientSession(
  *
  * Returns true if the client proof is valid.
  */
-export function validateClientProof(
-  clientM1: string,
-  expectedM1: string
-): boolean {
+export function validateClientProof(clientM1: string, expectedM1: string): boolean {
   const a = hexToBuffer(clientM1);
   const b = hexToBuffer(expectedM1);
 

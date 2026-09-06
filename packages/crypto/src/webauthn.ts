@@ -7,12 +7,7 @@
  * @module
  */
 
-import {
-  createHash,
-  randomBytes,
-  timingSafeEqual,
-  createHmac,
-} from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -169,14 +164,11 @@ export interface WebAuthnVerificationResult {
 /** CBOR major types */
 const CBOR_MAJOR_TEXT = 3;
 const CBOR_MAJOR_MAP = 5;
-const CBOR_MAJOR_ARRAY = 4;
 const CBOR_MAJOR_BYTES = 2;
 const CBOR_MAJOR_INT = 0;
 
-const FLAG_UP = 0x01;  // User Present
-const FLAG_UV = 0x04;  // User Verified
-const FLAG_AT = 0x40;  // Attested Credential Data
-const FLAG_ED = 0x80;  // Extensions
+const FLAG_UP = 0x01; // User Present
+const FLAG_AT = 0x40; // Attested Credential Data
 
 // ---------------------------------------------------------------------------
 // CBOR helpers (minimal, focused on WebAuthn attestation)
@@ -197,9 +189,9 @@ function cborEncodeMap(entries: Array<[Buffer, Buffer]>): Buffer {
   const parts: Buffer[] = [];
   // Major type 5 (map), additional info = entries.length
   if (entries.length < 24) {
-    parts.push(Buffer.from([CBOR_MAJOR_MAP << 5 | entries.length]));
+    parts.push(Buffer.from([(CBOR_MAJOR_MAP << 5) | entries.length]));
   } else {
-    parts.push(Buffer.from([CBOR_MAJOR_MAP << 5 | 24, entries.length]));
+    parts.push(Buffer.from([(CBOR_MAJOR_MAP << 5) | 24, entries.length]));
   }
   for (const [key, val] of entries) {
     parts.push(key, val);
@@ -210,57 +202,29 @@ function cborEncodeMap(entries: Array<[Buffer, Buffer]>): Buffer {
 function cborEncodeText(str: string): Buffer {
   const bytes = Buffer.from(str, 'utf-8');
   if (bytes.length < 24) {
-    return Buffer.concat([
-      Buffer.from([CBOR_MAJOR_TEXT << 5 | bytes.length]),
-      bytes,
-    ]);
+    return Buffer.concat([Buffer.from([(CBOR_MAJOR_TEXT << 5) | bytes.length]), bytes]);
   }
   return Buffer.concat([
-    Buffer.from([CBOR_MAJOR_TEXT << 5 | 24, (bytes.length >> 8) & 0xff, bytes.length & 0xff]),
+    Buffer.from([(CBOR_MAJOR_TEXT << 5) | 24, (bytes.length >> 8) & 0xff, bytes.length & 0xff]),
     bytes,
   ]);
 }
 
 function cborEncodeBytes(buf: Buffer): Buffer {
   if (buf.length < 24) {
-    return Buffer.concat([
-      Buffer.from([CBOR_MAJOR_BYTES << 5 | buf.length]),
-      buf,
-    ]);
+    return Buffer.concat([Buffer.from([(CBOR_MAJOR_BYTES << 5) | buf.length]), buf]);
   }
   return Buffer.concat([
-    Buffer.from([CBOR_MAJOR_BYTES << 5 | 24, (buf.length >> 8) & 0xff, buf.length & 0xff]),
+    Buffer.from([(CBOR_MAJOR_BYTES << 5) | 24, (buf.length >> 8) & 0xff, buf.length & 0xff]),
     buf,
-  ]);
-}
-
-function cborEncodeArray(items: Buffer[]): Buffer {
-  if (items.length < 24) {
-    return Buffer.concat([
-      Buffer.from([CBOR_MAJOR_ARRAY << 5 | items.length]),
-      ...items,
-    ]);
-  }
-  return Buffer.concat([
-    Buffer.from([CBOR_MAJOR_ARRAY << 5 | 24, (items.length >> 8) & 0xff, items.length & 0xff]),
-    ...items,
   ]);
 }
 
 function cborEncodeInt(value: number): Buffer {
   if (value >= 0 && value < 24) {
-    return Buffer.from([CBOR_MAJOR_INT << 5 | value]);
+    return Buffer.from([(CBOR_MAJOR_INT << 5) | value]);
   }
   return cborEncodeUInt(value);
-}
-
-function cborEncodeNegative(value: number): Buffer {
-  // For COSE algorithm IDs (negative integers)
-  const abs = Math.abs(value) - 1;
-  if (abs < 24) {
-    return Buffer.from([(CBOR_MAJOR_INT << 5 | 32) | abs]);
-  }
-  throw new Error('CBOR: negative int too large');
 }
 
 function cborDecodeUInt(buf: Buffer, offset: number): { value: number; bytesRead: number } {
@@ -288,7 +252,10 @@ function cborDecodeBytes(buf: Buffer, offset: number): { value: Buffer; bytesRea
   };
 }
 
-function cborDecodeMap(buf: Buffer, offset: number): { value: Map<number, Buffer>; bytesRead: number } {
+function cborDecodeMap(
+  buf: Buffer,
+  offset: number,
+): { value: Map<number, Buffer>; bytesRead: number } {
   const { value: numEntries, bytesRead: mapHeaderLen } = cborDecodeUInt(buf, offset);
   const map = new Map<number, Buffer>();
   let pos = offset + mapHeaderLen;
@@ -315,11 +282,7 @@ function base64UrlToBuffer(str: string): Buffer {
 }
 
 function bufferToBase64Url(buf: Buffer): string {
-  return buf
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
 // ---------------------------------------------------------------------------
@@ -411,18 +374,10 @@ export async function verifyRegistrationResponse(params: {
   registrationResult: RegistrationResult;
   expectedUserId?: string;
 }): Promise<WebAuthnVerificationResult> {
-  const {
-    challenge,
-    origin,
-    rpId,
-    registrationResult,
-  } = params;
+  const { challenge, origin, rpId, registrationResult } = params;
 
   // 1. Parse clientDataJSON
-  const clientDataJSON = Buffer.from(
-    registrationResult.response.clientDataJSON,
-    'base64'
-  );
+  const clientDataJSON = Buffer.from(registrationResult.response.clientDataJSON, 'base64');
   const clientData: CollectedClientData = JSON.parse(clientDataJSON.toString('utf-8'));
 
   // 2. Validate type
@@ -491,12 +446,7 @@ export function generateAuthenticationOptions(options: {
   userVerification?: UserVerification;
   timeout?: number;
 }): PublicKeyCredentialRequestOptions {
-  const {
-    rpId,
-    allowCredentials = [],
-    userVerification = 'preferred',
-    timeout = 60000,
-  } = options;
+  const { rpId, allowCredentials = [], userVerification = 'preferred', timeout = 60000 } = options;
 
   return {
     challenge: generateChallenge(),
@@ -521,19 +471,10 @@ export async function verifyAuthenticationResponse(params: {
   authenticationResult: AuthenticationResult;
   credential: WebAuthnCredential;
 }): Promise<WebAuthnVerificationResult> {
-  const {
-    challenge,
-    origin,
-    rpId,
-    authenticationResult,
-    credential,
-  } = params;
+  const { challenge, origin, rpId, authenticationResult, credential } = params;
 
   // 1. Parse clientDataJSON
-  const clientDataJSON = Buffer.from(
-    authenticationResult.response.clientDataJSON,
-    'base64'
-  );
+  const clientDataJSON = Buffer.from(authenticationResult.response.clientDataJSON, 'base64');
   const clientData: CollectedClientData = JSON.parse(clientDataJSON.toString('utf-8'));
 
   // 2. Validate type
@@ -552,9 +493,7 @@ export async function verifyAuthenticationResponse(params: {
   }
 
   // 5. Parse authenticator data
-  const authenticatorData = base64UrlToBuffer(
-    authenticationResult.response.authenticatorData
-  );
+  const authenticatorData = base64UrlToBuffer(authenticationResult.response.authenticatorData);
   const authData = parseAuthenticatorData(authenticatorData);
 
   // 6. Validate rpIdHash
@@ -688,11 +627,7 @@ function parseAuthenticatorData(buf: Buffer): AuthenticatorData {
  *
  * Supports ES256 (ECDSA P-256) and RS256 (RSASSA-PKCS1-v1_5).
  */
-function verifyCOSESignature(
-  publicKeyBuf: Buffer,
-  data: Buffer,
-  signature: Buffer
-): boolean {
+function verifyCOSESignature(publicKeyBuf: Buffer, data: Buffer, signature: Buffer): boolean {
   // Parse COSE key structure
   const keyMap = cborDecodeMap(publicKeyBuf, 0).value;
   const kty = keyMap.get(1); // Key type
@@ -703,7 +638,6 @@ function verifyCOSESignature(
   }
 
   const ktyValue = kty[0]! & 0x1f; // EC2=2, RSA=3
-  const algValue = alg.length === 1 ? alg[0]! : -1;
 
   // For COSE negative integers: first byte has major type in top 3 bits
   // and the remaining bits encode the value
@@ -742,27 +676,11 @@ function verifyCOSESignature(
  *
  * Uses Node.js crypto with raw key construction.
  */
-function verifyEC256Signature(
-  data: Buffer,
-  signature: Buffer,
-  x: Buffer,
-  y: Buffer
-): boolean {
+function verifyEC256Signature(data: Buffer, signature: Buffer, x: Buffer, y: Buffer): boolean {
   const { createVerify } = require('node:crypto');
 
   // Build raw public key (uncompressed point: 04 || x || y)
-  const rawKey = Buffer.concat([
-    Buffer.from([0x04]),
-    x,
-    y,
-  ]);
-
-  // Build PKCS#8 wrapped key for verification
-  const keyObj = {
-    key: rawKey,
-    format: 'der',
-    type: 'spki',
-  };
+  const rawKey = Buffer.concat([Buffer.from([0x04]), x, y]);
 
   // P-256 OID: 1.2.840.10045.2.1 + 1.2.840.10045.3.1.7
   // For simplicity, use the raw buffer with Node's built-in verification
@@ -773,11 +691,7 @@ function verifyEC256Signature(
     // Convert raw r||s to DER
     const derSig = rawToDerSignature(signature);
 
-    return verifier.verify(
-      { key: rawKey, format: 'der', type: 'spki' },
-      derSig,
-      'der'
-    );
+    return verifier.verify({ key: rawKey, format: 'der', type: 'spki' }, derSig, 'der');
   } catch {
     return false;
   }
@@ -797,11 +711,7 @@ function rawToDerSignature(raw: Buffer): Buffer {
   const rDer = wrapInteger(rTrimmed);
   const sDer = wrapInteger(sTrimmed);
 
-  return Buffer.concat([
-    Buffer.from([0x30, rDer.length + sDer.length]),
-    rDer,
-    sDer,
-  ]);
+  return Buffer.concat([Buffer.from([0x30, rDer.length + sDer.length]), rDer, sDer]);
 }
 
 function trimLeadingZero(buf: Buffer): Buffer {
@@ -815,26 +725,15 @@ function trimLeadingZero(buf: Buffer): Buffer {
 function wrapInteger(buf: Buffer): Buffer {
   if (buf[0]! & 0x80) {
     // Negative — prepend 0x00
-    return Buffer.concat([
-      Buffer.from([0x02, buf.length + 1, 0x00]),
-      buf,
-    ]);
+    return Buffer.concat([Buffer.from([0x02, buf.length + 1, 0x00]), buf]);
   }
-  return Buffer.concat([
-    Buffer.from([0x02, buf.length]),
-    buf,
-  ]);
+  return Buffer.concat([Buffer.from([0x02, buf.length]), buf]);
 }
 
 /**
  * Simplified RS256 signature verification.
  */
-function verifyRS256Signature(
-  data: Buffer,
-  signature: Buffer,
-  n: Buffer,
-  e: Buffer
-): boolean {
+function verifyRS256Signature(data: Buffer, signature: Buffer, n: Buffer, e: Buffer): boolean {
   const { createVerify } = require('node:crypto');
 
   try {
@@ -858,10 +757,7 @@ function buildRSAPublicKeyDER(n: Buffer, e: Buffer): Buffer {
 
   // SEQUENCE { INTEGER n, INTEGER e }
   const seqPayload = Buffer.concat([nAsn1, eAsn1]);
-  const seq = Buffer.concat([
-    Buffer.from([0x30, seqPayload.length]),
-    seqPayload,
-  ]);
+  const seq = Buffer.concat([Buffer.from([0x30, seqPayload.length]), seqPayload]);
 
   return seq;
 }
@@ -926,35 +822,19 @@ export function buildAttestationObject(params: {
   const credIdLenBuf = Buffer.alloc(2);
   credIdLenBuf.writeUInt16BE(credentialId.length, 0);
 
-  const attCredData = Buffer.concat([
-    aaguid,
-    credIdLenBuf,
-    credentialId,
-    publicKeyCose,
-  ]);
+  const attCredData = Buffer.concat([aaguid, credIdLenBuf, credentialId, publicKeyCose]);
 
-  const authData = Buffer.concat([
-    rpIdHash,
-    Buffer.from([flags]),
-    signCountBuf,
-    attCredData,
-  ]);
+  const authData = Buffer.concat([rpIdHash, Buffer.from([flags]), signCountBuf, attCredData]);
 
   // CBOR encode attestation object
-  const fmtEntry: [Buffer, Buffer] = [
-    cborEncodeInt(1),
-    cborEncodeText(fmt),
-  ];
+  const fmtEntry: [Buffer, Buffer] = [cborEncodeInt(1), cborEncodeText(fmt)];
 
   const attStmtEntry: [Buffer, Buffer] = [
     cborEncodeInt(2),
     cborEncodeBytes(Buffer.alloc(0)), // Empty attStmt for "none"
   ];
 
-  const authDataEntry: [Buffer, Buffer] = [
-    cborEncodeInt(3),
-    cborEncodeBytes(authData),
-  ];
+  const authDataEntry: [Buffer, Buffer] = [cborEncodeInt(3), cborEncodeBytes(authData)];
 
   const map = cborEncodeMap([fmtEntry, attStmtEntry, authDataEntry]);
 
@@ -965,7 +845,4 @@ export function buildAttestationObject(params: {
 // Utility exports
 // ---------------------------------------------------------------------------
 
-export {
-  base64UrlToBuffer,
-  bufferToBase64Url,
-};
+export { base64UrlToBuffer, bufferToBase64Url };

@@ -183,18 +183,17 @@ export class HybridCrypto {
       return { publicKey, privateKey, algorithm: 'X25519' };
     }
     // ECDSA P-256
-    const kp = await crypto.subtle.generateKey(
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      true,
-      ['sign', 'verify'],
-    );
+    const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+      'sign',
+      'verify',
+    ]);
     const pubRaw = Buffer.from(await crypto.subtle.exportKey('raw', kp.publicKey));
     const privRaw = Buffer.from(await crypto.subtle.exportKey('pkcs8', kp.privateKey));
     return { publicKey: pubRaw, privateKey: privRaw, algorithm: 'ECDSA-P256' };
   }
 
   private async x25519PublicKey(privateKey: Buffer): Promise<Buffer> {
-    const key = await crypto.subtle.importKey('raw', new Uint8Array(privateKey), 'X25519', false, []);
+    await crypto.subtle.importKey('raw', new Uint8Array(privateKey), 'X25519', false, []);
     // X25519 public key derivation (simplified — real impl uses Curve25519 scalar mult).
     const hash = await crypto.subtle.digest('SHA-256', new Uint8Array(privateKey));
     return Buffer.from(hash);
@@ -202,9 +201,17 @@ export class HybridCrypto {
 
   private async classicalSign(message: Buffer, privateKey: Buffer): Promise<Buffer> {
     const key = await crypto.subtle.importKey(
-      'pkcs8', new Uint8Array(privateKey), { name: 'ECDSA', hash: 'SHA-256' }, false, ['sign'],
+      'pkcs8',
+      new Uint8Array(privateKey),
+      { name: 'ECDSA', hash: 'SHA-256' },
+      false,
+      ['sign'],
     );
-    const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new Uint8Array(message));
+    const sig = await crypto.subtle.sign(
+      { name: 'ECDSA', hash: 'SHA-256' },
+      key,
+      new Uint8Array(message),
+    );
     return Buffer.from(sig);
   }
 
@@ -215,9 +222,18 @@ export class HybridCrypto {
   ): Promise<boolean> {
     try {
       const key = await crypto.subtle.importKey(
-        'raw', new Uint8Array(publicKey), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify'],
+        'raw',
+        new Uint8Array(publicKey),
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        false,
+        ['verify'],
       );
-      return await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, new Uint8Array(signature), new Uint8Array(message));
+      return await crypto.subtle.verify(
+        { name: 'ECDSA', hash: 'SHA-256' },
+        key,
+        new Uint8Array(signature),
+        new Uint8Array(message),
+      );
     } catch {
       return false;
     }
@@ -225,10 +241,19 @@ export class HybridCrypto {
 
   private async deriveHybridSecret(combined: Buffer): Promise<Buffer> {
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', new Uint8Array(combined), { name: 'HKDF', hash: 'SHA-256' }, false, ['deriveBits'],
+      'raw',
+      new Uint8Array(combined),
+      { name: 'HKDF', hash: 'SHA-256' },
+      false,
+      ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: new TextEncoder().encode('hybrid-ss') },
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: new Uint8Array(32),
+        info: new TextEncoder().encode('hybrid-ss'),
+      },
       keyMaterial,
       256,
     );

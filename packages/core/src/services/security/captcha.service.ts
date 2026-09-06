@@ -57,14 +57,11 @@ export function createCaptchaVerifier(provider: CaptchaProvider) {
         return json.success === true;
       }
       if (provider === 'turnstile') {
-        const res = await fetch(
-          'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(token)}`,
-          },
-        );
+        const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(token)}`,
+        });
         const json = (await res.json()) as { success?: boolean };
         return json.success === true;
       }
@@ -97,7 +94,8 @@ export class CaptchaService {
     this.secretKey = config.secretKey;
     this.minScore = config.minScore ?? 0.5;
     this.verifyToken =
-      config.verifyToken ?? (config.secretKey ? createCaptchaVerifier(config.provider) : () => false);
+      config.verifyToken ??
+      (config.secretKey ? createCaptchaVerifier(config.provider) : () => false);
   }
 
   /**

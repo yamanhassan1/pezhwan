@@ -142,7 +142,9 @@ class SimulatedPkcs11Provider implements Pkcs11Provider {
   private sessionCounter = 0;
 
   async initialize(_config: Pkcs11Config): Promise<void> {}
-  async finalize(): Promise<void> { this.sessions.clear(); }
+  async finalize(): Promise<void> {
+    this.sessions.clear();
+  }
   async getSlots(): Promise<Array<{ slotId: number; label: string; tokenPresent: boolean }>> {
     return [{ slotId: 0, label: 'SoftHSM-Simulated', tokenPresent: true }];
   }
@@ -190,7 +192,11 @@ class SimulatedPkcs11Provider implements Pkcs11Provider {
   ): Promise<Pkcs11EncryptResult> {
     const start = Date.now();
     const actualIv = iv ?? randomBytes(16);
-    const cipher = (await import('node:crypto')).createCipheriv('aes-256-cbc', randomBytes(32), actualIv);
+    const cipher = (await import('node:crypto')).createCipheriv(
+      'aes-256-cbc',
+      randomBytes(32),
+      actualIv,
+    );
     const ciphertext = Buffer.concat([cipher.update(data), cipher.final()]);
     return { ciphertext, iv: actualIv, mechanism, latencyMs: Date.now() - start };
   }
@@ -201,7 +207,11 @@ class SimulatedPkcs11Provider implements Pkcs11Provider {
     _mechanism: string,
     iv?: Buffer,
   ): Promise<Buffer> {
-    const decipher = (await import('node:crypto')).createDecipheriv('aes-256-cbc', randomBytes(32), iv ?? randomBytes(16));
+    const decipher = (await import('node:crypto')).createDecipheriv(
+      'aes-256-cbc',
+      randomBytes(32),
+      iv ?? randomBytes(16),
+    );
     return Buffer.concat([decipher.update(data), decipher.final()]);
   }
   async generateRandom(_session: HsmSession, length: number): Promise<Buffer> {

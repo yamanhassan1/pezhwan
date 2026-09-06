@@ -70,7 +70,7 @@ export class GcpKmsClient {
    */
   async initialize(): Promise<void> {
     try {
-      // @ts-ignore — optional dependency, may not be installed
+      // @ts-expect-error �?" optional dependency, may not be installed
       const { KeyManagementServiceClient } = await import('@google-cloud/kms');
       this.client = new KeyManagementServiceClient({
         projectId: this.config.projectId,
@@ -99,7 +99,12 @@ export class GcpKmsClient {
 
     try {
       const keyName = this.keyVersionName();
-      const { encrypt } = this.client as { encrypt: (input: { name: string; plaintext: Buffer }) => Promise<[{ ciphertext: Buffer; name: string }]> };
+      const { encrypt } = this.client as {
+        encrypt: (input: {
+          name: string;
+          plaintext: Buffer;
+        }) => Promise<[{ ciphertext: Buffer; name: string }]>;
+      };
       const [result] = await encrypt({ name: keyName, plaintext });
       return {
         ciphertext: Buffer.from(result.ciphertext),
@@ -107,7 +112,9 @@ export class GcpKmsClient {
         protectionLevel: 'HSM',
       };
     } catch (err) {
-      throw new Error(`GCP KMS encrypt failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `GCP KMS encrypt failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -121,7 +128,12 @@ export class GcpKmsClient {
 
     try {
       const keyName = this.keyVersionName();
-      const { decrypt } = this.client as { decrypt: (input: { name: string; ciphertext: Buffer }) => Promise<[{ plaintext: Buffer; name: string }]> };
+      const { decrypt } = this.client as {
+        decrypt: (input: {
+          name: string;
+          ciphertext: Buffer;
+        }) => Promise<[{ plaintext: Buffer; name: string }]>;
+      };
       const [result] = await decrypt({ name: keyName, ciphertext });
       return {
         plaintext: Buffer.from(result.plaintext),
@@ -129,7 +141,9 @@ export class GcpKmsClient {
         primaryKeyName: result.name,
       };
     } catch (err) {
-      throw new Error(`GCP KMS decrypt failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `GCP KMS decrypt failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -145,7 +159,12 @@ export class GcpKmsClient {
 
     try {
       const keyName = this.keyVersionName();
-      const { encrypt } = this.client as { encrypt: (input: { name: string; plaintext: Buffer }) => Promise<[{ ciphertext: Buffer; name: string }]> };
+      const { encrypt } = this.client as {
+        encrypt: (input: {
+          name: string;
+          plaintext: Buffer;
+        }) => Promise<[{ ciphertext: Buffer; name: string }]>;
+      };
       const [result] = await encrypt({ name: keyName, plaintext });
       return {
         plaintext,
@@ -153,7 +172,9 @@ export class GcpKmsClient {
         keyName: this.config.keyId,
       };
     } catch (err) {
-      throw new Error(`GCP KMS generateDataKey failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `GCP KMS generateDataKey failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -165,7 +186,7 @@ export class GcpKmsClient {
     };
   }
 
-  private async simulateDecrypt(ciphertext: Buffer): Promise<GcpDecryptResult> {
+  private async simulateDecrypt(_ciphertext: Buffer): Promise<GcpDecryptResult> {
     return {
       plaintext: randomBytes(32),
       keyName: this.config.keyId,

@@ -134,6 +134,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   interface contract for optional lookups (previously it delegated to
   `getSecret`, which threw `SecretNotFoundError`).
 
+### Quality gates & CI
+
+- **Root test suites** (`tests/`): unit (54), security (61), failure-mode
+  (37, incl. redis/mongo/provider/clock-skew/network-partition), interop (22:
+  17 pass, 5 documented skips for SAML), integration (60, live Mongo via
+  mongodb-memory-server), and load (10 scripts, all performance floors met).
+- **CI pipeline** (`.github/workflows/ci.yml`): build + typecheck + lint +
+  format:check + workspace tests + license audit, plus a secret-scan job
+  (gitleaks + `scripts/secret-scan.mjs --ci`) and a Docker Compose validation
+  job, on Node 24. `security.yml` bumped to Node 24 to match the engine
+  requirement for the new `node --test` TypeScript suites.
+- **Final security audit** (`scripts/security-audit.mjs`): 21 automated
+  checks covering secret scanning, untracked secret material, core security
+  controls, threat-model/security documentation, TLS termination, CI wiring,
+  and reproducible installs. `npm run test:root` chains the local suites.
+- **Lint/format hygiene**: `eslint .` now clean (0 errors) and
+  `prettier --check .` green after removing dead code and unused imports in
+  `@pezhwan/crypto` (AES, WebAuthn, SRP, ZK, PQ, HSM adapters) and
+  `@pezhwan/core` services.
+- **TLS reverse proxy** (`infrastructure/docker/nginx`): functional
+  nginx-based TLS termination config (443, HSTS, security headers, HTTP→HTTPS
+  redirect) and Dockerfile, with runtime-mounted certificate bundle.
+
 <!-- Template section for the next release:
 
 ## [0.2.0] - YYYY-MM-DD

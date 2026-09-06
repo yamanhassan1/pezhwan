@@ -17,7 +17,8 @@ import type { AuditService } from '../audit.service.ts';
 // Types
 // ---------------------------------------------------------------------------
 
-export type TrustCriterion = 'security' | 'availability' | 'processing_integrity' | 'confidentiality' | 'privacy';
+export type TrustCriterion =
+  'security' | 'availability' | 'processing_integrity' | 'confidentiality' | 'privacy';
 
 export interface ControlEvidence {
   criterion: TrustCriterion;

@@ -200,11 +200,7 @@ export class KyberKeyEncapsulation {
     return this.hkdfDerive(combined, sharedSecretBytes, 'kyber-raw-ss');
   }
 
-  private async hkdfDerive(
-    ikm: Buffer,
-    length: number,
-    info: string,
-  ): Promise<Buffer> {
+  private async hkdfDerive(ikm: Buffer, length: number, info: string): Promise<Buffer> {
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
       new Uint8Array(ikm),
@@ -213,7 +209,12 @@ export class KyberKeyEncapsulation {
       ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: new TextEncoder().encode(info) },
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: new Uint8Array(32),
+        info: new TextEncoder().encode(info),
+      },
       keyMaterial,
       length * 8,
     );

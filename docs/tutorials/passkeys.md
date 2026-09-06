@@ -17,10 +17,10 @@ example lives in `demos/passkeys/`.
 
 Pezhwan splits WebAuthn into two layers:
 
-| Layer | Location | Responsibility |
-| ----- | -------- | -------------- |
-| Verifier primitives | `@pezhwan/crypto` `webauthn.ts` | Option generation, CBOR attestation parsing, COSE signature verification (ES256/RS256), counter checks. Pure and unit-testable. |
-| Enterprise service | `services/auth/webauthn.service.ts` | Challenge store, origin/rpId policy, credential persistence and lifecycle, audit events, cloned-authenticator detection. |
+| Layer               | Location                            | Responsibility                                                                                                                  |
+| ------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Verifier primitives | `@pezhwan/crypto` `webauthn.ts`     | Option generation, CBOR attestation parsing, COSE signature verification (ES256/RS256), counter checks. Pure and unit-testable. |
+| Enterprise service  | `services/auth/webauthn.service.ts` | Challenge store, origin/rpId policy, credential persistence and lifecycle, audit events, cloned-authenticator detection.        |
 
 Your server calls the service; your browser calls
 `navigator.credentials.create()` / `.get()` with the returned options.
@@ -32,10 +32,10 @@ import { WebAuthnService } from '@pezhwan/core';
 
 const webauthn = new WebAuthnService({
   rpName: 'Pezhwan Demo',
-  rpId: 'localhost',          // must match the page origin you serve
+  rpId: 'localhost', // must match the page origin you serve
   origins: ['http://localhost:5173'],
   requireUserVerification: true, // face/Touch ID/pin
-  requireResidentKey: false,     // set true to require passkeys
+  requireResidentKey: false, // set true to require passkeys
   attestation: 'none',
 });
 ```
@@ -86,17 +86,13 @@ The same two-step shape, mirrored for sign-in.
 
 ```ts
 const { options, expectedChallenge } = await webauthn.beginAuthentication(
-  userId,                    // required for non-resident flows
+  userId, // required for non-resident flows
   await webauthn.listCredentialIds(userId), // optional allowlist
 );
 
 // browser → navigator.credentials.get(options) → authenticationResult
 
-const ok = await webauthn.completeAuthentication(
-  authenticationResult,
-  expectedChallenge,
-  origin,
-);
+const ok = await webauthn.completeAuthentication(authenticationResult, expectedChallenge, origin);
 ```
 
 Behind the scenes the verifier:
@@ -114,11 +110,11 @@ Behind the scenes the verifier:
 The service exposes the lifecycle operations a typical "devices" screen needs:
 
 ```ts
-await webauthn.listCredentials(userId);    // id, nickname, last used, transports
+await webauthn.listCredentials(userId); // id, nickname, last used, transports
 await webauthn.renameCredential(userId, credentialId, 'Work laptop');
 await webauthn.deleteCredential(userId, credentialId);
 await webauthn.revokeCredential(userId, credentialId); // soft-disable, keeps history
-await webauthn.hasCredentials(userId);     // quick check for the login screen
+await webauthn.hasCredentials(userId); // quick check for the login screen
 ```
 
 ## 5. Client side (React)

@@ -168,10 +168,7 @@ export class LocalRegionEventTransport implements RegionEventTransport {
         try {
           await handler(event);
         } catch (error) {
-          console.error(
-            `[region-manager] ${this.name} handler failed for "${event.type}"`,
-            error,
-          );
+          console.error(`[region-manager] ${this.name} handler failed for "${event.type}"`, error);
         }
       }),
     );
@@ -476,10 +473,7 @@ export class RegionManager {
       try {
         await handler(event);
       } catch (error) {
-        console.error(
-          `[region-manager] consumer handler failed for "${event.type}"`,
-          error,
-        );
+        console.error(`[region-manager] consumer handler failed for "${event.type}"`, error);
       }
     }
   }
@@ -572,9 +566,7 @@ function haversineKm(a: RegionGeoPoint, b: RegionGeoPoint): number {
   const dLong = toRad(b.long - a.long);
   const sinLat = Math.sin(dLat / 2);
   const sinLong = Math.sin(dLong / 2);
-  const h =
-    sinLat * sinLat +
-    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * sinLong * sinLong;
+  const h = sinLat * sinLat + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * sinLong * sinLong;
   return 2 * earthRadiusKm * Math.asin(Math.sqrt(h));
 }
 

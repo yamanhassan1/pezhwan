@@ -54,9 +54,24 @@ export interface DilithiumParams {
 // ---------------------------------------------------------------------------
 
 export const DILITHIUM_PARAMS: Record<string, DilithiumParams> = {
-  Dilithium2: { publicKeyBytes: 1312, privateKeyBytes: 2528, signatureBytes: 2420, securityLevel: 2 },
-  Dilithium3: { publicKeyBytes: 1952, privateKeyBytes: 4000, signatureBytes: 3293, securityLevel: 3 },
-  Dilithium5: { publicKeyBytes: 2592, privateKeyBytes: 4864, signatureBytes: 4595, securityLevel: 5 },
+  Dilithium2: {
+    publicKeyBytes: 1312,
+    privateKeyBytes: 2528,
+    signatureBytes: 2420,
+    securityLevel: 2,
+  },
+  Dilithium3: {
+    publicKeyBytes: 1952,
+    privateKeyBytes: 4000,
+    signatureBytes: 3293,
+    securityLevel: 3,
+  },
+  Dilithium5: {
+    publicKeyBytes: 2592,
+    privateKeyBytes: 4864,
+    signatureBytes: 4595,
+    securityLevel: 5,
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -78,7 +93,7 @@ export class DilithiumSigner {
    * Generate a new Dilithium key pair.
    */
   async generateKeyPair(): Promise<DilithiumKeyPair> {
-    const { publicKeyBytes, privateKeyBytes } = this.params;
+    const { privateKeyBytes } = this.params;
 
     const seed = randomBytes(64);
     const publicKey = await this.derivePublicKey(seed);
@@ -142,10 +157,19 @@ export class DilithiumSigner {
     const hash = createHash('sha3-256').update(seed).digest();
     // Expand to public key size using HKDF.
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', hash, { name: 'HKDF', hash: 'SHA-256' }, false, ['deriveBits'],
+      'raw',
+      hash,
+      { name: 'HKDF', hash: 'SHA-256' },
+      false,
+      ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: new TextEncoder().encode('dilithium-pk') },
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: new Uint8Array(32),
+        info: new TextEncoder().encode('dilithium-pk'),
+      },
       keyMaterial,
       publicKeyBytes * 8,
     );
@@ -155,10 +179,19 @@ export class DilithiumSigner {
   private async deterministicSign(privateKey: Buffer, msgHash: Buffer): Promise<Buffer> {
     const { signatureBytes } = this.params;
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', new Uint8Array(privateKey.slice(0, 32)), { name: 'HKDF', hash: 'SHA-256' }, false, ['deriveBits'],
+      'raw',
+      new Uint8Array(privateKey.slice(0, 32)),
+      { name: 'HKDF', hash: 'SHA-256' },
+      false,
+      ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(msgHash), info: new TextEncoder().encode('dilithium-det-sig') },
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: new Uint8Array(msgHash),
+        info: new TextEncoder().encode('dilithium-det-sig'),
+      },
       keyMaterial,
       signatureBytes * 8,
     );
@@ -171,10 +204,19 @@ export class DilithiumSigner {
     const nonce = randomBytes(32);
     const combined = Buffer.concat([privateKey.slice(0, 32), msgHash, nonce]);
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', new Uint8Array(combined), { name: 'HKDF', hash: 'SHA-256' }, false, ['deriveBits'],
+      'raw',
+      new Uint8Array(combined),
+      { name: 'HKDF', hash: 'SHA-256' },
+      false,
+      ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: new TextEncoder().encode('dilithium-hedged-sig') },
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: new Uint8Array(32),
+        info: new TextEncoder().encode('dilithium-hedged-sig'),
+      },
       keyMaterial,
       signatureBytes * 8,
     );

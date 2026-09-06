@@ -130,13 +130,9 @@ export class DistributedLock {
     try {
       // Use the raw ioredis client if available for SET NX EX (atomic).
       if (this.client && this.client.status === 'ready' && typeof this.client.set === 'function') {
-        const result = await (this.client as { set: (...args: unknown[]) => Promise<string | null> }).set(
-          fullKey,
-          token,
-          'NX',
-          'EX',
-          ttlSeconds,
-        );
+        const result = await (
+          this.client as { set: (...args: unknown[]) => Promise<string | null> }
+        ).set(fullKey, token, 'NX', 'EX', ttlSeconds);
         return result === 'OK';
       }
 
@@ -164,7 +160,11 @@ export class DistributedLock {
         try {
           // Lua script for atomic ownership check + delete. Falls back to
           // GET + DEL for caches without Lua support.
-          if (this.client && this.client.status === 'ready' && typeof (this.client as any).eval === 'function') {
+          if (
+            this.client &&
+            this.client.status === 'ready' &&
+            typeof (this.client as any).eval === 'function'
+          ) {
             const result = await (this.client as any).eval(
               'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end',
               [fullKey],
@@ -184,7 +184,11 @@ export class DistributedLock {
         const newTtl = newTtlMs ?? ttlMs;
         const newTtlSeconds = Math.max(1, Math.ceil(newTtl / 1000));
         try {
-          if (this.client && this.client.status === 'ready' && typeof (this.client as any).eval === 'function') {
+          if (
+            this.client &&
+            this.client.status === 'ready' &&
+            typeof (this.client as any).eval === 'function'
+          ) {
             const result = await (this.client as any).eval(
               'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("pexpire", KEYS[1], ARGV[2]) else return 0 end',
               [fullKey],

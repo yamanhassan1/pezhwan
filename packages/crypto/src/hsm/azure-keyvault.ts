@@ -69,9 +69,9 @@ export class AzureKeyVaultClient {
    */
   async initialize(): Promise<void> {
     try {
-      // @ts-ignore — optional dependency, may not be installed
-      const { KeyClient, CryptographyClient } = await import('@azure/keyvault-keys');
-      // @ts-ignore — optional dependency, may not be installed
+      // @ts-expect-error -- optional dependency, may not be installed
+      const { KeyClient } = await import('@azure/keyvault-keys');
+      // @ts-expect-error -- optional dependency, may not be installed
       const { ClientSecretCredential } = await import('@azure/identity');
 
       let credential;
@@ -83,7 +83,7 @@ export class AzureKeyVaultClient {
         );
       } else {
         // Use DefaultAzureCredential (managed identity, CLI, etc.)
-        // @ts-ignore — optional dependency, may not be installed
+        // @ts-expect-error �?" optional dependency, may not be installed
         const { DefaultAzureCredential } = await import('@azure/identity');
         credential = new DefaultAzureCredential();
       }
@@ -103,8 +103,19 @@ export class AzureKeyVaultClient {
     }
 
     try {
-      const { keyClient } = this.client as { keyClient: { getCryptographyClient: (name: string) => Promise<{ encrypt: (alg: string, data: Buffer) => Promise<{ result: Buffer; algorithm: string; keyId?: string }> }> } };
-      const cryptoClient = await keyClient.getCryptographyClient(this.config.keyName ?? 'pezhwan-master');
+      const { keyClient } = this.client as {
+        keyClient: {
+          getCryptographyClient: (name: string) => Promise<{
+            encrypt: (
+              alg: string,
+              data: Buffer,
+            ) => Promise<{ result: Buffer; algorithm: string; keyId?: string }>;
+          }>;
+        };
+      };
+      const cryptoClient = await keyClient.getCryptographyClient(
+        this.config.keyName ?? 'pezhwan-master',
+      );
       const result = await cryptoClient.encrypt(algorithm, plaintext);
       return {
         ciphertext: Buffer.from(result.result),
@@ -113,7 +124,9 @@ export class AzureKeyVaultClient {
         keyVersion: result.keyId,
       };
     } catch (err) {
-      throw new Error(`Azure Key Vault encrypt failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `Azure Key Vault encrypt failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -126,8 +139,16 @@ export class AzureKeyVaultClient {
     }
 
     try {
-      const { keyClient } = this.client as { keyClient: { getCryptographyClient: (name: string) => Promise<{ decrypt: (alg: string, data: Buffer) => Promise<{ result: Buffer; algorithm: string }> }> } };
-      const cryptoClient = await keyClient.getCryptographyClient(this.config.keyName ?? 'pezhwan-master');
+      const { keyClient } = this.client as {
+        keyClient: {
+          getCryptographyClient: (name: string) => Promise<{
+            decrypt: (alg: string, data: Buffer) => Promise<{ result: Buffer; algorithm: string }>;
+          }>;
+        };
+      };
+      const cryptoClient = await keyClient.getCryptographyClient(
+        this.config.keyName ?? 'pezhwan-master',
+      );
       const result = await cryptoClient.decrypt(algorithm, ciphertext);
       return {
         plaintext: Buffer.from(result.result),
@@ -135,7 +156,9 @@ export class AzureKeyVaultClient {
         algorithm: result.algorithm,
       };
     } catch (err) {
-      throw new Error(`Azure Key Vault decrypt failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `Azure Key Vault decrypt failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -153,11 +176,17 @@ export class AzureKeyVaultClient {
     }
 
     try {
-      const { keyClient } = this.client as { keyClient: { encrypt: (name: string, alg: string, data: Buffer) => Promise<{ result: Buffer }> } };
+      const { keyClient } = this.client as {
+        keyClient: {
+          encrypt: (name: string, alg: string, data: Buffer) => Promise<{ result: Buffer }>;
+        };
+      };
       const result = await keyClient.encrypt(name, 'RSA-OAEP-256', plaintext);
       return { plaintext, encrypted: Buffer.from(result.result), keyName: name };
     } catch (err) {
-      throw new Error(`Azure Key Vault generateDataKey failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(
+        `Azure Key Vault generateDataKey failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -169,7 +198,7 @@ export class AzureKeyVaultClient {
     };
   }
 
-  private async simulateDecrypt(ciphertext: Buffer): Promise<AzureDecryptResult> {
+  private async simulateDecrypt(_ciphertext: Buffer): Promise<AzureDecryptResult> {
     return {
       plaintext: randomBytes(32),
       keyName: this.config.keyName ?? 'pezhwan-master',

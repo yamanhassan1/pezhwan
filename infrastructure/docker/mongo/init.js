@@ -10,7 +10,7 @@ try {
   if (status.ok === 1) {
     print('Replica set already initialized.');
   }
-} catch (e) {
+} catch {
   // Not yet initialized — configure it.
   print('Initializing replica set...');
 

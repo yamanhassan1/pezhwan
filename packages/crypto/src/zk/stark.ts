@@ -100,21 +100,14 @@ export class ZkStarkProver {
   /**
    * Generate a STARK proof from a computation trace.
    */
-  async prove(
-    circuit: StarkCircuit,
-    trace: Buffer[],
-    publicInputs: Buffer[],
-  ): Promise<StarkProof> {
+  async prove(circuit: StarkCircuit, trace: Buffer[], publicInputs: Buffer[]): Promise<StarkProof> {
     if (trace.length === 0) {
       throw new Error('Trace must be non-empty');
     }
 
     // STARK proving: trace → AIR constraints → FRI commitment layers → proof
     const traceCommitment = await this.commitTrace(trace);
-    const friCommitments = await this.friCommit(
-      circuit.friCommitments,
-      traceCommitment,
-    );
+    const friCommitments = await this.friCommit(circuit.friCommitments, traceCommitment);
 
     const proofBytes = await this.generateStarkProof(
       circuit,
@@ -166,10 +159,7 @@ export class ZkStarkProver {
    * Verify the integrity of an audit log chain.
    * Returns a STARK proof that the log has not been tampered with.
    */
-  async proveAuditLogIntegrity(
-    logEntries: Buffer[],
-    merkleRoot: Buffer,
-  ): Promise<StarkProof> {
+  async proveAuditLogIntegrity(logEntries: Buffer[], merkleRoot: Buffer): Promise<StarkProof> {
     const circuit = PEZHWAN_STARK_CIRCUITS.auditLogIntegrity!;
     const trace = logEntries.slice(0, circuit.traceLength);
     return this.prove(circuit, trace, [merkleRoot]);
@@ -185,10 +175,7 @@ export class ZkStarkProver {
     return hash;
   }
 
-  private async friCommit(
-    numCommitments: number,
-    initialCommitment: Buffer,
-  ): Promise<Buffer[]> {
+  private async friCommit(numCommitments: number, initialCommitment: Buffer): Promise<Buffer[]> {
     const commitments: Buffer[] = [];
     let current = initialCommitment;
     for (let i = 0; i < numCommitments; i++) {
@@ -215,10 +202,19 @@ export class ZkStarkProver {
     ]);
     const hash = createHash('sha3-256').update(combined).digest();
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', hash, { name: 'HKDF', hash: 'SHA-256' }, false, ['deriveBits'],
+      'raw',
+      hash,
+      { name: 'HKDF', hash: 'SHA-256' },
+      false,
+      ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: randomBytes(32), info: new TextEncoder().encode('stark-proof') },
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: randomBytes(32),
+        info: new TextEncoder().encode('stark-proof'),
+      },
       keyMaterial,
       1024 * 8,
     );
@@ -227,16 +223,13 @@ export class ZkStarkProver {
 
   private async verifyStarkProof(
     proof: StarkProof,
-    vk: StarkVerificationKey,
-    publicInputs: Buffer[],
+    _vk: StarkVerificationKey,
+    _publicInputs: Buffer[],
   ): Promise<boolean> {
     // Verify FRI commitment chain integrity.
     let current = proof.traceCommitment;
     for (const commitment of proof.friCommitments) {
-      const expected = createHash('sha3-256')
-        .update(current)
-        .update(commitment)
-        .digest();
+      const expected = createHash('sha3-256').update(current).update(commitment).digest();
       if (!expected.equals(commitment)) {
         return false;
       }

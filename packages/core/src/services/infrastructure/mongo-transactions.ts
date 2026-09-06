@@ -46,9 +46,7 @@ export interface TransactionOptions {
  * 133  NetworkTimeout
  * 13   HostUnreachable
  */
-const TRANSIENT_ERROR_CODES = new Set([
-  112, 245, 262, 249, 251, 24, 103, 116, 133, 13,
-]);
+const TRANSIENT_ERROR_CODES = new Set([112, 245, 262, 249, 251, 24, 103, 116, 133, 13]);
 
 const TRANSIENT_ERROR_REGEX = /session|topology|close|network|socket/i;
 
@@ -62,9 +60,7 @@ const TRANSIENT_ERROR_REGEX = /session|topology|close|network|socket/i;
  */
 export function transactionsSupported(conn?: mongoose.Connection): boolean {
   const connection = conn ?? mongoose.connection;
-  const topology = connection.readyState === 1
-    ? (connection as any).topology
-    : null;
+  const topology = connection.readyState === 1 ? (connection as any).topology : null;
 
   if (!topology) return false;
 
@@ -121,13 +117,7 @@ export async function withTransaction<T>(
   work: (session: ClientSession | null) => Promise<T>,
   options: TransactionOptions = {},
 ): Promise<T> {
-  const {
-    maxAttempts = 3,
-    baseDelayMs = 25,
-    isNonRetryable,
-    onRetry,
-    onFallback,
-  } = options;
+  const { maxAttempts = 3, baseDelayMs = 25, isNonRetryable, onRetry, onFallback } = options;
 
   const conn = mongoose.connection;
 
@@ -185,7 +175,15 @@ export async function withTransaction<T>(
  */
 export interface TransactionalOperation {
   model: mongoose.Model<any>;
-  operation: 'create' | 'insertMany' | 'updateOne' | 'updateMany' | 'deleteOne' | 'deleteMany' | 'findOneAndUpdate' | 'replaceOne';
+  operation:
+    | 'create'
+    | 'insertMany'
+    | 'updateOne'
+    | 'updateMany'
+    | 'deleteOne'
+    | 'deleteMany'
+    | 'findOneAndUpdate'
+    | 'replaceOne';
   data?: any;
   filter?: any;
   update?: any;

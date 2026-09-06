@@ -38,5 +38,4 @@ const schema = new Schema<BreachRecordDoc>(
 schema.index({ hashPrefix: 1 }, { unique: true });
 
 export const BreachRecordModel: Model<BreachRecordDoc> =
-  (models.BreachRecord as Model<BreachRecordDoc>) ||
-  model<BreachRecordDoc>('BreachRecord', schema);
+  (models.BreachRecord as Model<BreachRecordDoc>) || model<BreachRecordDoc>('BreachRecord', schema);

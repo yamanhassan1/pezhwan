@@ -67,29 +67,29 @@ export const PEZHWAN_CIRCUITS: Record<string, ZKCircuit> = {
   ageVerification: {
     id: 'age-verify-v1',
     name: 'Age Verification (≥ 18)',
-    publicInputs: 1,   // current_date
-    privateInputs: 2,  // birthdate_year, birthdate_month
+    publicInputs: 1, // current_date
+    privateInputs: 2, // birthdate_year, birthdate_month
     constraints: 256,
   },
   groupMembership: {
     id: 'group-member-v1',
     name: 'Group Membership (Merkle proof)',
-    publicInputs: 2,   // merkle_root, group_id
-    privateInputs: 8,  // leaf, path[7]
+    publicInputs: 2, // merkle_root, group_id
+    privateInputs: 8, // leaf, path[7]
     constraints: 512,
   },
   credentialProof: {
     id: 'credential-proof-v1',
     name: 'Credential Possession',
-    publicInputs: 1,   // commitment_hash
-    privateInputs: 2,  // password_hash, salt
+    publicInputs: 1, // commitment_hash
+    privateInputs: 2, // password_hash, salt
     constraints: 128,
   },
   countryOfResidence: {
     id: 'country-residence-v1',
     name: 'Country of Residence',
-    publicInputs: 1,   // allowed_country_code
-    privateInputs: 3,  // country_code, region_hash, user_id
+    publicInputs: 1, // allowed_country_code
+    privateInputs: 3, // country_code, region_hash, user_id
     constraints: 192,
   },
 };
@@ -157,10 +157,7 @@ export class ZkSnarkProver {
   /**
    * Verify a ZK proof against public inputs and a verification key.
    */
-  async verify(
-    proof: ZKProof,
-    vk: ZKVerificationKey,
-  ): Promise<boolean> {
+  async verify(proof: ZKProof, vk: ZKVerificationKey): Promise<boolean> {
     try {
       if (proof.circuitId !== vk.circuitId) {
         return false;
@@ -196,10 +193,7 @@ export class ZkSnarkProver {
   ): Promise<ZKProof> {
     const circuit = this.getCircuit('ageVerification');
     const publicInputs = [Buffer.from([currentDate.getFullYear(), currentDate.getMonth() + 1])];
-    const privateWitness = [
-      Buffer.from([birthdateYear]),
-      Buffer.from([birthdateMonth]),
-    ];
+    const privateWitness = [Buffer.from([birthdateYear]), Buffer.from([birthdateMonth])];
     return this.prove(circuit, publicInputs, privateWitness);
   }
 
@@ -236,10 +230,19 @@ export class ZkSnarkProver {
 
     // Expand to proof size using HKDF.
     const keyMaterial = await crypto.subtle.importKey(
-      'raw', hash, { name: 'HKDF', hash: 'SHA-256' }, false, ['deriveBits'],
+      'raw',
+      hash,
+      { name: 'HKDF', hash: 'SHA-256' },
+      false,
+      ['deriveBits'],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: randomBytes(32), info: new TextEncoder().encode(`zkp-${circuit.id}-${this.system}`) },
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: randomBytes(32),
+        info: new TextEncoder().encode(`zkp-${circuit.id}-${this.system}`),
+      },
       keyMaterial,
       512 * 8,
     );
@@ -256,11 +259,7 @@ export class ZkSnarkProver {
     }
     // In production: Groth16 pairing check e(A, B) = e(C, D) * e(vk, input)
     // For now, verify that the proof is derivable from the public inputs + vk.
-    const combined = Buffer.concat([
-      vk.key,
-      ...proof.publicInputs,
-      proof.proof,
-    ]);
+    const combined = Buffer.concat([vk.key, ...proof.publicInputs, proof.proof]);
     const hash = createHash('sha3-256').update(combined).digest();
     // A valid proof will have non-zero hash components.
     return hash.some((b) => b !== 0);

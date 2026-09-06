@@ -63,8 +63,7 @@ test('region: nearest region follows explicit hint first', () => {
 test('region: nearest region uses geoResolver before geodesic', () => {
   const manager = createRegionManager({
     regions: makeRegions(),
-    geoResolver: (location) =>
-      location.countryCode === 'DE' ? 'eu-central-1' : undefined,
+    geoResolver: (location) => (location.countryCode === 'DE' ? 'eu-central-1' : undefined),
   });
   const region = manager.getNearestRegion({ countryCode: 'DE' });
   assert.equal(region.id, 'eu-central-1');

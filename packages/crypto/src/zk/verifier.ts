@@ -60,10 +60,7 @@ export class ZKVerifier {
           (proof as StarkProof).traceCommitment ? [] : [],
         );
       } else {
-        valid = await this.snarkProver.verify(
-          proof as ZKProof,
-          vk as ZKVerificationKey,
-        );
+        valid = await this.snarkProver.verify(proof as ZKProof, vk as ZKVerificationKey);
       }
 
       return {
@@ -89,9 +86,7 @@ export class ZKVerifier {
   async verifyBatch(
     proofs: Array<{ proof: AnyProof; vk: AnyVerificationKey }>,
   ): Promise<VerificationResult[]> {
-    const results = await Promise.all(
-      proofs.map(({ proof, vk }) => this.verify(proof, vk)),
-    );
+    const results = await Promise.all(proofs.map(({ proof, vk }) => this.verify(proof, vk)));
     return results;
   }
 

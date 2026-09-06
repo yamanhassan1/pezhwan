@@ -12,7 +12,7 @@
  * optimiser" principle).
  */
 
-import type { RedisCache, RedisLike } from '../redisCache.ts';
+import type { RedisLike } from '../redisCache.ts';
 import { RedisCacheImpl } from '../redisCache.ts';
 
 // ---------------------------------------------------------------------------
@@ -174,7 +174,7 @@ export class EnhancedRedisManager {
   private async connectSentinel(Redis: typeof import('ioredis').default): Promise<void> {
     const cfg = this.sentinelConfig!;
     const sentinelEndpoints = cfg.sentinels.map(
-      (s) => ({ host: s.host, port: s.port } as { host: string; port: number }),
+      (s) => ({ host: s.host, port: s.port }) as { host: string; port: number },
     );
 
     const client = new Redis({
@@ -336,6 +336,8 @@ export class EnhancedRedisManager {
   }
 }
 
-export function createEnhancedRedisManager(options: EnhancedRedisManagerOptions): EnhancedRedisManager {
+export function createEnhancedRedisManager(
+  options: EnhancedRedisManagerOptions,
+): EnhancedRedisManager {
   return new EnhancedRedisManager(options);
 }

@@ -7,8 +7,6 @@
  * a runtime dependency.
  */
 
-import mongoose from 'mongoose';
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -102,7 +100,7 @@ export class QueryOptimizer {
     }
 
     const namespace = (planning['namespace'] as string) ?? '';
-    const collection = namespace.includes('.') ? namespace.split('.')[1] ?? '' : namespace;
+    const collection = namespace.includes('.') ? (namespace.split('.')[1] ?? '') : namespace;
     const indexFilterSet = planning['indexFilterSet'] as boolean | undefined;
     const winningPlan = planning['winningPlan'] as Record<string, unknown> | undefined;
     const docsExamined = (execution['totalDocsExamined'] as number) ?? 0;

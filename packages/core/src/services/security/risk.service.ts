@@ -115,12 +115,12 @@ export class RiskService {
       push('bot_like', `Bot score ${(context.botScore ?? 0).toFixed(2)}`, 40);
     }
 
-    const score = Math.min(100, signals.reduce((s, x) => s + x.weight, 0));
-    const verdict: RiskVerdict = score >= THRESHOLD_BLOCK
-      ? 'block'
-      : score >= THRESHOLD_CHALLENGE
-        ? 'challenge'
-        : 'allow';
+    const score = Math.min(
+      100,
+      signals.reduce((s, x) => s + x.weight, 0),
+    );
+    const verdict: RiskVerdict =
+      score >= THRESHOLD_BLOCK ? 'block' : score >= THRESHOLD_CHALLENGE ? 'challenge' : 'allow';
 
     // Challenge whenever any credential-compromise signal fires, even below the
     // challenge threshold, because the account is demonstrably at risk.
@@ -136,7 +136,7 @@ export class RiskService {
   async assessAndRecord(context: RiskContext): Promise<RiskAssessment> {
     const assessment = this.assess(context);
 
-    const event = await RiskEventModel.create({
+    await RiskEventModel.create({
       tenantId: context.tenantId ?? this.tenantId ?? 'default',
       userId: context.userId,
       applicationId: context.applicationId ?? this.applicationId,

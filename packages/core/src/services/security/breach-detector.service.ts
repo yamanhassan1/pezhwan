@@ -49,7 +49,10 @@ export class BreachDetectorService {
   private readonly hibp?: HibpService;
   private readonly cachedWindowMs: number;
   private readonly riskService?: RiskService;
-  private readonly recentChecks = new Map<string, { breached: boolean; count: number; at: number }>();
+  private readonly recentChecks = new Map<
+    string,
+    { breached: boolean; count: number; at: number }
+  >();
 
   constructor(config: BreachDetectorConfig = {}) {
     this.hibp = config.hibp;

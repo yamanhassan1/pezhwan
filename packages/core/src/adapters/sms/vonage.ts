@@ -43,11 +43,6 @@ export class VonageSmsProvider implements OtpProvider {
       `&text=${encodeURIComponent(`Your PEZHWAN verification code is ${params.code}`)}` +
       `&type=text`;
 
-    if (this.options.deliveryReceiptUrl) {
-      const url = `&status-report-req=1&callback=${encodeURIComponent(this.options.deliveryReceiptUrl)}`;
-      // Append only if reasonable length
-    }
-
     try {
       const res = await callHttp({
         url: this.apiUrl,
@@ -60,7 +55,9 @@ export class VonageSmsProvider implements OtpProvider {
       });
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        const { data } = parseJsonBody(res) as { data?: { messages?: Array<{ status: string; 'error-text'?: string }> } };
+        const { data } = parseJsonBody(res) as {
+          data?: { messages?: Array<{ status: string; 'error-text'?: string }> };
+        };
         const message = data?.messages?.[0];
         const status = message?.status;
 

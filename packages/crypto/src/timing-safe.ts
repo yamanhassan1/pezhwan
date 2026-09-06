@@ -44,12 +44,8 @@ export interface HashCompareOptions {
 export function timingSafeCompare(options: TimingSafeOptions): boolean {
   const { expected, actual } = options;
 
-  const expectedBuf = typeof expected === 'string'
-    ? Buffer.from(expected, 'utf-8')
-    : expected;
-  const actualBuf = typeof actual === 'string'
-    ? Buffer.from(actual, 'utf-8')
-    : actual;
+  const expectedBuf = typeof expected === 'string' ? Buffer.from(expected, 'utf-8') : expected;
+  const actualBuf = typeof actual === 'string' ? Buffer.from(actual, 'utf-8') : actual;
 
   if (expectedBuf.length !== actualBuf.length) {
     return false;
@@ -63,20 +59,14 @@ export function timingSafeCompare(options: TimingSafeOptions): boolean {
  *
  * Useful for comparing hex-encoded hashes, signatures, or tokens.
  */
-export function timingSafeHexCompare(
-  expected: string,
-  actual: string
-): boolean {
+export function timingSafeHexCompare(expected: string, actual: string): boolean {
   return timingSafeCompare({ expected, actual });
 }
 
 /**
  * Constant-time buffer comparison.
  */
-export function timingSafeBufferCompare(
-  expected: Buffer,
-  actual: Buffer
-): boolean {
+export function timingSafeBufferCompare(expected: Buffer, actual: Buffer): boolean {
   if (expected.length !== actual.length) {
     return false;
   }
@@ -103,17 +93,11 @@ export function timingSafeBufferCompare(
  * });
  * ```
  */
-export function hashCompare(
-  options: TimingSafeOptions & HashCompareOptions
-): boolean {
+export function hashCompare(options: TimingSafeOptions & HashCompareOptions): boolean {
   const { expected, actual, algorithm = 'sha256' } = options;
 
-  const expectedBuf = typeof expected === 'string'
-    ? Buffer.from(expected, 'utf-8')
-    : expected;
-  const actualBuf = typeof actual === 'string'
-    ? Buffer.from(actual, 'utf-8')
-    : actual;
+  const expectedBuf = typeof expected === 'string' ? Buffer.from(expected, 'utf-8') : expected;
+  const actualBuf = typeof actual === 'string' ? Buffer.from(actual, 'utf-8') : actual;
 
   const expectedHash = createHash(algorithm).update(expectedBuf).digest();
   const actualHash = createHash(algorithm).update(actualBuf).digest();
@@ -132,15 +116,13 @@ export function hashCompare(
  */
 export function validateBearerToken(
   authHeader: string | undefined,
-  expectedToken: string
+  expectedToken: string,
 ): boolean {
   if (!authHeader) {
     return false;
   }
 
-  const token = authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : authHeader;
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
   return timingSafeCompare({ expected: expectedToken, actual: token });
 }
@@ -148,10 +130,7 @@ export function validateBearerToken(
 /**
  * Validate a CSRF token in constant time.
  */
-export function validateCsrfToken(
-  token: string | undefined,
-  expected: string
-): boolean {
+export function validateCsrfToken(token: string | undefined, expected: string): boolean {
   if (!token) {
     return false;
   }
@@ -165,7 +144,7 @@ export function validateHmacSignature(
   payload: Buffer | string,
   signature: string,
   secret: string,
-  algorithm: 'sha256' | 'sha512' = 'sha256'
+  algorithm: 'sha256' | 'sha512' = 'sha256',
 ): boolean {
   const { createHmac } = require('node:crypto');
   const expected = createHmac(algorithm, secret)
@@ -225,7 +204,7 @@ export function constantTimeStringEqual(a: string, b: string): boolean {
 export function verifySecret(
   input: string,
   stored: string,
-  algorithm: 'sha256' | 'sha512' = 'sha256'
+  algorithm: 'sha256' | 'sha512' = 'sha256',
 ): boolean {
   return hashCompare({
     expected: stored,
@@ -239,10 +218,7 @@ export function verifySecret(
  *
  * Use this to hash secrets before logging or storing in non-secure locations.
  */
-export function hashSecret(
-  secret: string,
-  algorithm: 'sha256' | 'sha512' = 'sha256'
-): string {
+export function hashSecret(secret: string, algorithm: 'sha256' | 'sha512' = 'sha256'): string {
   return createHash(algorithm).update(secret, 'utf-8').digest('hex');
 }
 
@@ -256,10 +232,7 @@ export function hashSecret(
  * Rate limit keys may contain IP addresses, user IDs, and other
  * identifying information that should not be leaked through timing.
  */
-export function compareRateLimitKeys(
-  key1: string,
-  key2: string
-): boolean {
+export function compareRateLimitKeys(key1: string, key2: string): boolean {
   return timingSafeCompare({ expected: key1, actual: key2 });
 }
 
@@ -293,9 +266,6 @@ export function estimateEntropy(password: string): number {
 /**
  * Check if a password meets minimum entropy requirements.
  */
-export function hasMinimumEntropy(
-  password: string,
-  minBits = 60
-): boolean {
+export function hasMinimumEntropy(password: string, minBits = 60): boolean {
   return estimateEntropy(password) >= minBits;
 }

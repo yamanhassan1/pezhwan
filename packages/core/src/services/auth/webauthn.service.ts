@@ -17,7 +17,6 @@
  */
 
 import {
-  generateChallenge,
   generateRegistrationOptions,
   generateAuthenticationOptions,
   verifyRegistrationResponse,
@@ -201,10 +200,7 @@ export class WebAuthnService {
       credentialId: verification.credentialId,
     });
     if (existing > 0) {
-      throw new ValidationError(
-        'Credential already registered',
-        'WEB_AUTHN_DUPLICATE',
-      );
+      throw new ValidationError('Credential already registered', 'WEB_AUTHN_DUPLICATE');
     }
 
     const credential = await WebAuthnCredentialModel.create({
@@ -215,7 +211,8 @@ export class WebAuthnService {
       // is what the authenticator later signs with during authentication.
       publicKey: verification.credentialPublicKey ?? '',
       counter: verification.newCounter ?? 0,
-      transports: (registrationResult.response as { getTransports?: () => string[] }).getTransports?.() ?? [],
+      transports:
+        (registrationResult.response as { getTransports?: () => string[] }).getTransports?.() ?? [],
       attestationFormat: verification.attestationFormat ?? this.attestation,
       discoverable: this.requireResidentKey,
       userVerified: this.requireUserVerification,
@@ -243,9 +240,10 @@ export class WebAuthnService {
     userId: string,
     credentialIds?: string[],
   ): Promise<AuthenticateOptionsResult> {
-    const allowCredentials = credentialIds && credentialIds.length > 0
-      ? credentialIds
-      : await this.listCredentialIds(userId);
+    const allowCredentials =
+      credentialIds && credentialIds.length > 0
+        ? credentialIds
+        : await this.listCredentialIds(userId);
 
     const options = generateAuthenticationOptions({
       rpId: this.rpId,
@@ -289,20 +287,19 @@ export class WebAuthnService {
       throw new AuthenticationError('Unknown credential', 'WEB_AUTHN_UNKNOWN');
     }
 
-    const verification: WebAuthnVerificationResult =
-      await verifyAuthenticationResponse({
-        challenge: expectedChallenge,
-        origin,
-        rpId: this.rpId,
-        authenticationResult,
-        credential: {
-          credentialId: credential.credentialId,
-          publicKey: credential.publicKey,
-          counter: credential.counter,
-          transports: credential.transports as AuthenticatorTransport[],
-          createdAt: credential.createdAt,
-        },
-      });
+    const verification: WebAuthnVerificationResult = await verifyAuthenticationResponse({
+      challenge: expectedChallenge,
+      origin,
+      rpId: this.rpId,
+      authenticationResult,
+      credential: {
+        credentialId: credential.credentialId,
+        publicKey: credential.publicKey,
+        counter: credential.counter,
+        transports: credential.transports as AuthenticatorTransport[],
+        createdAt: credential.createdAt,
+      },
+    });
 
     if (!verification.verified) {
       await this.audit?.log({

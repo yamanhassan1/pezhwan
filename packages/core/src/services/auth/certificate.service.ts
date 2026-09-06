@@ -20,7 +20,6 @@
  */
 
 import { createHash } from 'node:crypto';
-import { AuthenticationError, ValidationError } from '@pezhwan/shared';
 import { AUDIT_EVENT } from '@pezhwan/shared';
 import type { AuditService } from '../audit.service.ts';
 
@@ -82,10 +81,12 @@ export interface RevocationChecker {
 // ---------------------------------------------------------------------------
 
 export class CertificateService {
-  private readonly config: Required<Pick<
-    CertificateConfig,
-    'requireChainVerification' | 'failClosedOnRevocationError' | 'maxChainDepth'
-  >> & { trustedCAs: string[]; enableCrlCheck: boolean; enableOcspCheck: boolean };
+  private readonly config: Required<
+    Pick<
+      CertificateConfig,
+      'requireChainVerification' | 'failClosedOnRevocationError' | 'maxChainDepth'
+    >
+  > & { trustedCAs: string[]; enableCrlCheck: boolean; enableOcspCheck: boolean };
   private revocationChecker?: RevocationChecker;
 
   constructor(
@@ -197,9 +198,7 @@ export class CertificateService {
    * Use as a stable index key for cert-bound tokens / client lookup.
    */
   static thumbprint(pemOrDer: string | Buffer): string {
-    const der = Buffer.isBuffer(pemOrDer)
-      ? pemOrDer
-      : this.decodeDer(pemOrDer);
+    const der = Buffer.isBuffer(pemOrDer) ? pemOrDer : this.decodeDer(pemOrDer);
     return createHash('sha256').update(der).digest('base64url');
   }
 

@@ -43,7 +43,11 @@ const keySchema = new Schema<KeyDoc>(
     algorithm: { type: String, required: true, enum: ['RS256', 'ES256', 'EdDSA', 'HS256'] },
     publicKey: { type: String, required: true },
     privateKey: { type: String, required: true, select: false },
-    status: { type: String, required: true, enum: ['STAGED', 'ACTIVE', 'VERIFY-ONLY', 'RETIRED', 'REVOKED'] },
+    status: {
+      type: String,
+      required: true,
+      enum: ['STAGED', 'ACTIVE', 'VERIFY-ONLY', 'RETIRED', 'REVOKED'],
+    },
     activatedAt: { type: Date },
     retiredAt: { type: Date },
     revokedAt: { type: Date },
@@ -56,8 +60,7 @@ keySchema.index({ tenantId: 1, kid: 1 }, { unique: true });
 keySchema.index({ tenantId: 1, status: 1 });
 keySchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-const KeyModel: Model<KeyDoc> =
-  (models.Key as Model<KeyDoc>) || model<KeyDoc>('Key', keySchema);
+const KeyModel: Model<KeyDoc> = (models.Key as Model<KeyDoc>) || model<KeyDoc>('Key', keySchema);
 
 // ---------------------------------------------------------------------------
 // Service

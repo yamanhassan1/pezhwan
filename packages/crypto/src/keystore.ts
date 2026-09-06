@@ -98,7 +98,10 @@ export class CryptoKeyStore {
   /**
    * List all keys (optionally filtered by purpose and status).
    */
-  listKeys(filters?: { purpose?: CryptoKey['purpose']; status?: CryptoKey['status'] }): CryptoKey[] {
+  listKeys(filters?: {
+    purpose?: CryptoKey['purpose'];
+    status?: CryptoKey['status'];
+  }): CryptoKey[] {
     return Array.from(this.keys.values()).filter((key) => {
       if (filters?.purpose && key.purpose !== filters.purpose) return false;
       if (filters?.status && key.status !== filters.status) return false;
