@@ -39,3 +39,12 @@ export {
 export * from './auth/index.ts';
 export * from './security/index.ts';
 export * from './compliance/index.ts';
+export * from './audit/index.ts';
+export * from './authorization/index.ts';
+export * from './developer/index.ts';
+export * from './ecosystem/index.ts';
+export * from './events/index.ts';
+export * from './oauth/index.ts';
+export * from './observability/index.ts';
+export * from './session/index.ts';
+export * from './tenant/index.ts';
