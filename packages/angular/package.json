@@ -1,5 +1,39 @@
 {
   "name": "@pezhwan/angular",
   "version": "0.1.0",
-  "private": true
+  "description": "Pezhwan Angular SDK — PezhwanModule, AuthService, SessionService, auth guard and HTTP interceptor.",
+  "private": true,
+  "type": "module",
+  "main": "./dist/public-api.js",
+  "module": "./dist/public-api.js",
+  "types": "./dist/public-api.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/public-api.d.ts",
+      "import": "./dist/public-api.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@angular/common": "^19.0.0",
+    "@angular/core": "^19.0.0",
+    "@angular/router": "^19.0.0",
+    "rxjs": "^7.8.0",
+    "@pezhwan/shared": "*"
+  },
+  "devDependencies": {
+    "@angular/compiler": "^19.0.0",
+    "@types/node": "^26.4.0",
+    "typescript": "^5.5.0"
+  }
 }
