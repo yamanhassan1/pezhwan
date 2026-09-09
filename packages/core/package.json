@@ -30,7 +30,7 @@
     "mongoose": "^8.0.0"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.4.1",
     "@types/nodemailer": "^8.0.1",
     "nodemailer": "^9.1.1",
     "typescript": "^5.5.0"
