@@ -42,7 +42,7 @@
     "argon2@0.45.1": true
   },
   "devDependencies": {
-    "eslint": "^9.39.5",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "license-checker": "^25.0.1",
     "mongodb-memory-server": "^11.2.0",
