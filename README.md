@@ -1,6 +1,6 @@
 ﻿# PEZHWAN — One Identity. Every Application. (پېژوان)
 
-Pezhwan is a security-first identity and access management SDK for modern web applications. It provides registration, login, sessions, MFA, RBAC, OAuth/OIDC primitives, and token lifecycle handling in a single server-side abstraction.
+Pezhwan is a security-first identity and access management SDK for modern web applications. It provides registration, login, sessions, MFA, RBAC, OAuth/OIDC primitives, and token lifecycle handling across multiple programming languages and frameworks.
 
 The core idea is simple: applications integrate Pezhwan once and never reimplement authentication logic themselves.
 
@@ -25,15 +25,39 @@ MongoDB + Redis + security services
 
 ## Monorepo layout
 
+### Core Packages
+
 | Package                    | Purpose                                                             |
 | -------------------------- | ------------------------------------------------------------------- |
 | `@pezhwan/shared`          | Shared types, constants, and error definitions                      |
 | `@pezhwan/crypto`          | Key generation, Argon2id, JWT signing, OTP/TOTP, encryption helpers |
 | `@pezhwan/oauth`           | OAuth/OIDC flows and PKCE helpers                                   |
 | `@pezhwan/core`            | Runtime, auth engine, domain models, sessions, rate limiting, RBAC  |
+
+### Node.js & JavaScript Packages
+
+| Package                    | Purpose                                                             |
+| -------------------------- | ------------------------------------------------------------------- |
 | `@pezhwan/node`            | Node.js SDK facade                                                  |
 | `@pezhwan/express`         | Express middleware, auth middleware, routers, security helpers      |
 | `@pezhwan/react`           | Browser auth provider and route guards                              |
+| `@pezhwan/angular`         | Angular authentication module and route guards                      |
+| `@pezhwan/vue`             | Vue.js composables and authentication provider                      |
+| `@pezhwan/cli`             | Command-line tools for Pezhwan management and operations            |
+
+### Backend Packages
+
+| Package                    | Purpose                                                             |
+| -------------------------- | ------------------------------------------------------------------- |
+| `@pezhwan/go`              | Go SDK for server-side authentication                                |
+| `@pezhwan/java`            | Java SDK for enterprise applications                                 |
+| `@pezhwan/dotnet`          | .NET SDK for C# and ASP.NET applications                             |
+| `@pezhwan/python`          | Python SDK for Django, FastAPI, and other frameworks                |
+
+### Reference Implementation
+
+| Package                    | Purpose                                                             |
+| -------------------------- | ------------------------------------------------------------------- |
 | `@pezhwan/identity-server` | Reference identity server used for local dev and demos              |
 
 ## Quick start
@@ -127,9 +151,119 @@ app.get('/v1/admin/health', requireAuth(), requireRole('ADMIN'), (_req, res) => 
 });
 ```
 
+### React integration
+
+```tsx
+import { PezhwanProvider, useAuth } from '@pezhwan/react';
+
+function App() {
+  return (
+    <PezhwanProvider
+      issuer="http://localhost:4011"
+      clientId="dev-app"
+      redirectUri="http://localhost:3000/callback"
+    >
+      <Dashboard />
+    </PezhwanProvider>
+  );
+}
+
+function Dashboard() {
+  const { user, login, logout } = useAuth();
+  
+  if (!user) {
+    return <button onClick={() => login()}>Log in</button>;
+  }
+  
+  return (
+    <div>
+      <p>Welcome, {user.email}</p>
+      <button onClick={() => logout()}>Log out</button>
+    </div>
+  );
+}
+```
+
 ### Browser auth flow
 
-For browser clients, prefer secure cookie-based authentication and keep tokens off the page whenever possible. The demo in `demos/browser-sdk/index.html` is intentionally a development-only example and should not be used as a production reference for token handling.
+For browser clients, prefer secure cookie-based authentication and keep tokens off the page whenever possible. The demo in `demos/browser-sdk/index.html` is intentionally a development-only example.
+
+### Go integration
+
+```go
+package main
+
+import (
+  "github.com/yamanhassan1/pezhwan/packages/go"
+)
+
+func main() {
+  client := pezhwan.NewClient(
+    pezhwan.WithIssuer("http://localhost:4011"),
+    pezhwan.WithTenantID("dev-tenant"),
+    pezhwan.WithApplicationID("dev-app"),
+  )
+  
+  // Register user
+  user, err := client.Auth.Register(ctx, &pezhwan.RegisterRequest{
+    Email:    "user@example.com",
+    Password: "secure-password",
+  })
+  
+  // Login
+  tokens, err := client.Auth.LoginPassword(ctx, &pezhwan.LoginRequest{
+    Email:    "user@example.com",
+    Password: "secure-password",
+  })
+}
+```
+
+### Java integration
+
+```java
+import com.pezhwan.sdk.Pezhwan;
+import com.pezhwan.sdk.auth.AuthService;
+
+public class AuthApp {
+  public static void main(String[] args) {
+    Pezhwan pezhwan = Pezhwan.builder()
+      .issuer("http://localhost:4011")
+      .tenantId("dev-tenant")
+      .applicationId("dev-app")
+      .build();
+    
+    AuthService auth = pezhwan.getAuthService();
+    
+    // Register and login flow
+    var user = auth.register("user@example.com", "password");
+    var tokens = auth.loginPassword("user@example.com", "password");
+  }
+}
+```
+
+### Python integration
+
+```python
+from pezhwan import Pezhwan
+
+pezhwan = Pezhwan(
+    issuer="http://localhost:4011",
+    tenant_id="dev-tenant",
+    application_id="dev-app"
+)
+
+# Register
+user = pezhwan.auth.register(
+    email="user@example.com",
+    password="secure-password"
+)
+
+# Login
+tokens = pezhwan.auth.login_password(
+    email="user@example.com",
+    password="secure-password"
+)
+```
 
 ## Configuration
 
@@ -173,6 +307,17 @@ Important:
 - Never expose refresh tokens or bearer tokens in frontend JavaScript in production
 - Treat the browser as untrusted territory; all policy decisions must be enforced on the server
 
+## Supported languages and frameworks
+
+Pezhwan SDKs support the following languages and frameworks:
+
+- **JavaScript/TypeScript**: Node.js, Express, React, Angular, Vue, CLI
+- **Go**: Standard library and popular frameworks
+- **Java**: Spring Boot, Jakarta EE, and standard Java
+- **Python**: Django, FastAPI, and WSGI-compatible frameworks
+- **.NET**: ASP.NET Core, C#
+- **Browser**: Vanilla JS, React, Angular, Vue with secure cookie-based auth
+
 ## Documentation
 
 Additional project documentation lives in `docs/`:
@@ -185,4 +330,4 @@ Additional project documentation lives in `docs/`:
 
 ## Status
 
-This repository is a development and reference implementation. It is intended for local evaluation, testing, and extension, not as a production deployment without additional hardening, secret management, and infrastructure controls.
+This repository is a development and reference implementation. It is intended for local evaluation, testing, and extension, not as a production deployment without additional hardening, secret management, and compliance verification.
