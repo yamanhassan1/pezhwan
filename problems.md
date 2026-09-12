@@ -1,8 +1,11 @@
 ﻿# PEZHWAN — Known Problems and Fixes
 
-This file records problems encountered while bringing up the SDK, the reference identity server, and the demo frontend. Each entry documents the symptom, root cause, reproduction notes, and final status.
+This file records problems encountered while bringing up the SDK, the reference
+identity server, and the demo frontend. Each entry documents the symptom, root
+cause, reproduction notes, and final status.
 
-The project intentionally documents both historical failures and current dev-only caveats so future contributors understand what was fixed and why.
+The project intentionally documents both historical failures and current
+dev-only caveats so future contributors understand what was fixed and why.
 
 ---
 
@@ -10,18 +13,24 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** The browser demo rendered raw tokens, refresh tokens, and user identity details in the UI and request logs.
+**Symptom:** The browser demo rendered raw tokens, refresh tokens, and user
+identity details in the UI and request logs.
 
-**Root cause:** The demo page stored access/refresh tokens in browser state and displayed them directly for debugging convenience. That is acceptable in a local UI only, but not in a production browser app because any XSS or browser inspection can expose the token.
+**Root cause:** The demo page stored access/refresh tokens in browser state and
+displayed them directly for debugging convenience. That is acceptable in a local
+UI only, but not in a production browser app because any XSS or browser
+inspection can expose the token.
 
 **Fix applied:**
 
 - masked token previews instead of printing raw values
 - limited user profile output to non-sensitive metadata
 - sanitized API log output to remove token-like strings and JWTs
-- documented that the demo is a development-only reference and should never be treated as production token handling
+- documented that the demo is a development-only reference and should never be
+  treated as production token handling
 
-**Production guidance:** keep tokens in secure, HttpOnly cookies whenever possible; never render bearer tokens or refresh tokens in browser UI code.
+**Production guidance:** keep tokens in secure, HttpOnly cookies whenever
+possible; never render bearer tokens or refresh tokens in browser UI code.
 
 ---
 
@@ -29,9 +38,13 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** browser requests from `http://127.0.0.1:5500` or other demo origins were rejected with a CORS error before the API even processed the request.
+**Symptom:** browser requests from `http://127.0.0.1:5500` or other demo origins
+were rejected with a CORS error before the API even processed the request.
 
-**Root cause:** the identity server allowlist was built from configured origins and did not include the actual demo origin. The local dev server also loaded environment variables inconsistently when started from a different working directory.
+**Root cause:** the identity server allowlist was built from configured origins
+and did not include the actual demo origin. The local dev server also loaded
+environment variables inconsistently when started from a different working
+directory.
 
 **Fix applied:**
 
@@ -45,9 +58,11 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** POST requests such as register/login failed with `403 CSRF token mismatch`.
+**Symptom:** POST requests such as register/login failed with
+`403 CSRF token mismatch`.
 
-**Root cause:** the middleware validated a double-submit cookie and header pair, but the browser never received a cookie unless a safe request created it first.
+**Root cause:** the middleware validated a double-submit cookie and header pair,
+but the browser never received a cookie unless a safe request created it first.
 
 **Fix applied:**
 
@@ -61,15 +76,19 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** registration failed with a cast error when the app used string tenant IDs like `dev-tenant`.
+**Symptom:** registration failed with a cast error when the app used string
+tenant IDs like `dev-tenant`.
 
-**Root cause:** the runtime consistently used string-based tenant/application IDs, but the Mongo models stored them as `ObjectId` references. That caused validation failures on create/update flows.
+**Root cause:** the runtime consistently used string-based tenant/application
+IDs, but the Mongo models stored them as `ObjectId` references. That caused
+validation failures on create/update flows.
 
 **Fix applied:**
 
 - aligned all affected Mongo models to string-based identifiers
 - enforced identifier policy consistency across the runtime
-- added partial index guards to avoid duplicate email/phone collisions under one tenant
+- added partial index guards to avoid duplicate email/phone collisions under one
+  tenant
 
 ---
 
@@ -77,9 +96,11 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ MITIGATED
 
-**Symptom:** the browser demo worked from the identity server itself but broke when served from a separate editor preview host.
+**Symptom:** the browser demo worked from the identity server itself but broke
+when served from a separate editor preview host.
 
-**Root cause:** same-origin cookies and strict CORS rules were being challenged by a cross-origin UI served from a different port/host.
+**Root cause:** same-origin cookies and strict CORS rules were being challenged
+by a cross-origin UI served from a different port/host.
 
 **Fix applied:**
 
@@ -93,11 +114,15 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** concurrent refresh requests using the same refresh token could both succeed and create duplicate session states.
+**Symptom:** concurrent refresh requests using the same refresh token could both
+succeed and create duplicate session states.
 
-**Root cause:** both requests read the same active session and both attempted a refresh without an atomic claim step.
+**Root cause:** both requests read the same active session and both attempted a
+refresh without an atomic claim step.
 
-**Fix applied:** refresh now atomically marks a parent session as `rotating` before issuing a new child session. Only one caller wins, while duplicates are rejected as token reuse.
+**Fix applied:** refresh now atomically marks a parent session as `rotating`
+before issuing a new child session. Only one caller wins, while duplicates are
+rejected as token reuse.
 
 ---
 
@@ -105,11 +130,14 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** multiple concurrent requests could bypass the expected rate limit because increments were overwritten or dropped.
+**Symptom:** multiple concurrent requests could bypass the expected rate limit
+because increments were overwritten or dropped.
 
-**Root cause:** the limiter used a read-modify-write pattern that was not atomic under contention.
+**Root cause:** the limiter used a read-modify-write pattern that was not atomic
+under contention.
 
-**Fix applied:** moved to atomic counter semantics with bounded in-memory fallback behavior and stronger enforcement.
+**Fix applied:** moved to atomic counter semantics with bounded in-memory
+fallback behavior and stronger enforcement.
 
 ---
 
@@ -117,9 +145,11 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** Redis connection failures could surface as noisy unhandled errors, and in-memory fallback caches could grow without bounds.
+**Symptom:** Redis connection failures could surface as noisy unhandled errors,
+and in-memory fallback caches could grow without bounds.
 
-**Root cause:** the Redis manager lacked bounded retries and shutdown cleanup; the memory cache had no capacity limits.
+**Root cause:** the Redis manager lacked bounded retries and shutdown cleanup;
+the memory cache had no capacity limits.
 
 **Fix applied:**
 
@@ -133,11 +163,14 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** a correctly signed token that lacked required claims could still be treated as valid.
+**Symptom:** a correctly signed token that lacked required claims could still be
+treated as valid.
 
-**Root cause:** validation accepted tokens that were structurally valid but semantically incomplete.
+**Root cause:** validation accepted tokens that were structurally valid but
+semantically incomplete.
 
-**Fix applied:** verification now rejects tokens missing required claims and timestamp data.
+**Fix applied:** verification now rejects tokens missing required claims and
+timestamp data.
 
 ---
 
@@ -145,9 +178,11 @@ The project intentionally documents both historical failures and current dev-onl
 
 **Status:** ✅ FIXED
 
-**Symptom:** partially written or zero-byte signing key files could prevent the server from booting cleanly.
+**Symptom:** partially written or zero-byte signing key files could prevent the
+server from booting cleanly.
 
-**Root cause:** direct writes and atomicity issues around temp files and rotation intervals were causing startup instability.
+**Root cause:** direct writes and atomicity issues around temp files and
+rotation intervals were causing startup instability.
 
 **Fix applied:**
 
@@ -167,7 +202,8 @@ Examples:
 - favicon 404 when no icon is shipped
 - React DevTools suggestion in development builds
 
-These are not security issues by themselves; they are simply non-blocking warnings in local development.
+These are not security issues by themselves; they are simply non-blocking
+warnings in local development.
 
 ---
 
@@ -187,47 +223,49 @@ Common checks:
 - verify `http://localhost:4011/.well-known/openid-configuration`
 - verify `http://localhost:4011/.well-known/jwks.json`
 - verify `http://localhost:4011/v1/auth/csrf`
-- verify the browser is calling the server on the same allowed host/origin configuration
+- verify the browser is calling the server on the same allowed host/origin
+  configuration
 
 Notes:
 
-- the browser demo is a development reference and should be considered unsafe to copy into production
-- do not store tokens in browser-local state outside of a local debugging environment
+- the browser demo is a development reference and should be considered unsafe to
+  copy into production
+- do not store tokens in browser-local state outside of a local debugging
+  environment
 
 ---
 
-# Current production-readiness assessment
+## Current production-readiness assessment
 
-**Assessment date:** 2026-09-04
-**Current rating:** **8.2/10**
-**Decision:** **NO-GO**
+**Assessment date:** 2026-09-04 **Current rating:** **8.2/10** **Decision:**
+**NO-GO**
 
 The SDK has materially improved security controls, and this session added a
 live-MongoDB integration suite (running in CI), verified refresh-rotation
 atomicity, a Mongo replica-set integration path, a durable Redis-failure rate
 limit, an MFA legacy-secret migration utility, an **executed, verified
-backup/restore drill** with measured RPO/RTO and post-restore auth
-verification, and a **real email/SMS OTP provider chain** (retry, circuit
-breaker, failover) wired into the identity server with production fail-fast.
-It still lacks a live provider send against a real account, plus
-load/failure-injection infrastructure and live replica-set/HA proof to meet the
-9.9/10 production target. This rating is based on implemented controls plus
-verified evidence, not documentation alone.
+backup/restore drill** with measured RPO/RTO and post-restore auth verification,
+and a **real email/SMS OTP provider chain** (retry, circuit breaker, failover)
+wired into the identity server with production fail-fast. It still lacks a live
+provider send against a real account, plus load/failure-injection infrastructure
+and live replica-set/HA proof to meet the 9.9/10 production target. This rating
+is based on implemented controls plus verified evidence, not documentation
+alone.
 
 ## Release-blocking problems
 
-1. ~~No repeatable live MongoDB/Redis integration suite runs in CI.~~
-   ✅ **RESOLVED:** `tests/integration/` (34 tests) runs via `npm run
-test:integration`, wired into `security.yml`.
+1. ~~No repeatable live MongoDB/Redis integration suite runs in CI.~~ ✅
+   **RESOLVED:** `tests/integration/` (34 tests) runs via
+   `npm run test:integration`, wired into `security.yml`.
 2. ~~No executed Mongo backup/restore drill with measured RPO/RTO and
-   post-restore authentication verification.~~
-   ✅ **DONE:** `scripts/backup-drill.mjs` + `scripts/restore-drill.mjs`
+   post-restore authentication verification.~~ ✅ **DONE:**
+   `scripts/backup-drill.mjs` + `scripts/restore-drill.mjs`
    (`npm run drill:backup-restore`) back up the identity store (AES-256-GCM
    encrypted archive + SHA-256 checksum), restore into an isolated in-memory
    replica set, and verify indexes, data integrity and post-restore auth
    (`session create → refresh → reuse-rejected`). Executed end-to-end: 3
-   collections / 3 docs / 4 indexes restored, integrity + auth OK, RPO ≈ 0s,
-   RTO ≈ 1s, checksums match. Procedure documented in
+   collections / 3 docs / 4 indexes restored, integrity + auth OK, RPO ≈ 0s, RTO
+   ≈ 1s, checksums match. Procedure documented in
    `docs/operations/backup-restore.md`.
 3. Mongo replica-set transactions, Redis Sentinel/Cluster, multi-instance
    behavior, and JWKS consistency are not proven with a live replica set.
@@ -235,8 +273,8 @@ test:integration`, wired into `security.yml`.
    finalization; the atomic claim and replay checks are now VERIFIED by
    live-Mongo tests (8 concurrent refreshes → 1 success, 7 reuse-rejected, no
    double-claim), reducing failure-window risk.
-5. ~~The audit hash chain is best-effort and has no retention control.~~
-   ✅ **PARTIALLY RESOLVED:** strict global `sequence` (unique, non-forking) +
+5. ~~The audit hash chain is best-effort and has no retention control.~~ ✅
+   **PARTIALLY RESOLVED:** strict global `sequence` (unique, non-forking) +
    `setRetentionDays` TTL are implemented and tested; full strict hash-link
    chaining under concurrent HA writers still needs a single-writer shard (G7).
 6. MFA legacy-secret migration: `scripts/migrate-mfa-secrets.mjs` with
@@ -244,15 +282,15 @@ test:integration`, wired into `security.yml`.
    `docs/operations/mfa-migration.md` now exist; **a live run on real data is
    not yet executed.**
 7. ~~The reference server has development console OTP adapters; production fails
-   closed rather than sending, but no real email/SMS provider integration exists.~~
-   ✅ **DONE (wiring + enforcement):** provider-agnostic `OtpProvider` contract +
-   `OtpDeliveryManager` (retry, circuit breaker, failover chain) in
+   closed rather than sending, but no real email/SMS provider integration
+   exists.~~ ✅ **DONE (wiring + enforcement):** provider-agnostic `OtpProvider`
+   contract + `OtpDeliveryManager` (retry, circuit breaker, failover chain) in
    `packages/core/src/adapters/`; transports `NodemailerSmtpProvider`,
-   `SendGridProvider`, `AwsSesProvider`, `TwilioSmsProvider` (wired from validated
-   env via `apps/identity-server/src/otp.ts`), provider health on `/health/ready`,
-   and **production fails fast unless a real email + SMS transport is configured**
-   (console/mock forbidden in prod). Unit-tested (5 tests). Remaining: real account
-   send + `AwsSnsProvider` placeholder.
+   `SendGridProvider`, `AwsSesProvider`, `TwilioSmsProvider` (wired from
+   validated env via `apps/identity-server/src/otp.ts`), provider health on
+   `/health/ready`, and **production fails fast unless a real email + SMS
+   transport is configured** (console/mock forbidden in prod). Unit-tested (5
+   tests). Remaining: real account send + `AwsSnsProvider` placeholder.
 8. ~~Redis outages reduce distributed rate limiting to process-local limits.~~
    ✅ **RESOLVED:** durable MongoDB counter fallback (Option C) keeps limits
    shared across instances during a Redis outage; tested in
@@ -296,25 +334,25 @@ test:integration`, wired into `security.yml`.
 | CI/CD and supply chain                 |   7.0 |
 | Documentation and developer experience |   8.0 |
 
-**Overall:** **8.2/10**. Per the production prompt, any score below 9.9
-requires a **NO-GO** decision.
+**Overall:** **8.2/10**. Per the production prompt, any score below 9.9 requires
+a **NO-GO** decision.
 
 ## Required path to production approval
 
-1. Add real MongoDB/Redis integration tests and run them in CI.
-   ✅ **DONE** — `tests/integration/` (34 tests) + `npm run test:integration` +
-   CI step. (Redis/Sentinel cluster coverage still pending live Redis.)
+1. Add real MongoDB/Redis integration tests and run them in CI. ✅ **DONE** —
+   `tests/integration/` (34 tests) + `npm run test:integration` + CI step.
+   (Redis/Sentinel cluster coverage still pending live Redis.)
 2. Add Mongo replica-set transaction coverage and Redis HA coverage.
-3. Execute backup/restore and signing-key recovery drills.
-   ✅ **DONE** (backup/restore) — `npm run drill:backup-restore` passes end-to-end;
+3. Execute backup/restore and signing-key recovery drills. ✅ **DONE**
+   (backup/restore) — `npm run drill:backup-restore` passes end-to-end;
    signing-key recovery drill remains pending.
-4. Add MFA legacy-secret migration with rollback and verification.
-   ✅ **DONE** — `scripts/migrate-mfa-secrets.mjs` (`--dry-run`/`--apply`/
+4. Add MFA legacy-secret migration with rollback and verification. ✅ **DONE** —
+   `scripts/migrate-mfa-secrets.mjs` (`--dry-run`/`--apply`/
    `--batch-size`/`--rollback`/`--validate`), `v2:` envelope in
    `mfa.service.ts`, `docs/operations/mfa-migration.md`. (Live run not yet
    executed.)
-5. Add load, failure-injection, OAuth interoperability, and cross-tenant
-   attack suites.
+5. Add load, failure-injection, OAuth interoperability, and cross-tenant attack
+   suites.
 6. Add lint, coverage, dependency review, license review, and container scan
    gates, then attach release evidence and alert-test results.
 
@@ -326,8 +364,8 @@ retained as open PRs with a documented reason.
 
 - **Merged (branches deleted):** Argon2 0.45.1 (already on main, including the
   `HashOptions` type fix), GitHub Actions (`checkout`/`setup-node`/
-  `upload-artifact` v4→v7, `gitleaks` v2→v3), dotenv 17.4.2, @types/node
-  26.4.0, @types/react 19.2.18. All pass build, typecheck, and workspace tests.
+  `upload-artifact` v4→v7, `gitleaks` v2→v3), dotenv 17.4.2, @types/node 26.4.0,
+  @types/react 19.2.18. All pass build, typecheck, and workspace tests.
 - **Held open (blocked):** Mongoose 9.9.4 and ioredis 6.0.0 remain unmerged
   because runtime integration tests against real MongoDB and Redis are not yet
   available, and Mongoose 9/TypeScript 7 currently fail build/typecheck.
@@ -338,8 +376,8 @@ retained as open PRs with a documented reason.
 ## Authentication tenant-boundary hardening
 
 - User ID lookups and updates in the authentication engine now require the
-  authenticated tenant context, including lockout, password changes/resets,
-  MFA completion, refresh-token account resolution, and email verification.
+  authenticated tenant context, including lockout, password changes/resets, MFA
+  completion, refresh-token account resolution, and email verification.
 - MFA verification now resolves and validates the tenant-owned user before
   checking the factor.
 - Refresh completion rejects sessions whose tenant or application context does
@@ -368,9 +406,10 @@ Per the `docs/PROMPT.md` Phase 1 "feasible now" scope, this session delivered:
 
 ### 1. Live MongoDB integration suite
 
-- Tooling: `mongodb-memory-server` (dev dep) + `npm run test:integration` +
-  CI step in `security.yml`.
-- `tests/integration/helpers/mongo.ts` (start/clean/stop), `helpers/assertions.ts`.
+- Tooling: `mongodb-memory-server` (dev dep) + `npm run test:integration` + CI
+  step in `security.yml`.
+- `tests/integration/helpers/mongo.ts` (start/clean/stop),
+  `helpers/assertions.ts`.
 - `refresh-rotation.test.ts` — 8 concurrent refreshes of one token → exactly 1
   success, 7 `REFRESH_TOKEN_REUSE`, at most one live session (fail-closed).
 - `auth-lifecycle.test.ts` — register→login→refresh→logout→revokeAll.
@@ -392,12 +431,12 @@ Per the `docs/PROMPT.md` Phase 1 "feasible now" scope, this session delivered:
 
 ### 8. Redis distributed rate limiting — durable Option C
 
-- `RateLimitService` now tiers Redis → durable MongoDB counter →
-  in-memory. `createPezhwan` enables the Mongo fallback only when Redis is
-  configured (never for the null-cache unit path).
+- `RateLimitService` now tiers Redis → durable MongoDB counter → in-memory.
+  `createPezhwan` enables the Mongo fallback only when Redis is configured
+  (never for the null-cache unit path).
 - New `RateLimitCounterModel`; atomic fixed-window increment with self-reset.
-- `tests/integration/rate-limit.test.ts` + `rate-limit-durable.test.ts`
-  (two instances share one Mongo counter during a Redis outage).
+- `tests/integration/rate-limit.test.ts` + `rate-limit-durable.test.ts` (two
+  instances share one Mongo counter during a Redis outage).
 - Strategy documented in `docs/security/rate-limiting.md`.
 
 ### 6. MFA legacy-secret migration
@@ -410,6 +449,6 @@ Per the `docs/PROMPT.md` Phase 1 "feasible now" scope, this session delivered:
 - `docs/operations/mfa-migration.md`; `npm run migrate:mfa`.
 - Updated `docs/security-audit.md` evidence + follow-ups.
 
-**Verification:** full build + typecheck clean; workspace unit tests
-28/28 (core) etc. all green (61 unit total); `npm run test:integration` 34/34;
-secret scan clean.
+**Verification:** full build + typecheck clean; workspace unit tests 28/28
+(core) etc. all green (61 unit total); `npm run test:integration` 34/34; secret
+scan clean.
