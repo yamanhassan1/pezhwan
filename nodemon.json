@@ -1,0 +1,7 @@
+{
+  "_note": "Optional dev convenience: the canonical watch loop is `tsc -w` per package plus `npm run dev -w @pezhwan/identity-server` (node --watch). This file is not required for anything.",
+  "watch": ["apps", "packages"],
+  "ext": "ts",
+  "ignore": ["**/dist", "node_modules"],
+  "exec": "npm run dev -w @pezhwan/identity-server"
+}

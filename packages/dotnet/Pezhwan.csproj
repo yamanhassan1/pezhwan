@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Pezhwan</RootNamespace>
+    <AssemblyName>Pezhwan</AssemblyName>
+    <PackageId>Pezhwan</PackageId>
+    <Version>0.1.0</Version>
+    <Description>Universal Identity &amp; Access Management client for PEZHWAN</Description>
+  </PropertyGroup>
+
+</Project>

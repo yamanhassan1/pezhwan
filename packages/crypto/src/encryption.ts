@@ -7,7 +7,12 @@
  * and integrity.
  */
 
-import { randomBytes, createCipheriv, createDecipheriv } from 'node:crypto';
+import {
+  randomBytes,
+  createCipheriv,
+  createDecipheriv,
+  pbkdf2Sync,
+} from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -154,6 +159,5 @@ export function deriveKeyFromPassword(
   salt: Buffer,
   iterations = 100_000,
 ): Buffer {
-  const { pbkdf2Sync } = require('node:crypto') as typeof import('node:crypto');
   return pbkdf2Sync(password, salt, iterations, 32, 'sha512');
 }

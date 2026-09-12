@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PEZHWAN — Social Login Demo</title>
+    <style>
+      :root {
+        --bg: #f4f6fb;
+        --surface: #ffffff;
+        --border: #dfe7f3;
+        --border-strong: #ccd9ec;
+        --text: #0f172a;
+        --text-soft: #475569;
+        --text-muted: #64748b;
+        --accent: #2563eb;
+        --accent-deep: #1d4ed8;
+        --green: #15803d;
+        --red: #dc2626;
+        --shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+        --radius: 14px;
+        --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+      }
+      .wrap { width: 100%; max-width: 540px; }
+      header { text-align: center; margin-bottom: 18px; }
+      header h1 { font-size: 1.7rem; letter-spacing: -0.04em; }
+      header .sub { color: var(--text-soft); font-size: .88rem; margin-top: 4px; }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow);
+      }
+      .card h2 { font-size: 1rem; margin-bottom: 14px; }
+      .card h3 {
+        font-size: .72rem; color: var(--text-muted); text-transform: uppercase;
+        letter-spacing: .08em; font-weight: 700; margin-bottom: 10px;
+      }
+      hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+      .form-row { margin-bottom: 12px; }
+      .form-row label {
+        display: block; font-size: .78rem; color: var(--text-soft);
+        margin-bottom: 6px; font-weight: 600;
+      }
+      .form-row input, .form-row select {
+        width: 100%; padding: 10px 12px; border-radius: 10px;
+        border: 1px solid var(--border-strong); background: #f8fafc;
+        color: var(--text); font-size: .88rem; font-family: var(--mono); outline: none;
+      }
+      .form-row input:focus, .form-row select:focus {
+        border-color: var(--accent); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+      }
+      .btn {
+        padding: 10px 16px; border: none; border-radius: 10px; font-size: .82rem;
+        font-weight: 600; cursor: pointer; font-family: inherit;
+      }
+      .btn:disabled { opacity: .5; cursor: not-allowed; }
+      .btn-primary { background: linear-gradient(180deg, var(--accent), var(--accent-deep)); color: #fff; }
+      .btn-ghost { background: #fff; color: var(--text); border: 1px solid var(--border); }
+      .btn-danger { background: linear-gradient(180deg, #ef4444, #dc2626); color: #fff; }
+      .btn-sm { padding: 6px 12px; font-size: .73rem; }
+      .btn-block { width: 100%; }
+      .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .google-btn {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        width: 100%; padding: 11px; border: 1px solid var(--border-strong);
+        border-radius: 10px; background: #fff; color: var(--text);
+        font-weight: 600; font-size: .86rem; cursor: pointer; font-family: inherit;
+      }
+      .google-btn:hover { background: #f8fafc; }
+      .google-btn .g { color: #4285f4; font-weight: 800; font-size: 1rem; }
+      .token-box {
+        background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
+        padding: 12px; font-family: var(--mono); font-size: .7rem; word-break: break-all;
+        max-height: 220px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap;
+        color: var(--text);
+      }
+      .log {
+        background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
+        padding: 12px; font-family: var(--mono); font-size: .7rem;
+        max-height: 200px; overflow-y: auto; line-height: 1.6;
+        color: var(--text-soft);
+      }
+      .error-msg { color: var(--red); font-size: .78rem; margin-top: 8px; }
+      .success-msg { color: var(--green); font-size: .78rem; margin-top: 8px; }
+      .callout {
+        background: #eef3ff; border: 1px solid #dfe7f3; border-radius: 12px;
+        padding: 12px; font-size: .76rem; color: var(--text-soft); line-height: 1.55;
+      }
+      .meta { font-size: .72rem; color: var(--text-muted); font-family: var(--mono); }
+      footer { text-align: center; color: var(--text-muted); font-size: .7rem; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>PEZHWAN</h1>
+        <div class="sub">Social Login demo — Mock Google IdP via FederatedIdentityService</div>
+      </header>
+
+      <div class="card" id="card-google">
+        <h2>Sign in with Google</h2>
+        <p class="meta" style="margin-bottom:12px;font-family:inherit;color:var(--text-soft);font-size:.78rem">
+          Redirects to a simulated Google consent screen, then back to this SPA with fresh tokens.
+        </p>
+        <button class="google-btn" id="btn-google">
+          <span class="g">G</span> Continue with Mock Google
+        </button>
+        <hr />
+        <p class="meta">
+          In production the IdP exchange happens via OIDC (authorization code + id_token);
+          here we simulate the IdP in-process so no external network is needed.
+          Auto-provisioned accounts get <b>emailVerified=true</b>.
+        </p>
+      </div>
+
+      <div class="card" id="card-pass">
+        <h2>Or use email / password</h2>
+        <div class="form-row">
+          <label>Email</label>
+          <input id="pass-email" type="email" placeholder="user@example.com" />
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <input id="pass-password" type="password" placeholder="8+ chars, upper+lower+digit" />
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btn-register">Register</button>
+          <button class="btn btn-ghost" id="btn-login">Login</button>
+        </div>
+        <div class="error-msg" id="pass-error"></div>
+      </div>
+
+      <div class="card" id="card-profile" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h2 style="margin:0">Profile</h2>
+          <button class="btn btn-danger btn-sm" id="btn-logout">Logout</button>
+        </div>
+        <h3>Account</h3>
+        <div class="token-box" id="profile-box"></div>
+        <hr />
+        <h3>Linked identities</h3>
+        <div class="token-box" id="linked-box"></div>
+        <div class="form-row" style="margin-top:12px">
+          <label>Google email to attach to this account</label>
+          <input id="link-email" type="email" placeholder="you@gmail.com" />
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" id="btn-link">Link Google to this account</button>
+          <button class="btn btn-danger btn-sm" id="btn-unlink">Unlink</button>
+        </div>
+        <div class="error-msg" id="link-error"></div>
+        <div class="success-msg" id="link-success"></div>
+      </div>
+
+      <div class="card" id="card-tokens">
+        <h2 style="display:flex;justify-content:space-between;align-items:center">
+          Token inspector
+          <button class="btn btn-ghost btn-sm" id="btn-refresh-tokens">Reload /api/me</button>
+        </h2>
+        <div class="token-box" id="tokens-box">No tokens yet. Sign in or continue with Google.</div>
+      </div>
+
+      <div class="card">
+        <h2>Activity log</h2>
+        <div class="log" id="log">Ready.</div>
+      </div>
+
+      <footer>PEZHWAN SDK demo</footer>
+    </div>
+
+    <script>
+      'use strict';
+      const $ = (id) => document.getElementById(id);
+
+      let accessToken = null;
+      let refreshToken = null;
+
+      function log(msg) {
+        const el = $('log');
+        const line = document.createElement('div');
+        line.textContent = `${new Date().toLocaleTimeString()}  ${msg}`;
+        el.prepend(line);
+        while (el.children.length > 50) el.removeChild(el.lastChild);
+      }
+
+      function decodeJwt(token) {
+        try {
+          const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+          return JSON.parse(atob(base64 + padding));
+        } catch {
+          return null;
+        }
+      }
+
+      function redact(v, s = 6, e = 4) {
+        if (!v) return '—';
+        v = String(v);
+        if (v.length <= s + e) return '••••••';
+        return v.slice(0, s) + '…' + v.slice(-e);
+      }
+
+      async function api(path, { method = 'GET', body, token } = {}) {
+        const headers = { 'Content-Type': 'application/json' };
+        const useToken = token !== undefined ? token : accessToken;
+        if (useToken) headers['Authorization'] = 'Bearer ' + useToken;
+        const res = await fetch(path, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        let json = {};
+        try { json = await res.json(); } catch { json = { success: false, error: { message: 'non-JSON response' } }; }
+        if (!res.ok || !json.success) {
+          const msg = (json.error && (json.error.message || json.error.code)) || `HTTP ${res.status}`;
+          throw new Error(msg);
+        }
+        return json.data;
+      }
+
+      function showError(el, msg) { el.textContent = msg; }
+
+      async function renderProfile() {
+        if (!accessToken) return;
+        try {
+          const me = await api('/api/me');
+          $('profile-box').textContent = JSON.stringify({
+            id: redact(me.userId),
+            email: me.email,
+            tenantId: me.tenantId,
+            applicationId: me.applicationId,
+            sessionId: redact(me.sessionId),
+            authMethod: me.authMethod,
+          }, null, 2);
+          const linked = me.googleSubject ? [{ provider: 'google', subject: me.googleSubject }] : [];
+          $('linked-box').textContent = linked.length
+            ? JSON.stringify(linked, null, 2)
+            : 'No Google identity linked yet.';
+          $('card-profile').style.display = 'block';
+          $('card-pass').style.display = 'none';
+          $('card-google').style.display = 'none';
+          const p = decodeJwt(accessToken);
+          $('tokens-box').textContent = JSON.stringify({
+            status: 'stored in memory only',
+            accessToken: { exp: p && p.exp ? new Date(p.exp * 1000).toLocaleString() : 'unknown', sub: p ? redact(p.sub) : 'unknown', authMethod: me.authMethod },
+            refreshToken: { length: refreshToken ? refreshToken.length : 0, preview: redact(refreshToken, 8, 6) },
+          }, null, 2);
+        } catch (err) {
+          log('Profile refresh failed: ' + err.message);
+          $('tokens-box').textContent = 'Error loading profile: ' + err.message;
+        }
+      }
+
+      async function handlePasswordFlow(mode) {
+        const email = $('pass-email').value.trim();
+        const password = $('pass-password').value;
+        showError($('pass-error'), '');
+        if (!email || !password) { showError($('pass-error'), 'Email and password are required'); return; }
+        try {
+          const data = await api(`/api/password/${mode}`, { method: 'POST', body: { email, password } });
+          accessToken = data.tokens.accessToken;
+          refreshToken = data.tokens.refreshToken;
+          log(`${mode} ok — ${email}`);
+          await renderProfile();
+        } catch (err) {
+          showError($('pass-error'), err.message);
+          log(`${mode} failed: ${err.message}`);
+        }
+      }
+
+      function startGoogle() {
+        const state = Math.random().toString(36).slice(2);
+        log('redirecting to /mock-idp/authorize?state=' + state);
+        sessionStorage.setItem('pk_state', state);
+        window.location.href = '/mock-idp/authorize?state=' + state;
+      }
+
+      function readCallbackTokens() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const refresh = params.get('refresh');
+        if (token && refresh) {
+          accessToken = token;
+          refreshToken = refresh;
+          log('received tokens from /social/callback — validating via /api/me');
+          history.replaceState({}, '', window.location.pathname);
+          renderProfile();
+        }
+      }
+
+      // On /social/callback the SPA is served again with token+refresh in the URL.
+      readCallbackTokens();
+      // If we already hold tokens (e.g. e-mail/password login or page reload), re-render.
+      if (!accessToken) renderProfile();
+
+      $('btn-google').addEventListener('click', startGoogle);
+      $('btn-register').addEventListener('click', () => handlePasswordFlow('register'));
+      $('btn-login').addEventListener('click', () => handlePasswordFlow('login'));
+
+      $('btn-link').addEventListener('click', async () => {
+        const email = $('link-email').value.trim();
+        showError($('link-error'), '');
+        $('link-success').textContent = '';
+        if (!email) { showError($('link-error'), 'Enter a Google email to link'); return; }
+        try {
+          const data = await api('/api/link', { method: 'POST', body: { email } });
+          $('link-success').textContent = `Linked ${data.provider}:${data.subject}`;
+          log('linked google ' + data.subject);
+          await renderProfile();
+        } catch (err) {
+          showError($('link-error'), err.message);
+        }
+      });
+
+      $('btn-unlink').addEventListener('click', async () => {
+        const email = $('link-email').value.trim();
+        showError($('link-error'), '');
+        $('link-success').textContent = '';
+        if (!email) { showError($('link-error'), 'Enter the Google email to unlink'); return; }
+        try {
+          await api('/api/unlink', { method: 'POST', body: { email } });
+          $('link-success').textContent = 'Unlinked';
+          log('unlinked google ' + email);
+          await renderProfile();
+        } catch (err) {
+          showError($('link-error'), err.message);
+        }
+      });
+
+      $('btn-logout').addEventListener('click', async () => {
+        try { await api('/api/logout', { method: 'POST', token: accessToken }); } catch {}
+        accessToken = null;
+        refreshToken = null;
+        log('logged out');
+        $('card-profile').style.display = 'none';
+        $('card-pass').style.display = '';
+        $('card-google').style.display = '';
+        $('tokens-box').textContent = 'No tokens yet. Sign in or continue with Google.';
+      });
+
+      $('btn-refresh-tokens').addEventListener('click', renderProfile);
+    </script>
+  </body>
+</html>

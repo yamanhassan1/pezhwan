@@ -28,7 +28,7 @@ export class ChargebeeAdapter implements BillingProviderClient {
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
   }
 
-  async createCheckout(plan: string, customerRef: string): Promise<CheckoutResult> {
+  async createCheckout(plan: string, _customerRef: string): Promise<CheckoutResult> {
     const body = new URLSearchParams({
       embed: 'false',
       'subscription[plan_id]': plan,

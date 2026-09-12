@@ -1,0 +1,11 @@
+# PEZHWAN — ESLint ignore (legacy format).
+#
+# The project lints with ESLint 9 flat config (see eslint.config.*), which
+# ignores node_modules and dotfiles by default and no longer reads this file.
+# Kept for tooling that still consumes a classic .eslintignore, and for the
+# explicit excludes below that do not belong in flat config ignore patterns.
+
+dist/
+coverage/
+*.min.js
+package-lock.json

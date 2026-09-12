@@ -712,10 +712,6 @@ pezhwan/
 │ │ │ └── config/
 │ │ │ ├── env.ts
 │ │ │ └── index.ts
-│ │ ├── demo/ # Browser demo
-│ │ │ ├── index.html
-│ │ │ ├── styles.css
-│ │ │ └── app.js
 │ │ └── **tests**/
 │ │ └── server.test.ts
 │ │
@@ -1015,6 +1011,9 @@ pezhwan/
 │
 ├── demos/ # 🎯 Demo applications
 │ ├── README.md
+│ │
+│ ├── browser-sdk/ # Browser SDK demo served by the identity server at /
+│ │ └── index.html
 │ │
 │ ├── basic-auth/ # Basic auth demo
 │ │ ├── package.json

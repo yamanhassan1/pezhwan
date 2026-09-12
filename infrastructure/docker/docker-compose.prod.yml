@@ -1,0 +1,77 @@
+# Pezhwan production overlay.
+#
+#   docker compose -f infrastructure/docker/docker-compose.yml \
+#     -f infrastructure/docker/docker-compose.prod.yml up -d
+#
+# Hardens the base stack: restart policies, resource limits, health-gated
+# startup, read-only root + no-new-privileges for the identity server and
+# production defaults. Secrets come from environment interpolation (`:?` fails
+# fast when required values are missing). TLS termination is opt-in via
+# infrastructure/docker/nginx (not part of the base stack).
+
+services:
+  mongo1:
+    restart: always
+    mem_limit: 2g
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  mongo2:
+    restart: always
+    mem_limit: 2g
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  mongo3:
+    restart: always
+    mem_limit: 2g
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  redis:
+    restart: always
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  identity-server:
+    restart: always
+    init: true
+    read_only: true
+    mem_limit: 1g
+    security_opt:
+      - 'no-new-privileges:true'
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    environment:
+      NODE_ENV: 'production'
+      PEZHWAN_ISSUER: '${PEZHWAN_PUBLIC_ISSUER:?set PEZHWAN_PUBLIC_ISSUER in the environment}'
+      PEZHWAN_ALLOWED_ORIGINS: '${PEZHWAN_ALLOWED_ORIGINS:?set PEZHWAN_ALLOWED_ORIGINS in the environment}'
+      PEZHWAN_COOKIE_SECURE: 'true'
+      PEZHWAN_COOKIE_DOMAIN: '${PEZHWAN_COOKIE_DOMAIN:-}'
+      PEZHWAN_LOG_LEVEL: '${PEZHWAN_LOG_LEVEL:-info}'
+      # Read-only root requires signing keys on the /tmp tmpfs.
+      PEZHWAN_SIGNING_KEYS_PATH: '/tmp/keys'
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:4011/.well-known/jwks.json').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      start_period: 15s
+      retries: 12

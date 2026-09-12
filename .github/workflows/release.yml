@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.2.0); defaults to the pushed git tag'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: release
+    env:
+      # Empty when the repo has no publish credentials; keeps publishing gated.
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (all workspaces)
+        run: npm run build
+
+      - name: Root test gate
+        run: npm run test:root
+
+      - name: Typecheck (all workspaces)
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Secret scan
+        run: node scripts/secret-scan.mjs --ci
+
+      - name: Generate SBOM (CycloneDX)
+        run: npm run sbom > sbom.cdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: pezhwan-release-sbom
+          path: sbom.cdx.json
+
+      - name: Pack workspaces (dry-run, then asset tarballs)
+        run: |
+          npm pack --dry-run --workspaces
+          mkdir -p dist
+          npm pack --workspaces --pack-destination ./dist
+
+      - name: Resolve release version
+        id: version
+        run: |
+          VERSION="${{ inputs.version }}"
+          [ -n "$VERSION" ] || VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      # Private repo with no confirmed publish scope: runs only when NPM_TOKEN exists.
+      - name: Publish to registry (gated on NPM_TOKEN)
+        if: env.NPM_TOKEN != ''
+        run: npm publish --workspaces
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release with assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          gh release create "v${VERSION}" --title "Pezhwan v${VERSION}" --generate-notes sbom.cdx.json dist/*.tgz

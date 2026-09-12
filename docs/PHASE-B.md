@@ -143,7 +143,8 @@ tracked as the next phase.
 `apps/identity-server/Dockerfile` — multi-stage:
 
 - Stage 1: install + build all workspaces (shared→crypto→oauth→core→node→express→react→identity-server).
-- Stage 2: non-root `pezhwan` user, copies workspace dist + `demo/`, HEALTHCHECK
+- Stage 2: non-root `pezhwan` user, copies workspace dist + the browser demo
+  (`demos/browser-sdk`), HEALTHCHECK
   on `/.well-known/jwks.json`, CMD `node dist/server.js`.
 
 `infrastructure/docker/docker-compose.yml` (compose v5.3.1 semantics, `version:`

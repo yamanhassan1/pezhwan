@@ -1,0 +1,67 @@
+@startuml system-overview
+title PEZHWAN Identity Server — System Context
+
+' Grounding: docs/architecture/architecture.md (System Context, Component Interaction,
+' Technology Stack) and docs/architecture/data-flow.md (middleware pipeline).
+' Every HTTP request crosses the middleware pipeline before reaching AuthEngine.
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 12
+
+' ── External callers (SDK clients) ──────────────────────────────────────────
+component "Browser / SPA\n(@pezhwan/react)" as CLIENT_BROWSER
+component "Mobile App\n(iOS / Android)" as CLIENT_MOBILE
+component "Backend Service\n(@pezhwan/node | @pezhwan/express)" as CLIENT_BACKEND
+component "Admin Console\n(React Admin)" as CLIENT_ADMIN
+component "Developer Portal\n(React + API docs)" as CLIENT_PORTAL
+
+' ── Identity Server container ───────────────────────────────────────────────
+package "Identity Server — @pezhwan/identity-server" as SERVER {
+  component "Express Routes\nHTTP + /v1/auth, /v1/mfa,\n/v1/oauth, /v1/sessions" as EXPRESS
+  component "Security Middleware\nCORS / CSRF / RateLimit /\nSecurityHeaders / Auth" as MIDDLEWARE
+  component "AuthEngine\npassword, MFA, OTP,\nlockout, account state" as AUTHENGINE
+  component "Services\nSessionService, TokenService,\nMfaService, OtpService, Audit" as SERVICES
+  component "Models\nUser, Session, OAuth, Audit,\nRateLimit, KeyStore" as MODELS
+  component "JWKS / OIDC discovery\n.well-known, /jwks" as JWKS
+
+  EXPRESS --> MIDDLEWARE : request pipeline
+  MIDDLEWARE --> AUTHENGINE : authenticated / rate-limited request
+  AUTHENGINE --> SERVICES : login, create, rotate, sign
+  SERVICES --> MODELS : persistence
+}
+
+' ── External dependencies ───────────────────────────────────────────────────
+component "MongoDB\nreplica set (source of truth)" as MONGO
+component "Redis\ncache / liveness / rate limit" as REDIS
+component "Email / SMS adapters\n(notification delivery)" as ADAPTERS
+component "OAuth IdPs\nGoogle / GitHub /\nApple / Microsoft" as IDP
+component "HSM / KMS\nsigning-key custody,\nRS256 + JWKS rotation" as HSM
+
+MODELS --> MONGO : durable state, transactions
+SERVICES --> REDIS : session liveness, distributed limits
+SERVICES --> ADAPTERS : OTP / magic-link delivery
+AUTHENGINE --> IDP : OAuth 2.1 / OIDC federation
+SERVICES --> HSM : sign JWT with private key (RS256, kid)
+
+' ── Client → server edges ───────────────────────────────────────────────────
+CLIENT_BROWSER --> EXPRESS : HTTPS (tokens via HttpOnly cookie)
+CLIENT_MOBILE --> EXPRESS : HTTPS (Bearer tokens)
+CLIENT_BACKEND --> EXPRESS : HTTPS (machine / service identity)
+CLIENT_ADMIN --> EXPRESS : HTTPS (admin API, ADMIN role required)
+CLIENT_PORTAL --> EXPRESS : HTTPS (developer API keys)
+SERVICES --> JWKS : publish public keys for token verification
+
+note top of SERVER
+  Middleware pipeline (docs/architecture/data-flow.md): requestContext ->
+  securityHeaders -> corsAllowlist -> createAuthenticate -> csrfProtection ->
+  rateLimit -> handler; errors returned in { success, data | error } envelope.
+end note
+
+note bottom of SERVER
+  Stateless pods scale horizontally; tokens verify locally (JWKS cache);
+  stateful ops (sessions, rotation, audit) go to MongoDB. Fail closed on
+  storage dependency failure (503, never silent-allow).
+end note
+
+@enduml

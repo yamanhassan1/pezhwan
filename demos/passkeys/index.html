@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PEZHWAN · Passkey Demo</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --border: #e2e6f0;
+      --text: #17203a;
+      --muted: #66708a;
+      --accent: #2f6bff;
+      --accent-dark: #1e50c8;
+      --ok: #16a34a;
+      --err: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    main { max-width: 540px; margin: 48px auto; padding: 0 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 6px 24px rgba(23, 32, 58, 0.06);
+    }
+    h1 { margin: 0 0 4px; font-size: 24px; }
+    .subtitle { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+    h2 { font-size: 16px; margin: 0 0 12px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fbfcff;
+    }
+    .row { display: flex; gap: 10px; }
+    .row input { flex: 1; }
+    button {
+      margin-top: 14px;
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: var(--accent-dark); }
+    button.secondary { background: #eef1f8; color: var(--text); }
+    button.secondary:hover { background: #e2e7f3; }
+    button.danger { background: #fdeeee; color: var(--err); }
+    button.danger:hover { background: #fadada; }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    hr { border: 0; border-top: 1px solid var(--border); margin: 22px 0; }
+    pre {
+      background: #10162b;
+      color: #d7e0f5;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 40px;
+      margin: 0;
+    }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pill.ok { background: #e7f7ec; color: var(--ok); }
+    .pill.out { background: #fdeeee; color: var(--err); }
+    .hidden { display: none; }
+    footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--muted); }
+    .callout {
+      background: #f0f4ff;
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text);
+      margin-top: 14px;
+    }
+    .callout strong { color: var(--accent-dark); }
+    .err { color: var(--err); font-size: 13px; margin-top: 8px; }
+    .ok-msg { color: var(--ok); font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <h1>PEZHWAN &middot; Passkey Demo</h1>
+      <p class="subtitle">WebAuthn passkey registration and authentication &mdash; passwordless sign-in with FIDO2.</p>
+
+      <!-- ─── REGISTER ACCOUNT ─── -->
+      <section id="auth-section">
+        <h2>Register account</h2>
+        <div class="row">
+          <input id="reg-email" type="email" placeholder="you@example.com" />
+          <input id="reg-password" type="password" placeholder="Password (8+ chars)" />
+        </div>
+        <button id="reg-btn">Register</button>
+        <div class="err hidden" id="reg-error"></div>
+      </section>
+
+      <hr id="auth-hr" />
+
+      <!-- ─── PASSWORD LOGIN (fallback) ─── -->
+      <section id="password-login-section">
+        <h2>Password login</h2>
+        <div class="row">
+          <input id="login-email" type="email" placeholder="you@example.com" />
+          <input id="login-password" type="password" placeholder="Password" />
+        </div>
+        <button id="login-btn">Login</button>
+        <div class="err hidden" id="login-error"></div>
+      </section>
+
+      <hr id="login-hr" />
+
+      <!-- ─── YOUR ACCOUNT (signed in) ─── -->
+      <section id="account-panel" class="hidden">
+        <h2>Your account <span id="auth-pill" class="pill out">signed out</span></h2>
+        <pre id="account-body" style="min-height:60px"></pre>
+
+        <div class="row">
+          <button id="me-btn" class="secondary">Refresh profile</button>
+          <button id="logout-btn" class="danger">Logout</button>
+        </div>
+
+        <hr />
+
+        <h2>Register a passkey</h2>
+        <p class="hint">This will prompt your browser to create a new passkey (fingerprint, face, PIN, etc.).</p>
+        <button id="passkey-reg-btn" class="secondary">Register passkey</button>
+        <div class="err hidden" id="passkey-reg-error"></div>
+        <div class="ok-msg hidden" id="passkey-reg-ok"></div>
+      </section>
+
+      <div class="callout">
+        <strong>Note:</strong> Browser prompt requires a secure context &mdash; use
+        <code>localhost</code>. Passkeys are bound to the relying-party id
+        (<code>localhost:5178</code>).
+      </div>
+
+      <hr />
+
+      <!-- ─── PASSKEY LOGIN (signed out) ─── -->
+      <section id="passkey-login-section">
+        <h2>Sign in with a passkey</h2>
+        <label>Email</label>
+        <input id="passkey-login-email" type="email" placeholder="you@example.com" />
+        <button id="passkey-login-btn">Authenticate</button>
+        <div class="err hidden" id="passkey-login-error"></div>
+      </section>
+
+      <section>
+        <h2>Token Inspector</h2>
+        <pre id="token-inspector">No access token yet.</pre>
+      </section>
+
+      <section>
+        <h2>Server response</h2>
+        <pre id="response-log">&mdash;</pre>
+      </section>
+
+      <footer>PEZHWAN SDK demo &middot; self-contained &middot; vanilla JS</footer>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      let accessToken = null;
+      let refreshToken = null;
+
+      const $ = (sel) => document.querySelector(sel);
+
+      // ─── WebAuthn helpers (verbatim from spec) ─────────────────────────
+
+      const buf2b64u = (buf) => {
+        let s = '';
+        const u8 = new Uint8Array(buf);
+        for (let i = 0; i < u8.length; i += 0x8000) {
+          s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+        }
+        return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      };
+
+      const b64u2Uint8 = (v) => {
+        if (v && v.type === 'Buffer') return new Uint8Array(v.data);
+        if (v instanceof Uint8Array) return v;
+        if (Array.isArray(v)) return new Uint8Array(v);
+        return v;
+      };
+
+      const toWebAuthnOptions = (opts) => {
+        const o = JSON.parse(JSON.stringify(opts));
+        if (o.challenge) o.challenge = b64u2Uint8(o.challenge);
+        if (o.user && o.user.id) o.user.id = b64u2Uint8(o.user.id);
+        for (const k of ['excludeCredentials', 'allowCredentials']) {
+          if (Array.isArray(o[k])) o[k] = o[k].map((c) => ({ ...c, id: b64u2Uint8(c.id) }));
+        }
+        return o;
+      };
+
+      const publicKeyCredentialToJSON = (cred) => {
+        const res = {
+          id: cred.id,
+          rawId: buf2b64u(cred.rawId),
+          type: cred.type,
+          response: {
+            clientDataJSON: buf2b64u(cred.response.clientDataJSON),
+            attestationObject: cred.response.attestationObject ? buf2b64u(cred.response.attestationObject) : undefined,
+            transports: cred.response.getTransports ? cred.response.getTransports() : [],
+            authenticatorData: cred.response.authenticatorData ? buf2b64u(cred.response.authenticatorData) : undefined,
+            signature: cred.response.signature ? buf2b64u(cred.response.signature) : undefined,
+            userHandle: cred.response.userHandle ? buf2b64u(cred.response.userHandle) : undefined,
+          },
+        };
+        return res;
+      };
+
+      // ─── UI helpers ────────────────────────────────────────────────────
+
+      function showResponse(data) {
+        $('#response-log').textContent = JSON.stringify(data, null, 2);
+      }
+
+      function showError(id, msg) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = msg || '';
+        el.classList.toggle('hidden', !msg);
+      }
+
+      async function api(path, opts) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (accessToken) headers['Authorization'] = 'Bearer ' + accessToken;
+        const res = await fetch(path, {
+          method: (opts && opts.method) || 'GET',
+          headers,
+          body: opts && opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+        });
+        const json = await res.json().catch(() => ({}));
+        showResponse(json);
+        if (!json.success) {
+          throw Object.assign(new Error(json.error && json.error.message || 'Request failed'), {
+            code: json.error && json.error.code,
+            status: res.status,
+          });
+        }
+        return json.data;
+      }
+
+      function b64decode(seg) {
+        const pad = seg.length % 4 === 0 ? '' : '='.repeat(4 - (seg.length % 4));
+        const b64 = (seg + pad).replace(/-/g, '+').replace(/_/g, '/');
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return JSON.parse(new TextDecoder().decode(bytes));
+      }
+
+      function inspectToken(token) {
+        if (!token) return 'No access token yet.';
+        const parts = token.split('.');
+        if (parts.length !== 3) return 'Token is not a 3-segment JWT:\n' + token;
+        try {
+          const header = JSON.stringify(b64decode(parts[0]), null, 2);
+          const payload = JSON.stringify(b64decode(parts[1]), null, 2);
+          return '--- header ---\n' + header + '\n\n--- payload ---\n' + payload + '\n\n--- signature ---\n' + parts[2];
+        } catch (e) {
+          return 'Could not decode JWT: ' + e.message;
+        }
+      }
+
+      // ─── State ─────────────────────────────────────────────────────────
+
+      function setTokens(access, refresh) {
+        accessToken = access || null;
+        refreshToken = refresh || null;
+        $('#token-inspector').textContent = inspectToken(accessToken);
+        const signedIn = !!accessToken;
+        $('#auth-section').classList.toggle('hidden', signedIn);
+        $('#auth-hr').classList.toggle('hidden', signedIn);
+        $('#password-login-section').classList.toggle('hidden', signedIn);
+        $('#login-hr').classList.toggle('hidden', signedIn);
+        $('#account-panel').classList.toggle('hidden', !signedIn);
+        $('#passkey-login-section').classList.toggle('hidden', signedIn);
+        if (accessToken) fetchMe();
+      }
+
+      async function fetchMe() {
+        try {
+          const me = await api('/api/me');
+          const info = { email: me.email, userId: me.identity && me.identity.userId, passkeys: me.passkeys || [] };
+          $('#account-body').textContent = JSON.stringify(info, null, 2);
+          const pill = $('#auth-pill');
+          pill.className = 'pill ok';
+          pill.textContent = 'signed in';
+        } catch (e) {
+          $('#account-body').textContent = 'Error: ' + e.message;
+        }
+      }
+
+      // ─── Register account ──────────────────────────────────────────────
+
+      $('#reg-btn').addEventListener('click', async () => {
+        showError('reg-error');
+        try {
+          const data = await api('/api/register', {
+            method: 'POST',
+            body: { email: $('#reg-email').value, password: $('#reg-password').value },
+          });
+          setTokens(data.tokens.accessToken, data.tokens.refreshToken);
+        } catch (e) {
+          showError('reg-error', e.message);
+        }
+      });
+
+      // ─── Password login (fallback) ─────────────────────────────────────
+
+      $('#login-btn').addEventListener('click', async () => {
+        showError('login-error');
+        try {
+          const data = await api('/api/login', {
+            method: 'POST',
+            body: { email: $('#login-email').value, password: $('#login-password').value },
+          });
+          if (data.mfaRequired) {
+            showError('login-error', 'MFA is required on this account (MFA is not the focus of this demo).');
+            return;
+          }
+          setTokens(data.tokens.accessToken, data.tokens.refreshToken);
+        } catch (e) {
+          showError('login-error', e.message);
+        }
+      });
+
+      // ─── Logout ────────────────────────────────────────────────────────
+
+      $('#logout-btn').addEventListener('click', () => {
+        accessToken = null;
+        refreshToken = null;
+        setTokens(null, null);
+        $('#account-body').textContent = '';
+        $('#auth-pill').className = 'pill out';
+        $('#auth-pill').textContent = 'signed out';
+      });
+
+      // ─── Fetch /api/me ─────────────────────────────────────────────────
+
+      $('#me-btn').addEventListener('click', fetchMe);
+
+      // ─── Register passkey (WebAuthn registration ceremony) ─────────────
+
+      $('#passkey-reg-btn').addEventListener('click', async () => {
+        showError('passkey-reg-error');
+        $('#passkey-reg-ok').classList.add('hidden');
+        try {
+          const me = await api('/api/me');
+          const email = me.email;
+
+          // 1. Server generates registration options
+          const start = await api('/api/passkey/register/begin', {
+            method: 'POST',
+            body: { email: email },
+          });
+
+          // 2. Browser prompts the user to create a credential
+          const credential = await navigator.credentials.create({
+            publicKey: toWebAuthnOptions(start.options),
+          });
+
+          // 3. Send the client response to the server for verification
+          const result = await api('/api/passkey/register/complete', {
+            method: 'POST',
+            body: {
+              credential: publicKeyCredentialToJSON(credential),
+              expectedChallenge: start.expectedChallenge,
+              origin: window.location.origin,
+            },
+          });
+
+          $('#passkey-reg-ok').textContent = 'Passkey registered successfully: ' + result.credentialId;
+          $('#passkey-reg-ok').classList.remove('hidden');
+          fetchMe();
+        } catch (e) {
+          showError('passkey-reg-error', e.message);
+        }
+      });
+
+      // ─── Passkey login (WebAuthn authentication ceremony) ──────────────
+
+      $('#passkey-login-btn').addEventListener('click', async () => {
+        showError('passkey-login-error');
+        const email = $('#passkey-login-email').value;
+        try {
+          // 1. Server looks up the user and generates authentication options
+          const start = await api('/api/passkey/assert/begin', {
+            method: 'POST',
+            body: { email: email },
+          });
+
+          // 2. Browser prompts for the passkey
+          const credential = await navigator.credentials.get({
+            publicKey: toWebAuthnOptions(start.options),
+          });
+
+          // 3. Send the signed challenge to the server for verification
+          const data = await api('/api/passkey/assert/complete', {
+            method: 'POST',
+            body: {
+              credential: publicKeyCredentialToJSON(credential),
+              expectedChallenge: start.expectedChallenge,
+              origin: window.location.origin,
+            },
+          });
+
+          setTokens(data.tokens.accessToken, data.tokens.refreshToken);
+        } catch (e) {
+          showError('passkey-login-error', e.message);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -25,7 +25,7 @@ package layering:
 - **Ephemeral state:** optional Redis, strictly an optimiser. On any Redis
   failure the stack degrades to a bounded process-local cache and always falls
   back to Mongo for durable state.
-- **Demo:** `demo/index.html` served by the identity server itself at `/`, or via
+- **Demo:** `demos/browser-sdk/index.html` served by the identity server itself at `/`, or via
   Live Server on `127.0.0.1:5500` (cross-origin — fixed CORS/CSRF, see below).
 
 ### Trust boundaries

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pezhwan Machine-to-Machine Demo</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6fb;color:#0f172a;min-height:100vh;padding:24px 16px 64px}
+    .wrap{max-width:640px;margin:0 auto}
+    h1{font-size:2rem;text-align:center;margin-bottom:4px}
+    .sub{text-align:center;color:#475569;margin-bottom:24px;font-size:.92rem}
+    .card{background:#fff;border:1px solid #dfe7f3;border-radius:12px;padding:20px;margin-bottom:14px;box-shadow:0 6px 16px rgba(15,23,42,.06)}
+    .card h2{font-size:1rem;margin-bottom:12px}
+    hr{border:none;border-top:1px solid #dfe7f3;margin:14px 0}
+    .section-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#64748b;margin-bottom:8px}
+    label{display:block;font-size:.78rem;color:#475569;margin-bottom:4px;font-weight:600}
+    input[type=text]{width:100%;padding:9px 10px;border:1px solid #ccd9ec;border-radius:8px;font-size:.88rem;font-family:monospace;margin-bottom:10px;background:#f8fafc}
+    input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .btn{padding:8px 14px;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit;margin-right:6px;margin-bottom:6px}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .btn-primary{background:#2563eb;color:#fff}
+    .btn-primary:hover:not(:disabled){background:#1d4ed8}
+    .btn-outline{background:#fff;color:#0f172a;border:1px solid #dfe7f3}
+    .btn-outline:hover:not(:disabled){background:#f8fafc}
+    .btn-danger{background:#dc2626;color:#fff}
+    .btn-sm{padding:5px 10px;font-size:.73rem}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700;font-family:monospace}
+    .badge-ok{background:rgba(21,128,61,.1);color:#15803d}
+    .badge-fail{background:rgba(220,38,38,.1);color:#dc2626}
+    pre{background:#f8fafc;border:1px solid #dfe7f3;border-radius:10px;padding:10px;font-size:.72rem;font-family:'SF Mono','Fira Code',monospace;max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-top:8px;line-height:1.6}
+    .warn{background:#fef9ee;border:1px solid #f0d68a;border-radius:8px;padding:8px 10px;font-size:.76rem;color:#92400e;margin:8px 0}
+    .log-box{background:#f8fafc;border:1px solid #dfe7f3;border-radius:10px;padding:10px;font-size:.72rem;font-family:monospace;max-height:200px;overflow-y:auto;line-height:1.6;margin-top:14px}
+    .footer{text-align:center;color:#94a3b8;font-size:.75rem;margin-top:32px}
+    .hidden{display:none}
+    .creds-box{background:#f8fafc;border:1px solid #dfe7f3;border-radius:10px;padding:10px;font-size:.72rem;font-family:monospace;margin:8px 0;line-height:1.8;word-break:break-all;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Pezhwan Machine-to-Machine</h1>
+    <p class="sub">Service-to-service auth via API keys + OAuth client_credentials.</p>
+
+    <div class="card">
+      <h2>Issue Credentials</h2>
+
+      <div class="section-title">API Key</div>
+      <input type="text" id="keyName" placeholder="publisher-key" value="publisher-key">
+      <button class="btn btn-primary btn-sm" onclick="createApiKey()">Create API Key</button>
+      <div id="apiKeyResult" class="hidden">
+        <div class="warn" id="apiKeyWarning"></div>
+        <pre id="apiKeyPre"></pre>
+        <button class="btn btn-danger btn-sm" id="revokeBtn" onclick="revokeApiKey()" disabled>Revoke Key</button>
+      </div>
+
+      <hr>
+      <div class="section-title">OAuth Client</div>
+      <button class="btn btn-primary btn-sm" onclick="registerOAuth()">Register Client</button>
+      <pre id="oauthPre">No client registered</pre>
+
+      <hr>
+      <div class="section-title">Client Credentials Token</div>
+      <input type="text" id="oauthClientId" placeholder="Client ID (auto-filled after register)">
+      <input type="text" id="oauthClientSecret" placeholder="Client Secret (auto-filled after register)">
+      <button class="btn btn-primary btn-sm" onclick="getToken()">Get Token</button>
+      <pre id="tokenPre">No token</pre>
+    </div>
+
+    <div class="card">
+      <h2>Call Protected Service</h2>
+
+      <div class="section-title">Service Endpoints</div>
+      <button class="btn btn-outline btn-sm" onclick="callPing('apikey')">Ping with API Key</button>
+      <button class="btn btn-outline btn-sm" onclick="callPing('token')">Ping with Token</button>
+      <button class="btn btn-outline btn-sm" onclick="callStatus()">Status with Token</button>
+      <button class="btn btn-outline btn-sm" onclick="callPing('none')">Ping with NO credentials</button>
+      <pre id="servicePre">No service calls yet</pre>
+
+      <hr>
+      <div class="section-title">Event Log</div>
+      <div class="log-box" id="logBox"></div>
+    </div>
+
+    <p class="footer">PEZHWAN SDK demo</p>
+  </div>
+
+<script>
+  let currentApiKey = null;
+  let currentRawKey = null;
+  let currentOAuthClientId = null;
+  let currentOAuthClientSecret = null;
+  let currentAccessToken = null;
+
+  function decodeJwtPayload(token) {
+    try {
+      const b64 = token.split('.')[1];
+      return JSON.parse(atob(b64.replace(/-/g,'+').replace(/_/g,'/')));
+    } catch { return null; }
+  }
+
+  function addLog(msg) {
+    const box = document.getElementById('logBox');
+    box.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + box.textContent;
+  }
+
+  function show(id, visible) { document.getElementById(id).classList.toggle('hidden', !visible); }
+
+  async function apiFetch(path, opts) {
+    const res = await fetch(path, opts);
+    const body = await res.json();
+    return { ok: res.ok, status: res.status, body };
+  }
+
+  // ---- Create API Key ----
+  async function createApiKey() {
+    const name = document.getElementById('keyName').value.trim();
+    if (!name) return addLog('MISSING NAME');
+    try {
+      const r = await apiFetch('/api/keys/create', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name, scopes: ['machine.read'] }),
+      });
+      if (r.ok) {
+        currentApiKey = name;
+        currentRawKey = r.body.data.rawKey;
+        document.getElementById('apiKeyWarning').textContent = r.body.data.warning;
+        document.getElementById('apiKeyPre').textContent =
+          `rawKey: ${r.body.data.rawKey}\nprefix: ${r.body.data.prefix}`;
+        show('apiKeyResult', true);
+        document.getElementById('revokeBtn').disabled = false;
+        addLog(`API KEY created: ${r.body.data.prefix}…`);
+      } else {
+        addLog(`API KEY FAIL — ${r.body.error?.message}`);
+      }
+    } catch(e) { addLog(`API KEY ERROR — ${e.message}`); }
+  }
+
+  // ---- Revoke API Key ----
+  async function revokeApiKey() {
+    if (!currentApiKey) return;
+    try {
+      const r = await apiFetch(`/api/keys/${currentApiKey}/revoke`, { method: 'POST' });
+      if (r.ok) {
+        addLog(`API KEY revoked: ${currentApiKey}`);
+        currentRawKey = null;
+        currentApiKey = null;
+        show('apiKeyResult', false);
+      } else {
+        addLog(`REVOKE FAIL — ${r.body.error?.message}`);
+      }
+    } catch(e) { addLog(`REVOKE ERROR — ${e.message}`); }
+  }
+
+  // ---- Register OAuth Client ----
+  async function registerOAuth() {
+    try {
+      const r = await apiFetch('/api/oauth/register', { method: 'POST' });
+      if (r.ok) {
+        currentOAuthClientId = r.body.data.clientId;
+        currentOAuthClientSecret = r.body.data.clientSecret;
+        document.getElementById('oauthClientId').value = currentOAuthClientId;
+        document.getElementById('oauthClientSecret').value = currentOAuthClientSecret || '';
+        document.getElementById('oauthPre').textContent =
+          `clientId: ${r.body.data.clientId}\nclientSecret: ${r.body.data.clientSecret ?? '(unavailable)'}\nnote: ${r.body.data.note || ''}`;
+        addLog(`OAUTH CLIENT registered: ${r.body.data.clientId.slice(0,12)}…`);
+      } else {
+        addLog(`OAUTH REGISTER FAIL — ${r.body.error?.message}`);
+      }
+    } catch(e) { addLog(`OAUTH REGISTER ERROR — ${e.message}`); }
+  }
+
+  // ---- Get client_credentials Token ----
+  async function getToken() {
+    const cid = document.getElementById('oauthClientId').value.trim();
+    const sec = document.getElementById('oauthClientSecret').value.trim();
+    if (!cid || !sec) return addLog('MISSING CLIENT CREDENTIALS');
+    try {
+      const r = await apiFetch('/api/oauth/token', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ clientId: cid, clientSecret: sec }),
+      });
+      if (r.ok) {
+        currentAccessToken = r.body.data.accessToken;
+        const d = decodeJwtPayload(currentAccessToken);
+        document.getElementById('tokenPre').textContent =
+          `accessToken: ${currentAccessToken.slice(0,20)}…\nexpiresIn: ${r.body.data.expiresIn}s\nscope: ${r.body.data.scope}\nserver-decoded sub: ${r.body.data.decoded.sub}\nserver-decoded roles: [${r.body.data.decoded.roles}]\nserver-decoded authMethod: ${r.body.data.decoded.authMethod}\n\nclient-decoded payload:\n${JSON.stringify(d, null, 2)}`;
+        addLog(`TOKEN issued — sub=${r.body.data.decoded.sub.slice(0,16)}… roles=[${r.body.data.decoded.roles}]`);
+      } else {
+        addLog(`TOKEN FAIL — ${r.body.error?.code}: ${r.body.error?.message}`);
+      }
+    } catch(e) { addLog(`TOKEN ERROR — ${e.message}`); }
+  }
+
+  // ---- Service calls ----
+  async function callPing(mode) {
+    const headers = {};
+    if (mode === 'apikey' && currentRawKey) {
+      headers['X-API-Key'] = currentRawKey;
+    } else if (mode === 'token' && currentAccessToken) {
+      headers['Authorization'] = 'Bearer ' + currentAccessToken;
+    }
+    const badge = (ok) => ok ? 'badge badge-ok' : 'badge badge-fail';
+    const label = (ok) => ok ? 'ACCEPTED' : 'REJECTED';
+    try {
+      const res = await fetch('/api/service/ping', { headers });
+      const body = await res.json();
+      const ok = res.ok;
+      document.getElementById('servicePre').textContent =
+        `<span class="${badge(ok)}">${label(ok)}</span>  GET /api/service/ping  [${res.status}]\n\n` + JSON.stringify(body, null, 2);
+      addLog(`PING (${mode}) → ${res.status} ${ok ? 'OK' : body.error?.code}`);
+    } catch(e) {
+      document.getElementById('servicePre').textContent = `ERROR: ${e.message}`;
+      addLog(`PING (${mode}) ERROR — ${e.message}`);
+    }
+  }
+
+  async function callStatus() {
+    const headers = {};
+    if (currentAccessToken) headers['Authorization'] = 'Bearer ' + currentAccessToken;
+    const badge = (ok) => ok ? 'badge badge-ok' : 'badge badge-fail';
+    const label = (ok) => ok ? 'ACCEPTED' : 'REJECTED';
+    try {
+      const res = await fetch('/api/service/status', { headers });
+      const body = await res.json();
+      const ok = res.ok;
+      document.getElementById('servicePre').textContent =
+        `<span class="${badge(ok)}">${label(ok)}</span>  GET /api/service/status  [${res.status}]\n\n` + JSON.stringify(body, null, 2);
+      addLog(`STATUS (token) → ${res.status} ${ok ? 'OK' : body.error?.code}`);
+    } catch(e) {
+      document.getElementById('servicePre').textContent = `ERROR: ${e.message}`;
+      addLog(`STATUS (token) ERROR — ${e.message}`);
+    }
+  }
+</script>
+</body>
+</html>

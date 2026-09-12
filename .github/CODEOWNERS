@@ -1,0 +1,28 @@
+# PEZHWAN — code ownership rules.
+#
+# GitHub assigns reviewers from these rules; the most specific path match wins.
+# Replace the placeholder handles below with your actual GitHub team or user
+# handles before relying on this file (multiple patterns per section allowed).
+
+# Default owner for everything not matched below
+* @pezhwan/maintainers
+
+# Core SDK packages and the CLI
+/packages/ @pezhwan/core-platform
+
+# Reference applications and demos
+/apps/ @pezhwan/core-platform
+/demos/ @pezhwan/core-platform
+
+# Database migrations and provisioning scripts
+/migrations/ @pezhwan/core-platform
+/scripts/ @pezhwan/core-platform
+
+# Infrastructure, deployment, and CI/CD
+/infrastructure/ @pezhwan/platform-ops
+/.github/workflows/ @pezhwan/platform-ops
+/.github/ @pezhwan/platform-ops
+
+# Documentation
+/docs/ @pezhwan/docs
+/README.md @pezhwan/docs

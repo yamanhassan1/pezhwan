@@ -135,6 +135,16 @@ const envSchema = z.object({
   PEZHWAN_LOCKOUT_MAX_ATTEMPTS: z.coerce.number().int().min(1).default(5),
   PEZHWAN_LOCKOUT_DURATION: z.coerce.number().int().min(60000).default(900000),
 
+  // ── Bootstrap admin (optional) ────────────────────────────────────────
+  // When both are set, the server ensures a first ADMIN user exists on
+  // startup (idempotent) so the admin console works out of the box. Never
+  // set in production — provision admins through your provisioning pipeline.
+  PEZHWAN_ADMIN_EMAIL: z.string().email('PEZHWAN_ADMIN_EMAIL must be a valid email').optional(),
+  PEZHWAN_ADMIN_PASSWORD: z
+    .string()
+    .min(8, 'PEZHWAN_ADMIN_PASSWORD must be at least 8 characters')
+    .optional(),
+
   // ── Observability ─────────────────────────────────────────────────────
   PEZHWAN_OTEL_ENDPOINT: z.string().optional(),
   PEZHWAN_REQUEST_LOGGING: booleanEnv.default(true),
@@ -366,6 +376,11 @@ function buildConfig(raw: EnvConfig) {
         otp: parseBudget(raw.PEZHWAN_RATE_LIMIT_OTP),
         api: parseBudget(raw.PEZHWAN_RATE_LIMIT_API),
       }),
+    }),
+
+    admin: Object.freeze({
+      email: raw.PEZHWAN_ADMIN_EMAIL,
+      password: raw.PEZHWAN_ADMIN_PASSWORD,
     }),
 
     observability: Object.freeze({

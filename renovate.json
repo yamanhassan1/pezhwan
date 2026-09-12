@@ -1,0 +1,40 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "separateMajorMinor": true,
+  "labels": ["dependencies", "renovate"],
+  "assignees": [],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Hold back Mongoose 9.x until the core package passes integration tests against a real MongoDB.",
+      "matchPackageNames": ["mongoose"],
+      "allowedVersions": "<9"
+    },
+    {
+      "description": "Hold back ioredis 6.x until the rate-limit/session/cache path is integration-verified against Redis 6.2+.",
+      "matchPackageNames": ["ioredis"],
+      "allowedVersions": "<6"
+    },
+    {
+      "description": "Hold back TypeScript 7.x until the build toolchain is migrated from TS 5.x to the native Go port.",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    },
+    {
+      "description": "Automerge non-breaking (minor + patch) updates.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "groupName": "non-major dependencies"
+    },
+    {
+      "description": "Group major updates for individual review.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "renovate", "major"]
+    }
+  ]
+}

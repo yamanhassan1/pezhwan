@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pezhwan-mongo-config
+  namespace: pezhwan
+  labels:
+    app.kubernetes.io/name: pezhwan
+    app.kubernetes.io/component: mongodb
+data:
+  mongod.conf: |
+    storage:
+      dbPath: /data/db
+    replication:
+      replSetName: pezhwan-rs
+    net:
+      port: 27017
+      bindIpAll: true

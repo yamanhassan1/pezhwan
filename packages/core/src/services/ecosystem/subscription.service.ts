@@ -40,7 +40,7 @@ export class SubscriptionService {
     return SubscriptionModel.findByIdAndUpdate(subscriptionId, { $set: { status } }, { new: true });
   }
 
-  async cancel(subscriptionId: string, atPeriodEnd = true): Promise<SubscriptionDoc | null> {
+  async cancel(subscriptionId: string, _atPeriodEnd = true): Promise<SubscriptionDoc | null> {
     return this.updateStatus(subscriptionId, 'canceled');
   }
 

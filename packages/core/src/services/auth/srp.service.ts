@@ -62,7 +62,6 @@ export class SrpService {
 
   /** Begin a server-side authentication session given a stored verifier. */
   begin(saltHex: string, verifierHex: string): SrpSession {
-    const salt = BigInt('0x' + saltHex);
     const verifier = BigInt('0x' + verifierHex);
     const k = kFactor();
     const b = randomBytes(32).reduce((acc, byte) => (acc * 256n + BigInt(byte)) % N, 0n);
@@ -85,14 +84,12 @@ export class SrpService {
   validateClientProof(session: SrpSession, clientPublicHex: string, clientProof: string): boolean {
     const A = BigInt('0x' + clientPublicHex);
     if (A % N === 0n) return false;
-    const B = BigInt('0x' + session.serverPublic);
     const uHash = createHash('sha256')
       .update(Buffer.from(clientPublicHex, 'hex'))
       .update(Buffer.from(session.serverPublic, 'hex'))
       .digest();
     const u = BigInt('0x' + uHash.toString('hex')) % N;
     if (u === 0n) return false;
-    const k = kFactor();
     const S = modPow(A * modPow(session.verifier, u, N) % N, session.serverPrivate, N);
     const sessionKey = this.hashToKey(S, clientPublicHex, session.serverPublic);
     const identityHash = createHash('sha256').update(session.salt).digest('hex');

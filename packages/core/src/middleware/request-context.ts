@@ -34,7 +34,7 @@ const fallback: RequestContextData = {
 function loadAls(): AsyncLocalStore | null {
   if (als) return als;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { AsyncLocalStorage } = require('node:async_hooks') as {
       AsyncLocalStorage: new () => AsyncLocalStore;
     };

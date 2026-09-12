@@ -1,0 +1,51 @@
+# Pezhwan development overlay.
+#
+#   docker compose -f infrastructure/docker/docker-compose.yml \
+#     -f infrastructure/docker/docker-compose.dev.yml up --build
+#
+# Adds: live-reload volumes for the identity server & packages, a Node
+# inspector debug port (9229), development environment defaults and an
+# optional mongo-express UI (enable with --profile dev-tools).
+#
+# Note: build the monorepo once locally (`npm run build`) before `up`, so the
+# bound directories contain the compiled `dist` output the runtime requires.
+
+services:
+  identity-server:
+    # Live-reload dev runtime: node --watch restarts on source changes and
+    # the inspector accepts the Chrome / VS Code debugger.
+    command: ['node', '--watch', '--inspect=0.0.0.0:9229', 'src/server.ts']
+    environment:
+      NODE_ENV: 'development'
+      PEZHWAN_ISSUER: '${PEZHWAN_ISSUER:-http://localhost:4011}'
+      PEZHWAN_TENANT_ID: 'dev-tenant'
+      PEZHWAN_APPLICATION_ID: 'dev-app'
+      PEZHWAN_LOG_LEVEL: 'debug'
+      PEZHWAN_REQUEST_LOGGING: 'true'
+      PEZHWAN_COOKIE_SECURE: 'false'
+      PEZHWAN_ALLOWED_ORIGINS: '${PEZHWAN_ALLOWED_ORIGINS:-http://localhost:4011,http://127.0.0.1:4011,http://localhost:5173,http://127.0.0.1:5500}'
+    volumes:
+      - ../../apps/identity-server/src:/app/apps/identity-server/src:ro
+      - ../../packages:/app/packages:ro
+      - pezhwan_signing_keys:/app/apps/identity-server/keys
+    ports:
+      - '127.0.0.1:9229:9229'
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: pezhwan-mongo-express
+    profiles:
+      - dev-tools
+    restart: unless-stopped
+    depends_on:
+      mongo1:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:8081:8081'
+    environment:
+      ME_CONFIG_MONGODB_URL: 'mongodb://mongo1:27017/pezhwan?replicaSet=pezhwan-rs'
+      ME_CONFIG_BASICAUTH_USERNAME: 'admin'
+      ME_CONFIG_BASICAUTH_PASSWORD: '${MONGO_EXPRESS_PASSWORD:-password}'
+
+volumes:
+  pezhwan_signing_keys:

@@ -1,0 +1,60 @@
+# PEZHWAN — Prometheus scrape configuration.
+#
+# Scrapes the identity server metrics endpoint plus MongoDB and Redis exporters.
+# Alert rules are loaded from alerts.yml (referenced via rule_files).
+#
+# Metric naming convention: the MetricsRegistry renders counters in Prometheus
+# text format as <metric_name>_total (dots become underscores).
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+  external_labels:
+    cluster: pezhwan-docker
+    environment: development
+
+rule_files:
+  - alerts.yml
+
+scrape_configs:
+  # --- Pezhwan Identity Server ---
+  - job_name: identity-server
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - pezhwan-identity-server:4011
+        labels:
+          service: pezhwan
+          component: identity-server
+
+  # --- MongoDB Exporter ---
+  - job_name: mongodb
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - pezhwan-mongodb-exporter:9216
+        labels:
+          service: pezhwan
+          component: mongodb
+
+  # --- Redis Exporter ---
+  - job_name: redis
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - pezhwan-redis-exporter:9121
+        labels:
+          service: pezhwan
+          component: redis
+
+  # --- Node Exporter (host metrics) ---
+  - job_name: node
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - node-exporter:9100
+        labels:
+          service: pezhwan
+          component: node

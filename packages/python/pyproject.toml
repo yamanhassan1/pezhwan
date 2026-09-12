@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pezhwan"
+version = "0.1.0"
+description = "Universal Identity & Access Management client for PEZHWAN"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "PEZHWAN" }]
+keywords = ["identity", "auth", "oauth", "iam", "pezhwan"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+homepage = "https://pezhwan.dev"
+documentation = "https://pezhwan.dev/docs"
+
+[tool.setuptools]
+packages = ["pezhwan"]

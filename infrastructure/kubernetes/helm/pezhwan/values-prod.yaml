@@ -1,0 +1,28 @@
+replicaCount: 3
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+
+ingress:
+  enabled: true
+  tls:
+    - hosts:
+        - auth.pezhwan.com
+      secretName: pezhwan-tls-prod
+
+mongodb:
+  replicas: 3
+  storageSize: 50Gi
+
+redis:
+  storageSize: 10Gi

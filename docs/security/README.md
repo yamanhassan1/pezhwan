@@ -4,6 +4,8 @@ These documents define the controls and operational evidence required before a
 Pezhwan deployment is approved for production. Each control is implemented in
 code where possible and must also be verified in the deployment environment.
 
+- [Threat model](./threat-model.md) + [full STRIDE model](../THREAT-MODEL.md)
+- [Security audit record](../security-audit.md)
 - [Key management](./key-management.md)
 - [Authentication security](./authentication.md)
 - [Authorization security](./authorization.md)
@@ -12,6 +14,9 @@ code where possible and must also be verified in the deployment environment.
 - [Multi-tenancy security](./multi-tenancy.md)
 - [Rate limiting](./rate-limiting.md)
 - [Risk-based authentication](./risk-based-authentication.md)
+- [Zero trust](./zero-trust.md)
+- [Penetration testing](./penetration-testing.md)
+- [Security checklist](./security-checklist.md)
 - [Compliance framework](./compliance/)
 - [Incident response](./incident-response.md)
 - [Disaster recovery](./disaster-recovery.md)

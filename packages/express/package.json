@@ -30,6 +30,8 @@
     "@pezhwan/core": "*",
     "@pezhwan/shared": "*",
     "@pezhwan/crypto": "*",
+    "@pezhwan/oauth": "*",
+    "graphql": "^16.8.1",
     "cookie-parser": "^1.4.6"
   },
   "devDependencies": {

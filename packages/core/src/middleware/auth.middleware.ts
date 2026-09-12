@@ -8,7 +8,6 @@
 
 import type { TokenService } from '../services/token.service.ts';
 import type { AccountStateService } from '../services/accountState.service.ts';
-import type { IdentityContext } from '@pezhwan/shared';
 import { AuthenticationError } from '@pezhwan/shared';
 
 export interface AuthContext {

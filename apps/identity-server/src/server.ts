@@ -23,7 +23,6 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 // Centralized config — validates ALL env vars at startup. Exits on failure.
 import { config } from './config/index.ts';
 
-import './bootstrap.ts';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
@@ -48,6 +47,7 @@ import {
   type PezhwanRequest,
 } from '@pezhwan/express';
 import { buildOtpDelivery } from './otp.ts';
+import { createAdminRouter, ensureBootstrap } from './admin.ts';
 
 // ---------------------------------------------------------------------------
 // Bootstrap: connect Mongo + construct the runtime, then wire the app
@@ -98,6 +98,17 @@ async function bootstrap(): Promise<void> {
     rotationIntervalMs: config.signingKeys.rotationIntervalMs,
   });
   console.log(`[pezhwan] signing keys ready in '${config.signingKeys.path}'`);
+
+  // Idempotent bootstrap records so the admin console/SDKs work out of the
+  // box: tenant, application, ADMIN role, and the optional seeded admin user.
+  await ensureBootstrap(runtime, {
+    tenantId: config.tenantId,
+    applicationId: config.applicationId,
+    tenantName: `Tenant ${config.tenantId}`,
+    tenantSlug: config.tenantId,
+    adminEmail: config.admin.email,
+    adminPassword: config.admin.password,
+  });
 
   wireApp(runtime, otp, redisManager);
 }
@@ -185,6 +196,17 @@ function wireApp(
   app.use('/v1/sessions', requireAuth(), routers.sessions);
   app.use('/v1/oauth', routers.oauth);
 
+  // Provisioning + extensibility surfaces backed by the runtime engines.
+  app.use('/v1/scim', createAuthenticate(runtime), requireAuth(), requireRole('ADMIN'), routers.scim);
+  app.use('/v1/webhooks', createAuthenticate(runtime), requireAuth(), requireRole('ADMIN'), routers.webhooks);
+  app.use('/v1/teams', createAuthenticate(runtime), requireAuth(), requireRole('ADMIN'), routers.teams);
+  app.use('/v1/subscriptions', createAuthenticate(runtime), requireAuth(), routers.subscriptions);
+  app.use('/v1/graphql', createAuthenticate(runtime), requireAuth(), routers.graphql);
+
+  console.log(
+    `[pezhwan] mounted /v1/scim /v1/webhooks /v1/teams /v1/subscriptions /v1/graphql`,
+  );
+
   // Authenticated user profile — scoped to the identity's tenant. The React
   // SDK reads this at bootstrap via GET /v1/users/me.
   app.get(
@@ -240,10 +262,16 @@ function wireApp(
     },
   );
 
-  // Admin-protected example + API-key-protected service example.
-  app.get('/v1/admin/health', requireAuth(), requireRole('ADMIN'), (_req, res) =>
-    res.json({ ok: true }),
+  // Admin console / SDK / CLI surface — ADMIN role required.
+  app.use(
+    '/v1/admin',
+    createAuthenticate(runtime),
+    requireAuth(),
+    requireRole('ADMIN'),
+    createAdminRouter(runtime),
   );
+
+  // API-key-protected service example.
   app.get('/v1/services/ping', createAuthenticateApiKey(runtime), requireAuth(), (_req, res) =>
     res.json({ ok: true }),
   );
@@ -255,7 +283,7 @@ function wireApp(
   });
 
   // Serve the browser demo from / (after all API routes).
-  const demoDir = path.resolve(__dirname, '../../../demo');
+  const demoDir = path.resolve(__dirname, '../../../demos/browser-sdk');
   app.use(express.static(demoDir));
 
   // Error handler — never expose internals in production.

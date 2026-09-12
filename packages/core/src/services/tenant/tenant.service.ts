@@ -25,6 +25,7 @@ export class TenantService {
       config: input.config ?? {},
     });
     return {
+      _id: String(doc._id),
       name: doc.name,
       slug: doc.slug,
       isActive: doc.isActive,

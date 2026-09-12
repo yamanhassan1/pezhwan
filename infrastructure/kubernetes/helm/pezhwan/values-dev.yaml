@@ -1,0 +1,24 @@
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 250m
+    memory: 384Mi
+
+autoscaling:
+  enabled: false
+
+env:
+  PEZHWAN_TENANT_ID: "dev-tenant"
+  PEZHWAN_APPLICATION_ID: "dev-app"
+  PEZHWAN_ALLOWED_ORIGINS: "http://localhost:4011,http://localhost:5173"
+
+mongodb:
+  replicas: 1
+  storageSize: 5Gi
+
+redis:
+  storageSize: 1Gi

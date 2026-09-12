@@ -74,13 +74,34 @@ export interface SessionApi {
   revokeAllSessions: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthState & AuthApi & { can: (p: string) => boolean }>(
-  null as never,
-);
-const SessionContext = createContext<SessionApi>(null as never);
+export type AuthContextValue = AuthState &
+  AuthApi & {
+    can: (permission: string) => boolean;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+  };
+
+export const AuthContext = createContext<AuthContextValue>(null as never);
+export const SessionContext = createContext<SessionApi>(null as never);
 
 // Minimal identity cache — NEVER store tokens or full PII here.
 const STORAGE_KEY = 'pezhwan.session';
+
+let activeConfig: PezhwanConfig | null = null;
+
+/** Current provider config, for standalone hooks mounted under a provider. */
+export function getActiveConfig(): PezhwanConfig {
+  if (!activeConfig) {
+    throw new PezhwanApiError(
+      {
+        code: 'NO_PROVIDER',
+        message: '<PezzhwanProvider> is not mounted; wrap your app with it.',
+      },
+      500,
+    );
+  }
+  return activeConfig;
+}
 
 function readCachedSession(): PezhwanUser | null {
   try {
@@ -152,7 +173,11 @@ function errorToMessage(err: unknown): string | PezhwanError {
   return err instanceof Error ? err.message : String(err);
 }
 
-async function request(config: PezhwanConfig, path: string, init?: RequestInit): Promise<unknown> {
+export async function request(
+  config: PezhwanConfig,
+  path: string,
+  init?: RequestInit,
+): Promise<unknown> {
   const method = (init?.method ?? 'GET').toUpperCase();
   const headers = new Headers(init?.headers);
   headers.set('Content-Type', 'application/json');
@@ -273,6 +298,10 @@ export function PezhwanProvider({
   useEffect(() => {
     void bootstrap();
   }, [bootstrap]);
+
+  useEffect(() => {
+    activeConfig = config;
+  }, [config]);
 
   const login = useCallback<AuthApi['login']>(
     async ({ email, phone, password }) => {
@@ -470,3 +499,30 @@ export function RequirePermission({
   const allowed = roles.length > 0;
   return <>{allowed ? children : fallback}</>;
 }
+
+// ---------------------------------------------------------------------------
+// Modular layout re-exports
+//
+// Standalone hooks and ready-made components live under hooks/ and components/
+// in the modular source layout; this entry re-exports them so the package
+// surface stays complete at `import { LoginForm, useMFA } from '@pezhwan/react'`.
+// ---------------------------------------------------------------------------
+
+export { useMFA } from './hooks/useMFA.ts';
+export { usePasswordless } from './hooks/usePasswordless.ts';
+export { useSSO } from './hooks/useSSO.ts';
+export { useTenant } from './hooks/useTenant.ts';
+export { useWebAuthn } from './hooks/useWebAuthn.ts';
+
+export { AuthProvider } from './components/AuthProvider.tsx';
+export { LoginForm } from './components/LoginForm.tsx';
+export { RegisterForm } from './components/RegisterForm.tsx';
+export { MFALogin } from './components/MFALogin.tsx';
+export { MFASetup } from './components/MFASetup.tsx';
+export { PasswordlessLogin } from './components/PasswordlessLogin.tsx';
+export { Profile } from './components/Profile.tsx';
+export { SSOLogin } from './components/SSOLogin.tsx';
+export { SessionManager } from './components/SessionManager.tsx';
+export { TrustedDevices } from './components/TrustedDevices.tsx';
+export { WebAuthnLogin } from './components/WebAuthnLogin.tsx';
+export { DataExport } from './components/DataExport.tsx';

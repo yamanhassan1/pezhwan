@@ -129,7 +129,7 @@ app.get('/v1/admin/health', requireAuth(), requireRole('ADMIN'), (_req, res) => 
 
 ### Browser auth flow
 
-For browser clients, prefer secure cookie-based authentication and keep tokens off the page whenever possible. The demo in `demo/index.html` is intentionally a development-only example and should not be used as a production reference for token handling.
+For browser clients, prefer secure cookie-based authentication and keep tokens off the page whenever possible. The demo in `demos/browser-sdk/index.html` is intentionally a development-only example and should not be used as a production reference for token handling.
 
 ## Configuration
 

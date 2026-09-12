@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+# PEZHWAN — pre-push hook: typecheck + lint before publishing commits.
+# Blocks the push on failure to protect `main` from regressions.
+#
+# Bypass: SKIP_HOOKS=1 git push
+
+if [ -n "$SKIP_HOOKS" ]; then
+  echo "[pre-push] SKIP_HOOKS=1 — skipping typecheck + lint."
+  exit 0
+fi
+
+echo "[pre-push] npm run typecheck"
+npm run typecheck || {
+  echo ""
+  echo "✖ pre-push BLOCKED — typecheck failed."
+  echo "  Fix type errors and re-push. (SKIP_HOOKS=1 bypasses this hook.)"
+  exit 1
+}
+
+echo "[pre-push] npm run lint"
+npm run lint || {
+  echo ""
+  echo "✖ pre-push BLOCKED — lint failed."
+  echo "  Run npm run lint:fix and re-push. (SKIP_HOOKS=1 bypasses this hook.)"
+  exit 1
+}
+
+echo "[pre-push] OK — typecheck and lint passed."

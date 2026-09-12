@@ -1,0 +1,56 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.codeql-language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        codeql-language:
+          - javascript-typescript
+          - go
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Pin the CodeQL engine major version (v3). If a matrix language has no
+      # matching source files the extractor simply produces no results, so the
+      # Go entry stays harmless until Go code arrives in the monorepo.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.codeql-language }}
+          paths-ignore:
+            - '**/node_modules'
+            - '**/dist'
+            - '**/.next'
+            - 'tests/load'
+
+      # Compile-free languages are analyzed directly; this triggers the
+      # JavaScript/TypeScript extractor (and the Go toolchain when present).
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.codeql-language }}'

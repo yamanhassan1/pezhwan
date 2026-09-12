@@ -30,7 +30,7 @@ RUN apk add --no-cache python3 make g++ && npm ci --ignore-scripts=false
 # Copy source and compile.
 COPY packages packages
 COPY apps/identity-server apps/identity-server
-COPY demo demo
+COPY demos/browser-sdk demos/browser-sdk
 RUN npm run build
 
 # Prune to production deps for the runtime stage.
@@ -61,7 +61,7 @@ COPY --from=build /app/packages/node/dist ./packages/node/dist
 COPY --from=build /app/packages/node/package.json ./packages/node/package.json
 COPY --from=build /app/apps/identity-server/dist ./apps/identity-server/dist
 COPY --from=build /app/apps/identity-server/package.json ./apps/identity-server/package.json
-COPY --from=build /app/demo ./demo
+COPY --from=build /app/demos/browser-sdk ./demos/browser-sdk
 
 # libcrypto/argon2 native bindings are provided by node_modules.
 WORKDIR /app/apps/identity-server

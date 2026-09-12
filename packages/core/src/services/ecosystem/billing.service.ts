@@ -40,7 +40,7 @@ export class BillingService {
       status: 'trialing',
     });
     if (this.provider) {
-      const { url, externalId } = await this.provider.createCheckout(
+      const { url } = await this.provider.createCheckout(
         options.plan,
         options.tenantId,
       );

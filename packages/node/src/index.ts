@@ -33,6 +33,12 @@ export {
 
 export * from '@pezhwan/core';
 
+export * from './client.ts';
+export * from './auth.ts';
+export * from './session.ts';
+export * from './authorization.ts';
+export * from './mfa.ts';
+
 /**
  * Construct the Pezhwan runtime. Validates configuration at startup and
  * wires the full stack (keystore → tokens → sessions → OTP → RBAC → audit).

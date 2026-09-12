@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pezhwan-identity-server
+  namespace: pezhwan
+  labels:
+    app.kubernetes.io/name: pezhwan
+    app.kubernetes.io/component: identity-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pezhwan
+      app.kubernetes.io/component: identity-server
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pezhwan
+        app.kubernetes.io/component: identity-server
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: identity-server
+          image: pezhwan/identity-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4011
+              name: http
+          envFrom:
+            - configMapRef:
+                name: pezhwan-config
+            - secretRef:
+                name: pezhwan-secrets
+          readinessProbe:
+            httpGet:
+              path: /.well-known/jwks.json
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /.well-known/jwks.json
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

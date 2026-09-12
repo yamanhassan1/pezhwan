@@ -20,6 +20,11 @@ import type { PezhwanRuntime } from '@pezhwan/core';
 import { createAuthRouter, createSessionRouter } from './routes.ts';
 import { createOauthRouter } from './routes.oauth.ts';
 import { createMfaRouter, createVerificationRouter } from './routes.extra.ts';
+import { createGraphqlRouter } from './routes/graphql.routes.ts';
+import { createScimRouter } from './routes/scim.routes.ts';
+import { createWebhookRouter } from './routes/webhook.routes.ts';
+import { createSubscriptionRouter } from './routes/subscription.routes.ts';
+import { createTeamRouter } from './routes/team.routes.ts';
 
 export * from './security.ts';
 export * from './apikey.ts';
@@ -63,14 +68,24 @@ export function createAuthenticate(runtime: PezhwanRuntime): RequestHandler {
       // requireAuth() (if mounted) rejects with 401.
       return next();
     }
+    // Machine identities have NO user account behind the token: the `sub` of a
+    // client_credentials token is `client:<clientId>` (and api_key identities
+    // are attached by createAuthenticateApiKey with `apikey:<id>`). Account-state
+    // lookup for those would fail the ObjectId cast → false 503. Their validity
+    // is the signature itself (+ live key lookup in the API-key middleware).
+    const machineIdentity = identity.authMethod === 'service' || identity.authMethod === 'api_key';
     let valid = false;
-    try {
-      valid = await runtime.accountState.validate(identity.userId, identity.tokenVersion ?? 0);
-    } catch (err) {
-      // Account state could not be checked (Mongo down). Fail closed AND
-      // surface the failure as 503 (SecurityDependencyError) rather than a
-      // misleading 401.
-      return next(err);
+    if (machineIdentity) {
+      valid = true;
+    } else {
+      try {
+        valid = await runtime.accountState.validate(identity.userId, identity.tokenVersion ?? 0);
+      } catch (err) {
+        // Account state could not be checked (Mongo down). Fail closed AND
+        // surface the failure as 503 (SecurityDependencyError) rather than a
+        // misleading 401.
+        return next(err);
+      }
     }
     if (!valid) {
       // Account deleted, disabled, or its tokenVersion was rotated (e.g.
@@ -132,8 +147,9 @@ export function jwksHandler(runtime: PezhwanRuntime): RequestHandler {
 
 /**
  * Build the pre-wired auth + session routers. Returns an object with
- * `.auth` and `.sessions` routers for mountPoints like /v1/auth and
- * /v1/sessions.
+ * `.auth`, `.sessions`, `.oauth`, `.mfa`, `.verification` routers plus the
+ * domain surfaces (`.scim`, `.webhooks`, `.subscriptions`, `.teams`,
+ * `.graphql`) for mountPoints like /v1/auth, /v1/sessions, /v1/scim.
  */
 export function buildRouters(runtime: PezhwanRuntime): {
   auth: Router;
@@ -141,6 +157,11 @@ export function buildRouters(runtime: PezhwanRuntime): {
   oauth: Router;
   mfa: Router;
   verification: Router;
+  scim: Router;
+  webhooks: Router;
+  subscriptions: Router;
+  teams: Router;
+  graphql: Router;
 } {
   return {
     auth: createAuthRouter(runtime),
@@ -148,6 +169,11 @@ export function buildRouters(runtime: PezhwanRuntime): {
     oauth: createOauthRouter(runtime),
     mfa: createMfaRouter(runtime),
     verification: createVerificationRouter(runtime),
+    scim: createScimRouter(runtime),
+    webhooks: createWebhookRouter(runtime),
+    subscriptions: createSubscriptionRouter(runtime),
+    teams: createTeamRouter(runtime),
+    graphql: createGraphqlRouter(runtime),
   };
 }
 
@@ -155,3 +181,8 @@ export { createAuthRouter, createSessionRouter } from './routes.ts';
 export { createOauthRouter, discoveryHandler } from './routes.oauth.ts';
 export { createMfaRouter, createVerificationRouter } from './routes.extra.ts';
 export { createAuthenticateApiKey, requireApiKey } from './apikey.ts';
+export { createGraphqlRouter } from './routes/graphql.routes.ts';
+export { createScimRouter } from './routes/scim.routes.ts';
+export { createWebhookRouter } from './routes/webhook.routes.ts';
+export { createSubscriptionRouter } from './routes/subscription.routes.ts';
+export { createTeamRouter } from './routes/team.routes.ts';

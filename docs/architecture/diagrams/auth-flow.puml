@@ -1,0 +1,85 @@
+@startuml auth-flow
+title PEZHWAN — Password Login, MFA Gate & Refresh Rotation
+
+' Grounding: docs/architecture/architecture.md §3 (auth) and §4 (refresh rotation);
+' docs/architecture/data-flow.md §2 (login + MFA) and §4 (rotation, reuse revoked),
+' §5 (revokeFamily). Mirror the service stack in packages/core/src/{auth,services}/.
+
+actor "Client\n(Browser / SPA)" as CLIENT
+participant "Express Routes\n/v1/auth" as ROUTES
+participant "AuthEngine" as AUTH
+participant "UserModel\n(MongoDB)" as USER
+participant "SessionService" as SESSION
+participant "TokenService" as TOKEN
+participant "AuditService" as AUDIT
+database "MongoDB\n(sessions)" as MONGO
+database "Redis\n(liveness cache)" as REDIS
+
+note over ROUTES
+  Middleware pipeline runs first (data-flow.md): securityHeaders ->
+  corsAllowlist -> createAuthenticate -> csrfProtection -> rateLimit.
+  Responses use { success, data | error } envelope.
+end note
+
+== 1. Password login + MFA gate ==
+
+CLIENT -> ROUTES : POST /v1/auth/login { email|phone, password }
+ROUTES -> AUTH : loginPassword({ tenantId, applicationId, device })
+AUTH -> USER : findOne({ tenantId, email })   [tenant-scoped lookup]
+AUTH -> AUTH : verifyPassword — Argon2id (rejects non-Argon2 hashes)
+alt bad password or hash mismatch
+    AUTH --> ROUTES : 401 invalid credentials  [enumeration-safe]
+    ROUTES --> CLIENT : error envelope
+else valid password
+    AUTH -> AUTH : checkLockout — 5 failed → loginLockUntil 15m (ACCOUNT_LOCKED)
+    AUTH -> AUTH : checkAccountState (isActive, tokenVersion)
+    AUTH -> AUTH : checkMFA — is TOTP / backup code enabled?
+
+    alt MFA enabled
+        AUTH --> ROUTES : { mfaRequired: true, userId }   [no tokens yet]
+        ROUTES --> CLIENT : 200 { mfaRequired: true }
+        note over AUTH: A valid password never mints tokens while MFA is enabled
+        CLIENT -> ROUTES : POST /v1/mfa/login { userId, code }
+        ROUTES -> AUTH : verifyMfaLogin (TOTP / backup code, constant-time)
+        alt code invalid
+            AUTH --> ROUTES : 401 MFA verification failed
+            ROUTES --> CLIENT : error envelope
+        end
+    end
+
+    ' MFA-passed path resumes here -- create session and sign tokens
+    AUTH -> SESSION : create() — new refresh family
+    SESSION -> MONGO : SessionModel.create (status 'active', new familyId)
+    SESSION -> REDIS : cache session liveness key (30s TTL)
+    AUTH -> TOKEN : signAccessToken (RS256, kid, tenantId, tokenVersion)
+    AUTH -> TOKEN : signRefreshToken (random; only SHA-256 hash stored)
+    AUTH -> AUDIT : AUDIT LOGIN_SUCCESS
+    AUTH --> ROUTES : { user, accessToken, refreshToken }
+    ROUTES --> CLIENT : 200 OK with tokens
+end
+
+== 2. Refresh token rotation (concurrency-safe) ==
+
+CLIENT -> ROUTES : POST /v1/auth/refresh { refreshToken }
+ROUTES -> SESSION : rotate(refreshToken, { tenantId?, applicationId? })
+SESSION -> SESSION : hash = SHA-256(refreshToken)   [only hashes stored]
+SESSION -> MONGO : findOneAndUpdate({ hash, status:'active' } → 'rotating')   [atomic claim]
+
+alt claim failed — session already consumed
+    SESSION -> MONGO : find by hash — settled ('replaced' | 'revoked' | 'expired')?
+    alt settled (REUSE DETECTION)
+        SESSION -> MONGO : revokeFamily(familyId) — revoke the whole chain
+        SESSION -> REDIS : evict every cached liveness marker
+        SESSION --> ROUTES : SessionError REFRESH_TOKEN_REUSE → 401
+    else in-flight 'rotating'
+        SESSION --> ROUTES : fail closed — loser gets no token; winner completes
+    end
+else claim succeeded — exactly one concurrent winner
+    SESSION -> MONGO : create child session (same familyId, new hash)   [tx]
+    SESSION -> MONGO : update parent → status 'replaced', replacedBySessionId
+    SESSION -> REDIS : refresh liveness cache for parent + child
+    SESSION --> ROUTES : { accessToken, refreshToken }
+end
+ROUTES --> CLIENT : 200 OK with rotated tokens
+
+@enduml

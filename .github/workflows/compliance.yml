@@ -1,0 +1,70 @@
+name: Compliance
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  license-sbom-audit:
+    name: License, SBOM & Dependency Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install
+        run: npm ci
+
+      - name: License audit (fail on copyleft)
+        run: npm run license:check
+
+      - name: Generate SBOM (CycloneDX)
+        run: npm run sbom > sbom.cdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: pezhwan-sbom
+          path: sbom.cdx.json
+
+      - name: npm audit (fail on high/critical)
+        run: npm audit --audit-level=high
+
+  release-checklist:
+    name: Release Readiness Checklist
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate required repository files
+        run: |
+          for file in \
+            package.json package-lock.json tsconfig.base.json README.md LICENSE \
+            SECURITY.md CHANGELOG.md CONTRIBUTING.md .env.example \
+            infrastructure/docker/docker-compose.yml \
+            apps/identity-server/Dockerfile
+          do
+            if [ ! -f "$file" ]; then
+              echo "::error::Required release file '$file' is missing"
+              exit 1
+            fi
+          done
+          echo "All required repository files present."
+
+      - name: Validate package-lock is in sync
+        run: npm install --package-lock-only --ignore-scripts

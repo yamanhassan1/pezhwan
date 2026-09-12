@@ -12,6 +12,7 @@ import type { Model } from 'mongoose';
 const { Schema, model, models } = mongoose;
 
 export interface TenantDoc {
+  _id?: string;
   name: string;
   slug: string;
   isActive: boolean;

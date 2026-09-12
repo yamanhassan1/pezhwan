@@ -1,0 +1,74 @@
+@startuml deployment
+title PEZHWAN — Multi-Region Active-Active Deployment
+
+' Grounding: docs/architecture/architecture.md §7 (Deployment Architecture) and
+' docs/operations/multi-region.md (RegionManager, global event broadcast).
+
+skinparam nodeStyle rectangle
+
+' ── Global entry point ──────────────────────────────────────────────────────
+node "Global Load Balancer (DNS)\nRoute53 / Cloudflare / Traffic Manager" as GLOBAL_LB {
+  rectangle "Geo-routing\nlatency / health probes"
+}
+
+' ── Region 1: us-east-1 ─────────────────────────────────────────────────────
+node "Region: us-east-1" as REGION1 {
+  node "Load Balancer" as LB1
+  node "identity-server pods (Kubernetes)" as K8S1 {
+    rectangle "Pods: stateless Express\n+ AuthEngine (HPA)"
+  }
+  node "MongoDB replica set\n(PRIMARY — write source)" as MONGO1
+  node "Redis cluster\n(distributed cache / liveness)" as REDIS1
+  LB1 --> K8S1 : routes requests
+  K8S1 --> MONGO1 : read/write (source of truth)
+  K8S1 --> REDIS1 : cache / rate limit / pub-sub
+}
+
+' ── Region 2: eu-west-1 ─────────────────────────────────────────────────────
+node "Region: eu-west-1" as REGION2 {
+  node "Load Balancer" as LB2
+  node "identity-server pods (Kubernetes)" as K8S2 {
+    rectangle "Pods: stateless Express\n+ AuthEngine (HPA)"
+  }
+  node "MongoDB replica set\n(REPLICA — local reads)" as MONGO2
+  node "Redis cluster\n(distributed cache / liveness)" as REDIS2
+  LB2 --> K8S2 : routes requests
+  K8S2 --> MONGO2 : local reads; writes replicate to primary
+  K8S2 --> REDIS2 : cache / rate limit / pub-sub
+}
+
+' ── Region 3: ap-southeast-1 ────────────────────────────────────────────────
+node "Region: ap-southeast-1" as REGION3 {
+  node "Load Balancer" as LB3
+  node "identity-server pods (Kubernetes)" as K8S3 {
+    rectangle "Pods: stateless Express\n+ AuthEngine (HPA)"
+  }
+  node "MongoDB replica set\n(REPLICA — local reads)" as MONGO3
+  node "Redis cluster\n(distributed cache / liveness)" as REDIS3
+  LB3 --> K8S3 : routes requests
+  K8S3 --> MONGO3 : local reads; writes replicate to primary
+  K8S3 --> REDIS3 : cache / rate limit / pub-sub
+}
+
+' ── Global wiring ───────────────────────────────────────────────────────────
+GLOBAL_LB --> LB1 : route by region + health
+GLOBAL_LB --> LB2 : route by region + health
+GLOBAL_LB --> LB3 : route by region + health
+
+MONGO1 <-d-> MONGO2 : oplog sync / replication
+MONGO1 <-d-> MONGO3 : oplog sync / replication
+MONGO2 <-d-> MONGO3 : replication
+
+' ── Global sync (change streams / event broadcast) ───────────────────────────
+rectangle "Global event sync\nMongo change streams +\nRegionManager broadcast\n(idempotent, dedupe 60s)" as SYNC
+SYNC ..> REDIS1 : session revocation events
+SYNC ..> REDIS2 : session revocation events
+SYNC ..> REDIS3 : session revocation events
+
+note bottom of SYNC
+  RegionManager (packages/core/src/services/infrastructure/region-manager.ts):
+  session revocation / password-MFA / account locks invalidated in EVERY region;
+  primary region switchable via switchPrimary(regionId).
+end note
+
+@enduml

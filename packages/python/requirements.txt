@@ -1,0 +1,6 @@
+# Runtime: the SDK uses only the Python standard library (urllib).
+# Nothing is required at install time.
+#
+# Development / test tooling (optional):
+#   pip install .[test]
+pytest>=7.0 ; extra == "test"

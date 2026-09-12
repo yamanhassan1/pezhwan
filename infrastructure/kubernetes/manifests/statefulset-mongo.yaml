@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pezhwan-mongo
+  namespace: pezhwan
+  labels:
+    app.kubernetes.io/name: pezhwan
+    app.kubernetes.io/component: mongodb
+spec:
+  serviceName: pezhwan-mongo
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pezhwan
+      app.kubernetes.io/component: mongodb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pezhwan
+        app.kubernetes.io/component: mongodb
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: mongod
+          image: mongo:7
+          command: ["mongod", "--config", "/etc/mongo/mongod.conf"]
+          ports:
+            - containerPort: 27017
+              name: mongodb
+          readinessProbe:
+            exec:
+              command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+            - name: config
+              mountPath: /etc/mongo
+      initContainers:
+        - name: init-replicaset
+          image: mongo:7
+          command:
+            - mongosh
+            - --quiet
+            - --eval
+            - |
+              if (rs.status().ok !== 1) {
+                rs.initiate({
+                  _id: 'pezhwan-rs',
+                  members: [
+                    { _id: 0, host: 'pezhwan-mongo-0.pezhwan-mongo:27017' },
+                    { _id: 1, host: 'pezhwan-mongo-1.pezhwan-mongo:27017' },
+                    { _id: 2, host: 'pezhwan-mongo-2.pezhwan-mongo:27017' }
+                  ]
+                });
+              }
+          env:
+            - name: MONGODB_URI
+              value: mongodb://localhost:27017
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+      volumes:
+        - name: config
+          configMap:
+            name: pezhwan-mongo-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 10Gi

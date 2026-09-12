@@ -6,8 +6,6 @@
  * (passwords, tokens, OTPs) that would violate record-retention rules.
  */
 
-import type { Severity } from '@pezhwan/shared';
-
 export interface RetentionPolicy {
   domain: string;
   maxDays: number;

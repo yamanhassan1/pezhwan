@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+# PEZHWAN — commit-msg hook: conventional-commits validation.
+# Uses @commitlint/cli when installed; otherwise falls back to a bundled
+# regex rule (kept in sync with .commitlintrc.json).
+#
+# Bypass: SKIP_HOOKS=1 git commit -m "chore: wip"
+
+if [ -n "$SKIP_HOOKS" ]; then
+  echo "[commit-msg] SKIP_HOOKS=1 — skipping commit message validation."
+  exit 0
+fi
+
+# Prefer commitlint when available (works everywhere, including Windows Git Bash).
+if command -v npx >/dev/null 2>&1 && npx --no-install @commitlint/cli --version >/dev/null 2>&1; then
+  echo "[commit-msg] validating with commitlint"
+  npx --no-install @commitlint/cli --edit "$1"
+  exit $?
+fi
+
+# Bundled fallback — mirrors .commitlintrc.json rules for environments where
+# commitlint is not installed.
+MSG=$(cat "$1")
+if ! echo "$MSG" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_./-]+\))?!?: .{1,200}$'; then
+  echo ""
+  echo "✖ commit message rejected — format violation."
+  echo ""
+  echo "  Expected:  <type>(<scope>): <subject>"
+  echo "  Example:   feat(core): add SRP verifier"
+  echo "  Types:     feat | fix | docs | style | refactor | perf | test | build | ci | chore | revert"
+  echo ""
+  echo "  commitlint is not installed; this hook used the bundled regex fallback."
+  echo "  To get richer validation: npm install -D @commitlint/cli @commitlint/config-conventional"
+  echo ""
+  echo "  On Windows (PowerShell), ensure hooks run via sh (Git Bash) — this hook is a POSIX script."
+  exit 1
+fi
+exit 0

@@ -13,6 +13,15 @@ export * from './providers/apple.ts';
 export * from './providers/github.ts';
 export * from './providers/microsoft.ts';
 
+export * from './pkce.ts';
+export * from './authorization-code.ts';
+export * from './oauth.service.ts';
+export * from './oidc.service.ts';
+export * from './token-exchange.ts';
+export * from './federation/index.ts';
+export * from './providers/index.ts';
+export * from './scim/index.ts';
+
 import { GoogleProvider } from './providers/google.ts';
 import { AppleProvider } from './providers/apple.ts';
 import { GitHubProvider } from './providers/github.ts';

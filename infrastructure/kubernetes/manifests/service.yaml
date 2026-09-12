@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pezhwan-identity-server
+  namespace: pezhwan
+  labels:
+    app.kubernetes.io/name: pezhwan
+    app.kubernetes.io/component: identity-server
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: pezhwan
+    app.kubernetes.io/component: identity-server
+  ports:
+    - port: 4011
+      targetPort: http
+      name: http

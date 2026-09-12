@@ -21,6 +21,13 @@ import { VerificationTokenService } from './services/verificationToken.service.t
 import { ApiKeyService } from './services/apiKey.service.ts';
 import { RateLimitService } from './services/rateLimit.service.ts';
 import type { RateLimitRule, RateLimitType } from './services/rateLimit.service.ts';
+import { WebhookService } from './services/events/webhook.service.ts';
+import { SubscriptionService } from './services/ecosystem/subscription.service.ts';
+import { BillingService } from './services/ecosystem/billing.service.ts';
+import { UsageService } from './services/ecosystem/usage.service.ts';
+import { QuotaService, type QuotaResource } from './services/tenant/quota.service.ts';
+import { OrganizationService } from './services/tenant/organization.service.ts';
+import { TeamService } from './services/tenant/team.service.ts';
 import { PezhwanLogger, newRequestId } from './services/logger.service.ts';
 import { MetricsRegistry } from './services/metrics.service.ts';
 import {
@@ -87,6 +94,9 @@ export interface PezhwanConfig {
    */
   rateLimits?: Partial<Record<RateLimitType, RateLimitRule>>;
 
+  /** Optional per-resource tenant quota limits (defaults to DEFAULT_QUOTA_LIMITS). */
+  quota?: { limits?: Partial<Record<QuotaResource, number>> };
+
   debug?: boolean;
 }
 
@@ -105,11 +115,28 @@ export interface PezhwanRuntime {
   oauth: OAuthService;
   verificationTokens: VerificationTokenService;
   apiKeys: ApiKeyService;
+  webhooks: WebhookService;
+  subscriptions: SubscriptionService;
+  billing: BillingService;
+  usage: UsageService;
+  quota: QuotaService;
+  organizations: OrganizationService;
+  teams: TeamService;
   logger: PezhwanLogger;
   metrics: MetricsRegistry;
   /** Trace/request correlation context for the current execution. */
   trace: { requestId: string };
 }
+
+/** Default per-tenant resource quotas (used when config.quota.limits omit a key). */
+const DEFAULT_QUOTA_LIMITS: Record<QuotaResource, number> = {
+  users: 1_000,
+  sessions: 10_000,
+  api_keys: 100,
+  oath_clients: 50,
+  webhooks: 20,
+  storage_bytes: 5 * 1024 * 1024 * 1024,
+};
 
 /**
  * Build (and validate) the Pezhwan runtime.
@@ -225,6 +252,16 @@ export function createPezhwan(config: PezhwanConfig): PezhwanRuntime {
   });
   const apiKeys = new ApiKeyService();
 
+  const quota = new QuotaService({
+    limits: { ...DEFAULT_QUOTA_LIMITS, ...(config.quota?.limits ?? {}) },
+  });
+  const usage = new UsageService(quota);
+  const subscriptions = new SubscriptionService();
+  const billing = new BillingService({ subscription: subscriptions });
+  const webhooks = new WebhookService();
+  const organizations = new OrganizationService();
+  const teams = new TeamService();
+
   const logger = new PezhwanLogger({
     serviceName: 'pezhwan',
     env: config.debug ? 'debug' : 'production',
@@ -247,6 +284,13 @@ export function createPezhwan(config: PezhwanConfig): PezhwanRuntime {
     oauth,
     verificationTokens,
     apiKeys,
+    webhooks,
+    subscriptions,
+    billing,
+    usage,
+    quota,
+    organizations,
+    teams,
     logger,
     metrics,
     trace: { requestId: newRequestId() },

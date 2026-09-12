@@ -1,0 +1,48 @@
+# PEZHWAN GraphQL schema — /v1/graphql
+#
+# Self-service read API over the verified identity. This SDL reproduces the
+# schema built in packages/express/src/routes/graphql.routes.ts (TYPE_DEFS).
+# GET /v1/graphql/schema returns the live printed schema.
+#
+# Endpoint conventions:
+#   POST /v1/graphql  { query, variables?, operationName? } -> Bearer required
+# The endpoint draws from the "api" rate-limit budget (100/15m by IP).
+#
+# Resolvers:
+#   viewer          -> reads the verified identity attached by the auth
+#                      middleware (req.pezhwan): userId, tenantId,
+#                      applicationId, roles, permissions, authMethod.
+#                      Throws UNAUTHENTICATED when no identity exists.
+#   activeSessions  -> SessionModel.find({ userId, tenantId,
+#                      status: { $in: ['active','rotating'] } }) sorted by
+#                      createdAt desc, limit clamped to [1, 100] (default 20).
+#
+# Mutations intentionally do not exist on this surface: login, logout, and
+# session revocation are served by the REST API under /v1/auth and /v1/sessions
+# (see OPENAPI.yaml). The GraphQL endpoint is a read service only.
+
+type Viewer {
+  "The verified identity attached by the auth middleware."
+  userId: ID!
+  tenantId: String!
+  applicationId: String!
+  roles: [String!]!
+  permissions: [String!]!
+  authMethod: String
+}
+
+type SessionInfo {
+  id: ID!
+  familyId: String!
+  status: String!
+  createdAt: String!
+  expiresAt: String
+}
+
+type Query {
+  "The verified identity attached by the auth middleware."
+  viewer: Viewer!
+
+  "Active sessions for the current identity."
+  activeSessions(limit: Int = 20): [SessionInfo!]!
+}

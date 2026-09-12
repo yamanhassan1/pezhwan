@@ -1,0 +1,60 @@
+# Pezhwan test composition for the integration suite: single-node MongoDB,
+# Redis and the identity server with NODE_ENV=test and lenient rate limits.
+#
+#   docker compose -f infrastructure/docker/docker-compose.test.yml up --build -d
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: pezhwan-test-mongo
+    ports:
+      - '127.0.0.1:27017:27017'
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: pezhwan-test-redis
+    ports:
+      - '127.0.0.1:6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  identity-server:
+    build:
+      context: ../.. # monorepo root (npm workspaces)
+      dockerfile: apps/identity-server/Dockerfile
+    container_name: pezhwan-test-identity-server
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:4011:4011'
+    environment:
+      NODE_ENV: 'test'
+      PEZHWAN_PORT: '4011'
+      PEZHWAN_ISSUER: 'http://127.0.0.1:4011'
+      PEZHWAN_TENANT_ID: 'test-tenant'
+      PEZHWAN_APPLICATION_ID: 'test-app'
+      PEZHWAN_MONGODB_URI: 'mongodb://mongo:27017/pezhwan'
+      PEZHWAN_REDIS_URL: 'redis://redis:6379'
+      PEZHWAN_ALLOWED_ORIGINS: 'http://127.0.0.1:4011'
+      PEZHWAN_RATE_LIMIT_LOGIN: '1000/1m'
+      PEZHWAN_RATE_LIMIT_OTP: '1000/1m'
+      PEZHWAN_RATE_LIMIT_API: '5000/1m'
+      PEZHWAN_LOCKOUT_MAX_ATTEMPTS: '1000'
+      PEZHWAN_SIGNING_KEY_ROTATION_MS: '0'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:4011/.well-known/jwks.json').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 30

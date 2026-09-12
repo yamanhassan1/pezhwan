@@ -1,0 +1,69 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-test-suite:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (all workspaces)
+        run: npm run build
+
+      - name: Typecheck (all workspaces)
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Create log directory
+        run: mkdir -p logs
+
+      # Each suite streams to a log file (piped to tee) so failed runs leave
+      # artifacts. GitHub Actions' default bash flags (-e -o pipefail) ensure
+      # a failing npm script still fails the step.
+      - name: Unit tests
+        run: npm run test:unit 2>&1 | tee logs/unit.log
+
+      - name: Security suite
+        run: npm run test:security-suite 2>&1 | tee logs/security.log
+
+      - name: Failure-mode tests
+        run: npm run test:failure 2>&1 | tee logs/failure.log
+
+      - name: Interop tests
+        run: npm run test:interop 2>&1 | tee logs/interop.log
+
+      - name: Integration tests (in-memory MongoDB replica set)
+        run: npm run test:integration 2>&1 | tee logs/integration.log
+
+      - name: Upload test logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pezhwan-nightly-test-logs
+          path: logs/

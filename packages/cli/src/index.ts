@@ -23,6 +23,7 @@ import keys from './commands/keys.ts';
 import migrate from './commands/migrate.ts';
 import backup from './commands/backup.ts';
 import config from './commands/config.ts';
+import webhooks from './commands/webhooks.ts';
 
 export class ApiError extends Error {
   constructor(
@@ -66,6 +67,7 @@ const commands: CliCommand[] = [
   migrate,
   backup,
   config,
+  webhooks,
 ];
 
 const registry = new Map(commands.map((c) => [c.command, c]));
