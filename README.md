@@ -231,6 +231,87 @@ See the [React SDK README](./packages/react/README.md) and the demos in
 `demos/basic-auth` for the full browser-auth pattern (CSRF cookie, token
 storage, refresh).
 
+For browser clients, prefer secure cookie-based authentication and keep tokens
+off the page whenever possible. The demo in `demos/browser-sdk/index.html` is
+intentionally a development-only example.
+
+### Go
+
+```go
+package main
+
+import (
+  "github.com/yamanhassan1/pezhwan/packages/go"
+)
+
+func main() {
+  client := pezhwan.NewClient(
+    pezhwan.WithIssuer("http://localhost:4011"),
+    pezhwan.WithTenantID("dev-tenant"),
+    pezhwan.WithApplicationID("dev-app"),
+  )
+
+  // Register user
+  user, err := client.Auth.Register(ctx, &pezhwan.RegisterRequest{
+    Email:    "user@example.com",
+    Password: "secure-password",
+  })
+
+  // Login
+  tokens, err := client.Auth.LoginPassword(ctx, &pezhwan.LoginRequest{
+    Email:    "user@example.com",
+    Password: "secure-password",
+  })
+}
+```
+
+### Java
+
+```java
+import com.pezhwan.sdk.Pezhwan;
+import com.pezhwan.sdk.auth.AuthService;
+
+public class AuthApp {
+  public static void main(String[] args) {
+    Pezhwan pezhwan = Pezhwan.builder()
+      .issuer("http://localhost:4011")
+      .tenantId("dev-tenant")
+      .applicationId("dev-app")
+      .build();
+
+    AuthService auth = pezhwan.getAuthService();
+
+    // Register and login flow
+    var user = auth.register("user@example.com", "password");
+    var tokens = auth.loginPassword("user@example.com", "password");
+  }
+}
+```
+
+### Python
+
+```python
+from pezhwan import Pezhwan
+
+pezhwan = Pezhwan(
+    issuer="http://localhost:4011",
+    tenant_id="dev-tenant",
+    application_id="dev-app"
+)
+
+# Register
+user = pezhwan.auth.register(
+    email="user@example.com",
+    password="secure-password"
+)
+
+# Login
+tokens = pezhwan.auth.login_password(
+    email="user@example.com",
+    password="secure-password"
+)
+```
+
 ### CLI
 
 ```bash
@@ -243,6 +324,39 @@ npm exec pezhwan -- users list      # tenant users
 ```
 
 See the [CLI README](./packages/cli/README.md) for all 13 commands.
+
+---
+
+## Supported languages and frameworks
+
+| Language / Platform | Packages / integrations                                       |
+| ------------------- | ------------------------------------------------------------- |
+| **JavaScript/TS**   | Node.js, Express, React, Angular, Vue, CLI                    |
+| **Go**              | Standard library and popular frameworks                       |
+| **Java**            | Spring Boot, Jakarta EE, and standard Java                    |
+| **Python**          | Django, FastAPI, and WSGI-compatible frameworks               |
+| **.NET**            | ASP.NET Core, C#                                              |
+| **Browser**         | Vanilla JS, React, Angular, Vue with secure cookie-based auth |
+
+---
+
+## Configuration
+
+The identity server validates all environment variables through
+`apps/identity-server/src/config/env.ts` using Zod.
+
+Typical local values include:
+
+```bash
+PEZHWAN_ISSUER=http://localhost:4011
+PEZHWAN_TENANT_ID=dev-tenant
+PEZHWAN_APPLICATION_ID=dev-app
+PEZHWAN_MONGODB_URI=mongodb://localhost:27017/pezhwan
+PEZHWAN_REDIS_URL=redis://localhost:6379
+PEZHWAN_ALLOWED_ORIGINS=http://localhost:4011,http://127.0.0.1:4011,http://localhost:5173
+```
+
+The repo includes `.env.example` as the safe template for local development.
 
 ---
 
@@ -307,6 +421,14 @@ Pezhwan follows a **fail-closed** design and assumes every client is untrusted:
 Production deployments should additionally use TLS 1.3 termination, a WAF
 (Cloudflare / AWS Shield), rate limiting at the edge, and managed secret storage
 (KMS / HashiCorp Vault).
+
+---
+
+## Status
+
+This repository is a development and reference implementation. It is intended
+for local evaluation, testing, and extension, not as a production deployment
+without additional hardening, secret management, and compliance verification.
 
 ---
 
