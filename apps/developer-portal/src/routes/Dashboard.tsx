@@ -14,7 +14,11 @@ function StatCard({ item }: { item: StatItem }) {
     <div className="card stat-card">
       <span className="stat-value">{item.value.toLocaleString()}</span>
       <span className="stat-label">{item.label}</span>
-      {item.hint && <span className="muted" style={{ fontSize: 12 }}>{item.hint}</span>}
+      {item.hint && (
+        <span className="muted" style={{ fontSize: 12 }}>
+          {item.hint}
+        </span>
+      )}
     </div>
   );
 }
@@ -68,13 +72,22 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}>
+          <div
+            className="grid grid-3 mb-4"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}
+          >
             {cards.map((item) => (
               <StatCard key={item.label} item={item} />
             ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.6fr) minmax(0,1fr)', gap: 16 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0,1.6fr) minmax(0,1fr)',
+              gap: 16,
+            }}
+          >
             <div className="card">
               <h3 className="mb-3">Recent risk events</h3>
               {!stats || stats.risk.length === 0 ? (
@@ -96,7 +109,9 @@ export default function Dashboard() {
                       {stats.risk.slice(0, 8).map((r: RiskEvent) => (
                         <tr key={r.attemptId}>
                           <td>
-                            <span className={`badge ${r.score >= 70 ? 'badge-danger' : r.score >= 40 ? 'badge-warning' : 'badge-success'}`}>
+                            <span
+                              className={`badge ${r.score >= 70 ? 'badge-danger' : r.score >= 40 ? 'badge-warning' : 'badge-success'}`}
+                            >
                               {r.score}
                             </span>
                           </td>
@@ -118,23 +133,33 @@ export default function Dashboard() {
             <div className="card">
               <h3 className="mb-3">Health</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <span className="muted">Users</span>
                   <strong>{stats?.users.toLocaleString()}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <span className="muted">Tenants</span>
                   <strong>{stats?.tenants.toLocaleString()}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <span className="muted">Audit events today</span>
                   <strong>{stats?.auditToday.toLocaleString()}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <span className="muted">Breaches</span>
                   <strong>{stats?.breaches.toLocaleString()}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <span className="muted">Open risk events</span>
                   <strong>{stats?.riskEvents.toLocaleString()}</strong>
                 </div>

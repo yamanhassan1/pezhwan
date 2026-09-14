@@ -7,7 +7,9 @@
  *     ATOMIC increment on the `audit-sequences` counter, so concurrent writers
  *     (even across HA instances sharing MongoDB) never receive the same
  *     sequence and the chain cannot fork.
- *   - `hash`: SHA-256 of `prevHash + canonical(event)`, the typed chain link.
+ *   - `hash`: digest of `prevHash + canonical(event)` using the configured
+ *     audit hash algorithm (default SHA-256, see crypto.auditHashAlgorithm),
+ *     the typed chain link.
  *   - `prevHash`: the previous entry's `hash` (root = 64 zero bytes).
  *
  * Never logs passwords, raw tokens, raw OTP codes, or client secrets. Events
@@ -20,6 +22,8 @@
 import { randomUUID, createHash } from 'node:crypto';
 import type { AuditEventType, Severity } from '@pezhwan/shared';
 import { AuditLogModel, AuditSequenceModel } from '../models/index.ts';
+import type { AuditHashAlgorithm } from '../config/env.ts';
+import { withTransaction } from './infrastructure/mongo-transactions.ts';
 
 /** Root of the hash chain when no predecessor exists. */
 export const AUDIT_CHAIN_ROOT = '0'.repeat(64);
@@ -55,6 +59,12 @@ export class AuditService {
   private retentionIndexed = false;
   /** Sequence counter key in `audit-sequences`. */
   private readonly counterId = 'audit';
+  /** Hash used for chain links (crypto.auditHashAlgorithm). */
+  private readonly hashAlgorithm: AuditHashAlgorithm;
+
+  constructor(options: { hashAlgorithm?: AuditHashAlgorithm } = {}) {
+    this.hashAlgorithm = options.hashAlgorithm ?? 'sha256';
+  }
 
   setSink(sink: AuditSink): void {
     this.sink = sink;
@@ -108,7 +118,136 @@ export class AuditService {
   }
 
   private chainHash(prevHash: string, data: AuditEntryInput): string {
-    return createHash('sha256').update(prevHash).update(this.canonicalData(data)).digest('hex');
+    return createHash(this.hashAlgorithm)
+      .update(prevHash)
+      .update(this.canonicalData(data))
+      .digest('hex');
+  }
+
+  /**
+   * Atomic, single-writer-style allocation of the next sequence AND the chain
+   * tip. The counter document is both incremented and updated with the new
+   * entry's hash inside one transaction, so concurrent writers (even across HA
+   * instances sharing a replica set) serialize on the counter document and
+   * each observes the predecessor chain tip written by the previous commit.
+   * This turns the documented G7 "best-effort hash link under concurrency"
+   * into STRICT ordering whenever MongoDB runs as a replica set / sharded
+   * cluster (the HA configuration the carve-out assumes). On standalone
+   * MongoDB (no transactions) the fallback path keeps the previous best-effort
+   * behaviour.
+   *
+   * Falls back to the non-transactional path internally — writes never block
+   * the calling flow.
+   */
+  private async writeEntry(input: AuditEntryInput): Promise<AuditEntry> {
+    let written: AuditEntry | undefined;
+    await withTransaction(
+      async (session) => {
+        if (!session) {
+          written = await this.writeEntryBestEffort(input);
+          return;
+        }
+
+        // Claim seq + read the committed chain tip atomically: every writer
+        // touches (and thus conflicts on) the SAME counter document, so on
+        // retry the loser re-reads a fresh snapshot that includes the winner's
+        // lastHash — no two entries can share a predecessor.
+        const counter = await AuditSequenceModel.findOneAndUpdate(
+          { _id: this.counterId },
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true, setDefaultsOnInsert: true, session },
+        ).lean();
+
+        const sequence = counter?.seq ?? 1;
+        let prevHash = counter?.lastHash || AUDIT_CHAIN_ROOT;
+        if (!counter?.lastHash) {
+          // First write (or the first write after a period of best-effort
+          // writes): adopt the tail of the existing chain so the link stays
+          // contiguous across a migration between modes.
+          const last = await AuditLogModel.findOne()
+            .sort({ sequence: -1 })
+            .select('hash')
+            .session(session)
+            .lean();
+          if (last?.hash) {
+            prevHash = last.hash;
+          }
+        }
+
+        const hash = this.chainHash(prevHash, input);
+        const doc = this.buildDoc(input, sequence, prevHash, hash);
+        await AuditLogModel.create([doc], { session });
+        await AuditSequenceModel.updateOne(
+          { _id: this.counterId },
+          { $set: { lastHash: hash } },
+          { session },
+        );
+        written = { sequence, prevHash, hash, data: input };
+      },
+      {
+        maxAttempts: 3,
+        // A write/sequence failure MUST never block the security flow; the
+        // fallback path is the legacy best-effort write.
+        onFallback: () => {
+          /* best-effort fallback already runs via the null-session path */
+        },
+      },
+    );
+    if (!written) {
+      // Defensive: fallback again if the transaction wrapper returned without
+      // persisting (should be unreachable — the null-session path writes).
+      written = await this.writeEntryBestEffort(input);
+    }
+    return written;
+  }
+
+  /** Legacy non-transactional path: atomic $inc counter + tail re-read. */
+  private async writeEntryBestEffort(input: AuditEntryInput): Promise<AuditEntry> {
+    const sequence = await this.getNextSequence();
+
+    // Last known chain link. Since sequences are strictly ordered, the entry
+    // with the highest sequence is always the immediate predecessor.
+    let prevHash = AUDIT_CHAIN_ROOT;
+    try {
+      const last = await AuditLogModel.findOne().sort({ sequence: -1 }).select('hash').lean();
+      if (last?.hash) {
+        prevHash = last.hash;
+      }
+    } catch {
+      prevHash = AUDIT_CHAIN_ROOT;
+    }
+
+    const hash = this.chainHash(prevHash, input);
+    await AuditLogModel.create(this.buildDoc(input, sequence, prevHash, hash));
+    return { sequence, prevHash, hash, data: input };
+  }
+
+  /** Assemble the persisted audit document for a chain position. */
+  private buildDoc(
+    input: AuditEntryInput,
+    sequence: number,
+    prevHash: string,
+    hash: string,
+  ): Record<string, unknown> {
+    const doc: Record<string, unknown> = {
+      timestamp: new Date(),
+      eventType: input.eventType,
+      severity: input.severity ?? 'info',
+      tenantId: input.tenantId,
+      applicationId: input.applicationId,
+      userId: input.userId,
+      sessionId: input.sessionId,
+      ip: input.ip,
+      userAgent: input.userAgent,
+      metadata: input.metadata ?? {},
+      sequence,
+      hash,
+      prevHash,
+    };
+    if (this.retentionMs) {
+      doc.expireAt = new Date(Date.now() + this.retentionMs);
+    }
+    return doc;
   }
 
   /**
@@ -119,48 +258,7 @@ export class AuditService {
   async log(input: AuditEntryInput): Promise<void> {
     let entry: AuditEntry | undefined;
     try {
-      const sequence = await this.getNextSequence();
-
-      // Last known chain link. Since sequences are strictly ordered, the entry
-      // with the highest sequence is always the immediate predecessor.
-      let prevHash = AUDIT_CHAIN_ROOT;
-      try {
-        const last = await AuditLogModel.findOne().sort({ sequence: -1 }).select('hash').lean();
-        if (last?.hash) {
-          prevHash = last.hash;
-        }
-      } catch {
-        prevHash = AUDIT_CHAIN_ROOT;
-      }
-
-      const hash = this.chainHash(prevHash, input);
-      entry = {
-        sequence,
-        prevHash,
-        hash,
-        data: input,
-      };
-
-      const doc: Record<string, unknown> = {
-        timestamp: new Date(),
-        eventType: input.eventType,
-        severity: input.severity ?? 'info',
-        tenantId: input.tenantId,
-        applicationId: input.applicationId,
-        userId: input.userId,
-        sessionId: input.sessionId,
-        ip: input.ip,
-        userAgent: input.userAgent,
-        metadata: input.metadata ?? {},
-        sequence,
-        hash,
-        prevHash,
-      };
-      if (this.retentionMs) {
-        doc.expireAt = new Date(Date.now() + this.retentionMs);
-      }
-
-      await AuditLogModel.create(doc);
+      entry = await this.writeEntry(input);
     } catch {
       // Swallow — logging must not break auth.
     }

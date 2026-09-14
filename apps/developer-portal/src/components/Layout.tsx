@@ -31,7 +31,12 @@ export default function Layout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {open && <div onClick={closeNav} style={{ position: 'fixed', inset: 0, background: 'rgba(13,20,36,0.4)', zIndex: 40 }} />}
+      {open && (
+        <div
+          onClick={closeNav}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(13,20,36,0.4)', zIndex: 40 }}
+        />
+      )}
       <aside
         className={`sidebar-shell${open ? ' open' : ''}`}
         style={{
@@ -48,9 +53,30 @@ export default function Layout() {
         }}
       >
         <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--sidebar-border)' }}>
-          <Link to="/" onClick={closeNav} style={{ color: '#fff', textDecoration: 'none', display: 'block' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 19, fontWeight: 700, letterSpacing: '0.08em' }}>PEZHWAN</div>
-            <div style={{ fontSize: 11.5, color: 'var(--sidebar-text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 2 }}>
+          <Link
+            to="/"
+            onClick={closeNav}
+            style={{ color: '#fff', textDecoration: 'none', display: 'block' }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 19,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+              }}
+            >
+              PEZHWAN
+            </div>
+            <div
+              style={{
+                fontSize: 11.5,
+                color: 'var(--sidebar-text-muted)',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                marginTop: 2,
+              }}
+            >
               Developer Portal
             </div>
           </Link>
@@ -68,7 +94,14 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div style={{ padding: '14px 16px', borderTop: '1px solid var(--sidebar-border)', fontSize: 12, color: 'var(--sidebar-text-muted)' }}>
+        <div
+          style={{
+            padding: '14px 16px',
+            borderTop: '1px solid var(--sidebar-border)',
+            fontSize: 12,
+            color: 'var(--sidebar-text-muted)',
+          }}
+        >
           REST API v1
         </div>
       </aside>
@@ -89,7 +122,11 @@ export default function Layout() {
           }}
           className="dp-header"
         >
-          <button className="btn btn-secondary btn-sm dp-burger" onClick={() => setOpen((v) => !v)} aria-label="Toggle navigation">
+          <button
+            className="btn btn-secondary btn-sm dp-burger"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Toggle navigation"
+          >
             Menu
           </button>
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }} className="dp-header-title">
@@ -115,7 +152,9 @@ export default function Layout() {
                   {initial}
                 </span>
                 <span style={{ fontSize: 13.5 }}>
-                  <span style={{ fontWeight: 600 }} className="text-ellipsis">{user.email}</span>
+                  <span style={{ fontWeight: 600 }} className="text-ellipsis">
+                    {user.email}
+                  </span>
                 </span>
               </div>
             )}
@@ -129,7 +168,15 @@ export default function Layout() {
           <Outlet />
         </main>
 
-        <footer style={{ borderTop: '1px solid var(--border)', padding: '16px 32px', fontSize: 12.5, color: 'var(--text-muted)', background: 'var(--surface)' }}>
+        <footer
+          style={{
+            borderTop: '1px solid var(--border)',
+            padding: '16px 32px',
+            fontSize: 12.5,
+            color: 'var(--text-muted)',
+            background: 'var(--surface)',
+          }}
+        >
           PEZHWAN Developer Portal — v1 API. Access is admin-scoped.
         </footer>
       </div>

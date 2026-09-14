@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { api, getCsrf, login as apiLogin, setAccessToken, setCsrfToken } from '../lib/api';
 import type { User } from '../types';
 
@@ -62,7 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = useMemo(() => user?.roles.includes('ADMIN') ?? false, [user]);
 
-  const value = useMemo<AuthState>(() => ({ user, loading, login, logout, isAdmin }), [user, loading, login, logout, isAdmin]);
+  const value = useMemo<AuthState>(
+    () => ({ user, loading, login, logout, isAdmin }),
+    [user, loading, login, logout, isAdmin],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

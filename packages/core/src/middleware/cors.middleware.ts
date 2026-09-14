@@ -28,13 +28,21 @@ export class CorsMiddleware {
 
   constructor(private readonly options: CorsOptions) {
     this.methods = options.methods ?? ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
-    this.allowedHeaders = options.allowedHeaders ?? ['Authorization', 'Content-Type', 'X-Tenant-Id'];
+    this.allowedHeaders = options.allowedHeaders ?? [
+      'Authorization',
+      'Content-Type',
+      'X-Tenant-Id',
+    ];
     this.exposedHeaders = options.exposedHeaders ?? ['X-Request-Id', 'X-Rate-Limit-Remaining'];
     this.allowCredentials = options.allowCredentials ?? true;
     this.maxAge = options.maxAge ?? 600;
   }
 
-  resolve(origin: string | undefined, method: string | undefined, requestHeaders: string): CorsResult {
+  resolve(
+    origin: string | undefined,
+    method: string | undefined,
+    requestHeaders: string,
+  ): CorsResult {
     if (!origin) {
       // Same-origin / non-browser request — no CORS headers required.
       return { headers: {}, preflightOk: true };
@@ -46,7 +54,7 @@ export class CorsMiddleware {
     }
     const headers: Record<string, string> = {
       'Access-Control-Allow-Origin': origin,
-      'Vary': 'Origin',
+      Vary: 'Origin',
     };
     if (this.allowCredentials) headers['Access-Control-Allow-Credentials'] = 'true';
     if (method === 'OPTIONS') {
@@ -62,12 +70,15 @@ export class CorsMiddleware {
       headers['Access-Control-Max-Age'] = String(this.maxAge);
       return { headers, preflightOk: ok };
     }
-    if (this.exposedHeaders.length) headers['Access-Control-Expose-Headers'] = this.exposedHeaders.join(', ');
+    if (this.exposedHeaders.length)
+      headers['Access-Control-Expose-Headers'] = this.exposedHeaders.join(', ');
     return { headers, preflightOk: true };
   }
 
   private isAllowed(origin: string): boolean {
-    const list = Array.isArray(this.options.origins) ? this.options.origins : [this.options.origins];
+    const list = Array.isArray(this.options.origins)
+      ? this.options.origins
+      : [this.options.origins];
     return list.some((entry) => {
       if (entry === '*') return true;
       if (entry === origin) return true;

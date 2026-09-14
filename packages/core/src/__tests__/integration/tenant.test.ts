@@ -28,7 +28,10 @@ test('tenant middleware resolves tenant id by precedence: header > path > user >
   });
   assert.deepEqual(header, { tenantId: 'header-tenant', source: 'header' });
 
-  const path = await middleware.resolve({ pathTenantId: 'path-tenant', userTenantId: 'user-tenant' });
+  const path = await middleware.resolve({
+    pathTenantId: 'path-tenant',
+    userTenantId: 'user-tenant',
+  });
   assert.deepEqual(path, { tenantId: 'path-tenant', source: 'path' });
 
   const system = await middleware.resolve({});

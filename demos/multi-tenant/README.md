@@ -14,41 +14,41 @@ instances, each with its own durable signing keys.
   (`server.ts:53`), so Tenant B can never verify a Tenant A token even if the
   claims were replayed.
 - Per-tenant register/login and per-tenant `createAuthenticate` middleware.
-- **Cross-tenant rejection** — a token sent to the *opposite* tenant is
+- **Cross-tenant rejection** — a token sent to the _opposite_ tenant is
   rejected with `CROSS_TENANT_REJECTED` 401 (`server.ts:207`), shown live by
   the A→A / A→B / B→A / B→B buttons in the UI.
 - Token inspector that renders the `tenantId` / `applicationId` JWT claims.
 
 ## Key files
 
-| File | Role |
-|------|------|
-| `server.ts` | Express app: two runtimes + two key stores, tenant-scoped routes, cross-tenant middleware test |
-| `index.html` | Split-panel SPA — register/login per tenant, cross-tenant validation buttons, event log |
-| `keys-a/` / `keys-b/` | Per-tenant durable signing key directories |
+| File                  | Role                                                                                           |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| `server.ts`           | Express app: two runtimes + two key stores, tenant-scoped routes, cross-tenant middleware test |
+| `index.html`          | Split-panel SPA — register/login per tenant, cross-tenant validation buttons, event log        |
+| `keys-a/` / `keys-b/` | Per-tenant durable signing key directories                                                     |
 
 ### API surface (`server.ts`)
 
 - `POST /api/tenants/:tenant/register` and `/login` (`a` | `b`).
 - `GET /api/tenants/a/me` / `/b/me` — validated by that tenant's middleware.
-- `GET /api/tenants/:tenant/me/cross` — runs the *opposite* middleware to
+- `GET /api/tenants/:tenant/me/cross` — runs the _opposite_ middleware to
   demonstrate rejection.
 - `POST /api/tenants/a/logout` / `/b/logout`.
 
 ## Required configuration
 
 **Self-contained.** The demo embeds `@pezhwan/core` and connects directly to
-MongoDB — it does *not* call the identity-server. `ISSUER` defaults to
+MongoDB — it does _not_ call the identity-server. `ISSUER` defaults to
 `http://localhost:4011` purely to stamp the same `iss` claim the identity-server
 uses, so tokens share the same contract.
 
-| Environment variable | Default | Purpose |
-|---|---|---|
-| `MONGODB_URI` | `mongodb://localhost:27017/pezhwan` | Shared database |
-| `PORT` | `5181` | HTTP listen port |
-| `TENANT_A_ID` / `TENANT_A_APP` | `dev-tenant` / `dev-app` | Tenant A identity |
-| `TENANT_B_ID` / `TENANT_B_APP` | `tenant-b` / `app-b` | Tenant B identity |
-| `ISSUER` | `http://localhost:4011` | JWT `iss` claim |
+| Environment variable           | Default                             | Purpose           |
+| ------------------------------ | ----------------------------------- | ----------------- |
+| `MONGODB_URI`                  | `mongodb://localhost:27017/pezhwan` | Shared database   |
+| `PORT`                         | `5181`                              | HTTP listen port  |
+| `TENANT_A_ID` / `TENANT_A_APP` | `dev-tenant` / `dev-app`            | Tenant A identity |
+| `TENANT_B_ID` / `TENANT_B_APP` | `tenant-b` / `app-b`                | Tenant B identity |
+| `ISSUER`                       | `http://localhost:4011`             | JWT `iss` claim   |
 
 Each tenant's identity values must also exist on the identity-server (if you
 run one) so that `dev-tenant`/`tenant-b` resolve to real applications.
@@ -63,7 +63,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
    npm install
    npm run build
    ```
-2. *Full-stack context only — not required.* Start the identity-server on 4011:
+2. _Full-stack context only — not required._ Start the identity-server on 4011:
    ```bash
    npm run dev -w @pezhwan/identity-server
    ```
@@ -86,7 +86,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
 ## Troubleshooting
 
 - **`11000 duplicate key … tenantId/email`** — same-user-per-tenant is by
-  design, but *stale non-partial indexes* from an older schema make even the
+  design, but _stale non-partial indexes_ from an older schema make even the
   first register fail. Drop them once:
   `db.users.dropIndex('tenantId_1_phone_1'); db.users.dropIndex('tenantId_1_email_1')`.
 - **A→B always rejected** — correct behavior: separate key stores mean no

@@ -43,7 +43,8 @@ export default function ApiExplorer() {
   const [response, setResponse] = useState<ResponseState | null>(null);
   const [history, setHistory] = useState<string[]>([]);
 
-  const base: string = (import.meta as unknown as { env: Record<string, string | undefined> }).env?.VITE_API_URL ?? '';
+  const base: string =
+    (import.meta as unknown as { env: Record<string, string | undefined> }).env?.VITE_API_URL ?? '';
 
   const needsBody = method !== 'GET';
 
@@ -86,7 +87,9 @@ export default function ApiExplorer() {
       <div className="page-header">
         <div>
           <h1 className="page-title">API Explorer</h1>
-          <p className="page-desc">Build a request against the PEZHWAN v1 API. Your access token is attached automatically.</p>
+          <p className="page-desc">
+            Build a request against the PEZHWAN v1 API. Your access token is attached automatically.
+          </p>
         </div>
       </div>
 
@@ -98,7 +101,11 @@ export default function ApiExplorer() {
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
             {PRESETS.map((p) => (
-              <button key={p.path} className="btn btn-secondary btn-sm" onClick={() => setPath(p.path)}>
+              <button
+                key={p.path}
+                className="btn btn-secondary btn-sm"
+                onClick={() => setPath(p.path)}
+              >
                 {p.label}
               </button>
             ))}
@@ -107,7 +114,10 @@ export default function ApiExplorer() {
           <div className="mb-3">
             <span className="label">Authentication</span>
             <div className="hint" style={{ marginTop: 0 }}>
-              Authorization header: <span className="code">Bearer {getAccessToken() ? '••••••••••••' : '(not signed in)'}</span>{' '}
+              Authorization header:{' '}
+              <span className="code">
+                Bearer {getAccessToken() ? '••••••••••••' : '(not signed in)'}
+              </span>{' '}
               {getAccessToken() ? '(attached automatically)' : ''}
             </div>
           </div>
@@ -115,14 +125,21 @@ export default function ApiExplorer() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'stretch', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span className="label">Method</span>
-              <select className="select" style={{ height: 41, minWidth: 100, fontWeight: 700, color: methodColor(method) }} value={method} onChange={(e) => setMethod(e.target.value as Method)}>
+              <select
+                className="select"
+                style={{ height: 41, minWidth: 100, fontWeight: 700, color: methodColor(method) }}
+                value={method}
+                onChange={(e) => setMethod(e.target.value as Method)}
+              >
                 <option value="GET">GET</option>
                 <option value="POST">POST</option>
                 <option value="PATCH">PATCH</option>
                 <option value="DELETE">DELETE</option>
               </select>
             </div>
-            <div style={{ flex: 1, minWidth: 240, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div
+              style={{ flex: 1, minWidth: 240, display: 'flex', flexDirection: 'column', gap: 6 }}
+            >
               <span className="label">Path</span>
               <input
                 className="input"
@@ -133,9 +150,28 @@ export default function ApiExplorer() {
                 spellCheck={false}
               />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'flex-end' }}>
-              <button className="btn btn-lg" onClick={send} disabled={sending} style={{ height: 41 }}>
-                {sending ? <span className="loader" style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }} /> : 'Send'}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button
+                className="btn btn-lg"
+                onClick={send}
+                disabled={sending}
+                style={{ height: 41 }}
+              >
+                {sending ? (
+                  <span
+                    className="loader"
+                    style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }}
+                  />
+                ) : (
+                  'Send'
+                )}
               </button>
             </div>
           </div>
@@ -143,15 +179,28 @@ export default function ApiExplorer() {
           {needsBody && (
             <div className="mt-3">
               <span className="label">Request body (JSON)</span>
-              <textarea className="textarea" value={body} onChange={(e) => setBody(e.target.value)} placeholder='{\n  "name": "ant",
+              <textarea
+                className="textarea"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder='{\n  "name": "ant",
   "scopes": ["read", "write"]
-}' spellCheck={false} />
+}'
+                spellCheck={false}
+              />
             </div>
           )}
         </div>
 
         <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 10,
+            }}
+          >
             <h3>Response</h3>
             {response && (
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -163,7 +212,9 @@ export default function ApiExplorer() {
             )}
           </div>
           {response ? (
-            <pre className="code-block" style={{ maxHeight: 480, overflow: 'auto' }}>{response.body}</pre>
+            <pre className="code-block" style={{ maxHeight: 480, overflow: 'auto' }}>
+              {response.body}
+            </pre>
           ) : (
             <div className="empty" style={{ border: '1px dashed var(--border)', borderRadius: 8 }}>
               Send a request to see the response envelope here.

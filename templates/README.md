@@ -13,15 +13,16 @@ templates/
 ├── angular/       Angular (modules + guards/services)
 └── express-api/   Express REST API with auth middleware
 ```
+
 ## Picking a template
 
-| You are building…                                | Use              |
-| ------------------------------------------------ | ---------------- |
-| A browser SPA with a build step, minimal config  | `react-spa`      |
-| A Next.js app (App Router, SSR, middleware)      | `nextjs`         |
-| A Vue 3 application                              | `vue`            |
-| A structured Angular enterprise application      | `angular`        |
-| A Node/Express REST API with protected routes    | `express-api`    |
+| You are building…                               | Use           |
+| ----------------------------------------------- | ------------- |
+| A browser SPA with a build step, minimal config | `react-spa`   |
+| A Next.js app (App Router, SSR, middleware)     | `nextjs`      |
+| A Vue 3 application                             | `vue`         |
+| A structured Angular enterprise application     | `angular`     |
+| A Node/Express REST API with protected routes   | `express-api` |
 
 Browser templates authenticate against the identity server over `/v1/auth/*`
 and protect routes client-side; the `express-api` template does the same
@@ -68,7 +69,7 @@ The scaffold files below are the seams you fill in with your application code:
 
 ## Documentation and tutorials
 
-- `docs/ARCHITECTURE.md`, `docs/OPENAPI.yaml` — architecture and HTTP surface
+- `docs/ARCHITECTURE.md`, `docs/api/OPENAPI.yaml` — architecture and HTTP surface
 - `docs/tutorials/` — `simple-auth.md`, `mfa-setup.md`, `multi-tenant.md`,
   `oauth-setup.md`, `enterprise-sso.md`, `social-login.md`, `passkeys.md`
 - `packages/react/` + `packages/express/` — browser provider/guards and server middleware

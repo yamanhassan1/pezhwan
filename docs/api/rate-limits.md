@@ -12,14 +12,14 @@ Defaults come from `DEFAULT_RATE_LIMITS`
 (`packages/shared/src/constants.ts`) and are applied by
 `RateLimitService` (`packages/core/src/services/rateLimit.service.ts`).
 
-| Budget     | Window          | Default | Scoped by (HTTP layer)                        |
-| ---------- | --------------- | ------- | --------------------------------------------- |
-| `login`    | 15 minutes      | 10      | IP (`/v1/auth/login`)                         |
-| `register` | 15 minutes      | 10      | IP (`/v1/auth/register`)                      |
-| `otp`      | 10 minutes      | 5       | IP (`/v1/auth/otp/*`, password flows)         |
-| `refresh`  | 15 minutes      | 30      | IP (`/v1/auth/refresh`)                       |
-| `mfa`      | 10 minutes      | 10      | IP (`/v1/mfa/*`, OAuth `code_challenge`)      |
-| `api`      | 15 minutes      | 100     | IP, or `userId`/client scope on authed routes (sessions, webhooks, GraphQL, teams, subscriptions) |
+| Budget     | Window     | Default | Scoped by (HTTP layer)                                                                            |
+| ---------- | ---------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `login`    | 15 minutes | 10      | IP (`/v1/auth/login`)                                                                             |
+| `register` | 15 minutes | 10      | IP (`/v1/auth/register`)                                                                          |
+| `otp`      | 10 minutes | 5       | IP (`/v1/auth/otp/*`, password flows)                                                             |
+| `refresh`  | 15 minutes | 30      | IP (`/v1/auth/refresh`)                                                                           |
+| `mfa`      | 10 minutes | 10      | IP (`/v1/mfa/*`, OAuth `code_challenge`)                                                          |
+| `api`      | 15 minutes | 100     | IP, or `userId`/client scope on authed routes (sessions, webhooks, GraphQL, teams, subscriptions) |
 
 Related, non-HTTP budgets: account lockout is 5 failed attempts to a 15-minute
 `loginLockUntil` (per `DEFAULT_LOCKOUT`); OTPs allow max 5 attempts, 5-minute
@@ -88,9 +88,9 @@ import { createPezhwan } from '@pezhwan/core';
 const runtime = createPezhwan({
   // ...tenantId, applicationId, issuer, audience, otpDelivery
   rateLimits: {
-    login:   { limit: 50,   windowMs: 15 * 60_000 },
-    otp:     { limit: 20,   windowMs: 10 * 60_000 },
-    api:     { limit: 500,  windowMs: 15 * 60_000 },
+    login: { limit: 50, windowMs: 15 * 60_000 },
+    otp: { limit: 20, windowMs: 10 * 60_000 },
+    api: { limit: 500, windowMs: 15 * 60_000 },
   },
 });
 ```

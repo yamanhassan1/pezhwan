@@ -100,20 +100,24 @@ export class OidcFederationService {
     if (!tokenSet.id_token) {
       throw new Error('OIDC token response missing id_token');
     }
-    const jwksDoc = (await this.getJson(params.discovery.jwks_uri)) as { keys?: Array<Record<string, unknown>> };
+    const jwksDoc = (await this.getJson(params.discovery.jwks_uri)) as {
+      keys?: Array<Record<string, unknown>>;
+    };
     const keys = jwksDoc.keys ?? [];
-    const { header } = await import('../oidc.service.ts').then((m) => m.decodeIdToken(tokenSet.id_token as string));
+    const { header } = await import('../oidc.service.ts').then((m) =>
+      m.decodeIdToken(tokenSet.id_token as string),
+    );
     const jwk = (keys.find((k) => k.kid === header.kid) ?? keys[0]) as {
-  kty: string;
-  n?: string;
-  e?: string;
-  crv?: string;
-  x?: string;
-  y?: string;
-};
-if (!jwk) {
-  throw new Error('No usable key in JWKS');
-}
+      kty: string;
+      n?: string;
+      e?: string;
+      crv?: string;
+      x?: string;
+      y?: string;
+    };
+    if (!jwk) {
+      throw new Error('No usable key in JWKS');
+    }
     const pem = jwkToPem(jwk);
     const claims = await verifyIdToken(tokenSet.id_token, {
       issuer: params.discovery.issuer,

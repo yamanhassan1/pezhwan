@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: pezhwan
     app.kubernetes.io/component: identity-server
 data:
-  PEZHWAN_PORT: "4011"
-  PEZHWAN_TENANT_ID: "default"
-  PEZHWAN_APPLICATION_ID: "default"
-  PEZHWAN_ALLOWED_ORIGINS: "https://auth.example.com,https://app.example.com"
+  PEZHWAN_PORT: '4011'
+  PEZHWAN_TENANT_ID: 'default'
+  PEZHWAN_APPLICATION_ID: 'default'
+  PEZHWAN_ALLOWED_ORIGINS: 'https://auth.example.com,https://app.example.com'

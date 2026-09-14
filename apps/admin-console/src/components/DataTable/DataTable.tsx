@@ -23,7 +23,13 @@ interface DataTableProps<T> {
   emptyMessage?: string;
 }
 
-export default function DataTable<T extends object>({ columns, rows, rowKey, onRowClick, emptyMessage = 'No records found' }: DataTableProps<T>) {
+export default function DataTable<T extends object>({
+  columns,
+  rows,
+  rowKey,
+  onRowClick,
+  emptyMessage = 'No records found',
+}: DataTableProps<T>) {
   if (rows.length === 0) {
     return <div className="empty-state">{emptyMessage}</div>;
   }
@@ -46,7 +52,7 @@ export default function DataTable<T extends object>({ columns, rows, rowKey, onR
           {rows.map((row, i) => {
             const key = rowKey
               ? rowKey(row)
-              : (row as Record<string, unknown>)['id']?.toString() ?? String(i);
+              : ((row as Record<string, unknown>)['id']?.toString() ?? String(i));
             return (
               <tr
                 key={key}
@@ -55,7 +61,11 @@ export default function DataTable<T extends object>({ columns, rows, rowKey, onR
               >
                 {columns.map((col) =>
                   col ? (
-                    <td key={col.key}>{col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '')}</td>
+                    <td key={col.key}>
+                      {col.render
+                        ? col.render(row)
+                        : String((row as Record<string, unknown>)[col.key] ?? '')}
+                    </td>
                   ) : null,
                 )}
               </tr>

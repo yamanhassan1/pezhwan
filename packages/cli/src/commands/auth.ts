@@ -20,7 +20,7 @@ export default {
       const email = flags.email;
       const password = flags.password;
       if (typeof email !== 'string' || typeof password !== 'string') {
-        return ctx.err('usage: pezhwan auth login --email <email> --password <password>'), 1;
+        return (ctx.err('usage: pezhwan auth login --email <email> --password <password>'), 1);
       }
       const data = (await ctx.api('/v1/auth/login', {
         method: 'POST',
@@ -28,7 +28,7 @@ export default {
       })) as { data?: { accessToken?: string } };
       const token = data.data?.accessToken;
       if (!token) {
-        return ctx.err('Login succeeded but no access token was returned'), 1;
+        return (ctx.err('Login succeeded but no access token was returned'), 1);
       }
       const profile = ctx.requireConfig();
       profile.token = token;

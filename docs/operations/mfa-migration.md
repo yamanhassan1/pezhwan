@@ -2,26 +2,33 @@
 
 ## Purpose
 
-Upgrade stored MFA TOTP secrets to the current **versioned AES-256-GCM
-envelope** (`v2:...`). The migration supports a **migration window** during
-which both the current `v2:` format and older formats are readable, then
+Upgrade stored MFA TOTP secrets to the current **DEK envelope** (`v3:...` — a
+random data key encrypts the secret with AES-256-GCM and is itself wrapped by
+the master key). The migration supports a **migration window** during which the
+current `v3:` format and the older `v2:`/legacy formats are all readable, then
 permanently re-encodes every record without changing the underlying TOTP
 secret — so **all existing authenticator/backup codes remain valid**.
 
 ## Why
 
-Older deployments may hold MFA secrets in one of two pre-`v2:` forms:
+Two storage schemes predate `v3:`:
 
-| Format                             | Detection                               | Action                       |
-| ---------------------------------- | --------------------------------------- | ---------------------------- |
-| `v2:<base64(iv‖tag‖ct)>` (current) | starts with `v2:`                       | skipped (already current)    |
-| legacy unprefixed AES-GCM envelope | decrypts under the key, no `v2:` prefix | re-wrapped as `v2:`          |
-| legacy **raw base64** TOTP secret  | not an envelope, decodes to ≥20 bytes   | wrapped as `v2:`             |
-| anything else                      | neither of the above                    | reported, **never modified** |
+| Format                             | Detection                             | Action                       |
+| ---------------------------------- | ------------------------------------- | ---------------------------- |
+| `v3:<base64(iv‖tag‖ct‖dekWrap)>`   | starts with `v3:`                     | skipped (already current)    |
+| `v2:<base64(iv‖tag‖ct)>`           | starts with `v2:`                     | re-wrapped as `v3:`          |
+| legacy unprefixed AES-GCM envelope | decrypts under the key, no prefix     | re-wrapped as `v3:`          |
+| legacy **raw base64** TOTP secret  | not an envelope, decodes to ≥20 bytes | wrapped as `v3:`             |
+| anything else                      | neither of the above                  | reported, **never modified** |
+
+`v3:` is a **true envelope**: the secret is encrypted under a per-record DEK
+and only that DEK is wrapped by the master key. The database / backups remain
+confidential even outside the key trust boundary, and a future master-key
+rotation only re-wraps DEKs instead of re-encrypting every secret.
 
 The runtime's `MfaService` (`packages/core/src/services/mfa.service.ts`)
-accepts both `v2:`-prefixed and legacy unprefixed envelopes throughout the
-migration window, so reads never break mid-upgrade.
+accepts `v3:`, `v2:`, and legacy unprefixed envelopes throughout the migration
+window, so reads never break mid-upgrade.
 
 ## Safety model
 

@@ -5,7 +5,13 @@
  */
 
 export { pezhwan, usePezhwanConfig, getActiveConfig, type PezhwanPluginOptions } from './plugin';
-export { useAuth, bootstrapAuth, type AuthState, type PezhwanUser, type PezhwanConfig } from './composables/useAuth';
+export {
+  useAuth,
+  bootstrapAuth,
+  type AuthState,
+  type PezhwanUser,
+  type PezhwanConfig,
+} from './composables/useAuth';
 export { useMFA, type MfaSetupResult, type MfaLoginResult } from './composables/useMFA';
 export { useSession, loadSessions, type PezhwanSession } from './composables/useSession';
 

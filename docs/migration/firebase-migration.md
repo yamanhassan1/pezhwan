@@ -38,10 +38,13 @@ import admin from 'firebase-admin';
 const app = admin.initializeApp({ credential: admin.credential.applicationDefault() });
 const list = await app.auth().listUsers(1000);
 const users = list.users.map((u) => {
-  const c = app.auth().getUser(u.uid) /* or u.customClaims */;
+  const c = app.auth().getUser(u.uid); /* or u.customClaims */
   return {
-    uid: u.uid, email: u.email, emailVerified: u.emailVerified,
-    phoneNumber: u.phoneNumber, disabled: u.disabled,
+    uid: u.uid,
+    email: u.email,
+    emailVerified: u.emailVerified,
+    phoneNumber: u.phoneNumber,
+    disabled: u.disabled,
     providerData: u.providerData.map((p) => ({ provider: p.providerId, subject: p.uid })),
     claims: u.customClaims ?? {},
   };
@@ -71,18 +74,18 @@ differences:
 
 ## 5. Mapping
 
-| Firebase concept | Pezhwan concept |
-| --- | --- |
-| `uid` | `User._id` (or `metadata.originalId`). |
-| `email` / `phoneNumber` | `User.email` / `User.phone`. |
-| `emailVerified` | `User.emailVerified`. |
-| `disabled` | `User.isActive` (inverted). |
-| `customClaims` | `User.metadata` + RBAC roles (prefer roles over claims). |
-| `providerData` (Google, Apple, ...) | `LinkedIdentity` (`provider`, `subject`). |
-| Firebase project | `Tenant` (`slug`). |
-| ID token / session cookie | Pezhwan RS256 access token + rotating refresh family. |
-| Password hash (scrypt/BCrypt) | Not transferable — reset/forgot or temporary password. |
-| TOTP/SMS MFA factors | Re-enroll on Pezhwan (`User.mfaEnabled`). |
+| Firebase concept                    | Pezhwan concept                                          |
+| ----------------------------------- | -------------------------------------------------------- |
+| `uid`                               | `User._id` (or `metadata.originalId`).                   |
+| `email` / `phoneNumber`             | `User.email` / `User.phone`.                             |
+| `emailVerified`                     | `User.emailVerified`.                                    |
+| `disabled`                          | `User.isActive` (inverted).                              |
+| `customClaims`                      | `User.metadata` + RBAC roles (prefer roles over claims). |
+| `providerData` (Google, Apple, ...) | `LinkedIdentity` (`provider`, `subject`).                |
+| Firebase project                    | `Tenant` (`slug`).                                       |
+| ID token / session cookie           | Pezhwan RS256 access token + rotating refresh family.    |
+| Password hash (scrypt/BCrypt)       | Not transferable — reset/forgot or temporary password.   |
+| TOTP/SMS MFA factors                | Re-enroll on Pezhwan (`User.mfaEnabled`).                |
 
 ## 6. Rolling out
 

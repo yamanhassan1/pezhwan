@@ -8,13 +8,7 @@
 import { useState, type FormEvent } from 'react';
 import { useMFA } from '../hooks/useMFA.ts';
 
-export function MFALogin({
-  userId,
-  onSuccess,
-}: {
-  userId: string;
-  onSuccess?: () => void;
-}) {
+export function MFALogin({ userId, onSuccess }: { userId: string; onSuccess?: () => void }) {
   const { completeMfaLogin } = useMFA();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);

@@ -10,8 +10,8 @@ The module is organized as `main.tf`, `variables.tf`, and `outputs.tf`.
 **The files are currently placeholders (0 bytes) and must be implemented
 before `terraform apply`**; the intended contract:
 
-| Inputs (`variables.tf`) | Outputs (`outputs.tf`) |
-| ----------------------- | ---------------------- |
+| Inputs (`variables.tf`)                                                                                | Outputs (`outputs.tf`)                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Location, resource-group name, AKS/VM sizing, Cosmos DB account tier, Redis SKU, DNS zone/record names | AKS cluster name and kubeconfig pointer, Cosmos connection string, Redis host/port (ref. via secret store), ingress host, KMS/Key Vault IDs |
 
 `main.tf` should provision: resource group, AKS cluster (or a VM/VMSS running

@@ -23,19 +23,19 @@ spec:
       containers:
         - name: mongod
           image: mongo:7
-          command: ["mongod", "--config", "/etc/mongo/mongod.conf"]
+          command: ['mongod', '--config', '/etc/mongo/mongod.conf']
           ports:
             - containerPort: 27017
               name: mongodb
           readinessProbe:
             exec:
-              command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+              command: ['mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
           livenessProbe:
             exec:
-              command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+              command: ['mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 3
@@ -44,7 +44,7 @@ spec:
               cpu: 200m
               memory: 512Mi
             limits:
-              cpu: "1"
+              cpu: '1'
               memory: 1Gi
           volumeMounts:
             - name: data
@@ -83,7 +83,7 @@ spec:
     - metadata:
         name: data
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: ['ReadWriteOnce']
         storageClassName: standard
         resources:
           requests:

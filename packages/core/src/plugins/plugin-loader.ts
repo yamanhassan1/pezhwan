@@ -47,7 +47,9 @@ export class PluginLoader {
     }
     const url = this.resolveUrl(manifest.entry);
     const cached = cache.get(url);
-    const mod = (cached as { default?: unknown } | undefined) ?? ((await import(url)) as { default?: unknown });
+    const mod =
+      (cached as { default?: unknown } | undefined) ??
+      ((await import(url)) as { default?: unknown });
     if (!cached) cache.set(url, mod);
     const exports = (mod.default ?? mod) as unknown;
     let hooks: string[] | undefined;

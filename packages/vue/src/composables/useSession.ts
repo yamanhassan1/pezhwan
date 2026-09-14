@@ -22,7 +22,9 @@ export interface PezhwanSession {
 const sessions = ref<PezhwanSession[]>([]) as Ref<PezhwanSession[]>;
 
 export async function loadSessions(): Promise<void> {
-  const data = (await request(getActiveConfig(), '/v1/sessions')) as { sessions?: PezhwanSession[] };
+  const data = (await request(getActiveConfig(), '/v1/sessions')) as {
+    sessions?: PezhwanSession[];
+  };
   sessions.value = data.sessions ?? [];
 }
 

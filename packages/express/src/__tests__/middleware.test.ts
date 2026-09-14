@@ -7,6 +7,8 @@ import {
   requireAuth,
   requireRole,
   requirePermission,
+  requireFreshPermissions,
+  requireFreshPermission,
 } from '@pezhwan/express';
 import type { PezhwanRequest } from '@pezhwan/express';
 import { createPezhwan, type PezhwanRuntime } from '@pezhwan/core';
@@ -102,4 +104,20 @@ test('createAuthenticate lets malformed tokens through unauthenticated', async (
     (e) => (errorOut = e ?? null),
   );
   assert.equal(errorOut, null, 'invalid token must not forward a dependency error');
+});
+
+test('requireFreshPermissions requires an authenticated identity first', async () => {
+  const runtime = mockRuntime();
+  let denied: unknown;
+  await requireFreshPermissions(runtime)(req(), {} as never, (e) => (denied = e));
+  assert.ok(denied instanceof Error);
+  assert.equal((denied as { code?: string }).code, 'UNAUTHENTICATED');
+});
+
+test('requireFreshPermission requires an authenticated identity first', async () => {
+  const runtime = mockRuntime();
+  let denied: unknown;
+  await requireFreshPermission(runtime, 'users:manage')(req(), {} as never, (e) => (denied = e));
+  assert.ok(denied instanceof Error);
+  assert.equal((denied as { code?: string }).code, 'UNAUTHENTICATED');
 });

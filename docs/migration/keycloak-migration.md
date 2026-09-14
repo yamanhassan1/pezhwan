@@ -64,20 +64,31 @@ import { createPezhwan, UserModel } from '@pezhwan/core';
 import { hashPassword } from '@pezhwan/crypto';
 
 await mongoose.connect(process.env.PEZHWAN_MONGODB_URI!);
-const runtime = createPezhwan({ tenantId: 'acme', applicationId: 'portal', /* ... */ otpDelivery: {} });
+const runtime = createPezhwan({
+  tenantId: 'acme',
+  applicationId: 'portal',
+  /* ... */ otpDelivery: {},
+});
 for (const u of exportedUsers) {
   const doc = await UserModel.create({
-    tenantId: 'acme', email: u.email?.toLowerCase(), emailVerified: u.emailVerified,
-    phone: u.attributes?.phoneNumber?.[0], isActive: u.enabled,
+    tenantId: 'acme',
+    email: u.email?.toLowerCase(),
+    emailVerified: u.emailVerified,
+    phone: u.attributes?.phoneNumber?.[0],
+    isActive: u.enabled,
     passwordHash: u.temporaryPassword ? await hashPassword(u.temporaryPassword) : null,
     metadata: { source: 'keycloak', kcId: u.id, ...(u.attributes ?? {}) },
   }).catch(() => undefined);
   if (!doc) continue;
   for (const roleName of flattenRoles(u)) {
-    await runtime.authorization.assignRole({
-      userId: String(doc._id), tenantId: 'acme', applicationId: 'portal',
-      roleName: roleName.toUpperCase(), // Pezhwan stores role names uppercase
-    }).catch(() => undefined);
+    await runtime.authorization
+      .assignRole({
+        userId: String(doc._id),
+        tenantId: 'acme',
+        applicationId: 'portal',
+        roleName: roleName.toUpperCase(), // Pezhwan stores role names uppercase
+      })
+      .catch(() => undefined);
   }
 }
 ```
@@ -88,19 +99,19 @@ graph.
 
 ## 5. Mapping
 
-| Keycloak concept | Pezhwan concept |
-| --- | --- |
-| Realm | `Tenant` (`slug` = realm name). |
-| Client | `Application` / OAuth client (`redirectUris`, confidential flags). |
-| `users.id` | `User._id` (or `metadata.kcId`). |
-| `username` / `email` / `phoneNumber` | `email` / `phone` (Pezhwan uses unique email/phone per tenant; map `username` to `metadata.username` if required). |
-| `emailVerified` / `enabled` | `User.emailVerified` / `User.isActive`. |
-| Realm roles, client roles, composites | Flattened `Role` + `UserRoleAssignment` (`roles[]`). |
-| User attributes / claim mappers | `User.metadata`; token claims are derived by Pezhwan, not mapped. |
-| LDAP / IdP federation | `LinkedIdentity` (`provider`, `subject`). |
-| OTP (TOTP) factors | Re-enroll (`User.mfaEnabled`). |
-| Password hashes (PBKDF2/BCrypt) | Not transferable — reset/forgot or temporary password. |
-| Session/SSO cookies | Pezhwan access + rotating refresh family, per session. |
+| Keycloak concept                      | Pezhwan concept                                                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Realm                                 | `Tenant` (`slug` = realm name).                                                                                    |
+| Client                                | `Application` / OAuth client (`redirectUris`, confidential flags).                                                 |
+| `users.id`                            | `User._id` (or `metadata.kcId`).                                                                                   |
+| `username` / `email` / `phoneNumber`  | `email` / `phone` (Pezhwan uses unique email/phone per tenant; map `username` to `metadata.username` if required). |
+| `emailVerified` / `enabled`           | `User.emailVerified` / `User.isActive`.                                                                            |
+| Realm roles, client roles, composites | Flattened `Role` + `UserRoleAssignment` (`roles[]`).                                                               |
+| User attributes / claim mappers       | `User.metadata`; token claims are derived by Pezhwan, not mapped.                                                  |
+| LDAP / IdP federation                 | `LinkedIdentity` (`provider`, `subject`).                                                                          |
+| OTP (TOTP) factors                    | Re-enroll (`User.mfaEnabled`).                                                                                     |
+| Password hashes (PBKDF2/BCrypt)       | Not transferable — reset/forgot or temporary password.                                                             |
+| Session/SSO cookies                   | Pezhwan access + rotating refresh family, per session.                                                             |
 
 ## 6. Rolling out
 

@@ -116,15 +116,15 @@ If this project is intended for real customer workloads, it must be evaluated fo
 
 ## Production readiness score by category
 
-| Category              | Score | Notes                                                 |
-| --------------------- | ----- | ----------------------------------------------------- |
-| Security model        | 8/10  | Strong foundations and good intent                    |
-| Architecture          | 7/10  | Clean monorepo and modularity                         |
-| Documentation         | 8/10  | Good docs and security notes                          |
-| Demo / developer UX   | 7/10  | Usable and understandable                             |
-| Operational maturity  | 6/10  | Backup verify + restore drill; rotation scripts       |
-| Production hardening  | 6/10  | Adversarial + failure-injection test suites           |
-| Real-world validation | 7/10  | 380+ automated tests across 6 suites                  |
+| Category              | Score | Notes                                           |
+| --------------------- | ----- | ----------------------------------------------- |
+| Security model        | 8/10  | Strong foundations and good intent              |
+| Architecture          | 7/10  | Clean monorepo and modularity                   |
+| Documentation         | 8/10  | Good docs and security notes                    |
+| Demo / developer UX   | 7/10  | Usable and understandable                       |
+| Operational maturity  | 6/10  | Backup verify + restore drill; rotation scripts |
+| Production hardening  | 6/10  | Adversarial + failure-injection test suites     |
+| Real-world validation | 7/10  | 380+ automated tests across 6 suites            |
 
 Overall: 7.5/10
 

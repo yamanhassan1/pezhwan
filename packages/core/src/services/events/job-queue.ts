@@ -103,10 +103,13 @@ export class JobQueue {
     job.runAt = this.now() + delay;
     this.jobs.push(job);
     if (this.drainTimer) clearTimeout(this.drainTimer);
-    const timer = setTimeout(() => {
-      this.drainTimer = undefined;
-      void this.drain();
-    }, Math.max(0, delay));
+    const timer = setTimeout(
+      () => {
+        this.drainTimer = undefined;
+        void this.drain();
+      },
+      Math.max(0, delay),
+    );
     if (typeof timer.unref === 'function') timer.unref();
     this.drainTimer = timer;
   }

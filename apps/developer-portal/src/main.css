@@ -6,7 +6,7 @@
   --sidebar-bg-2: #0d1424;
   --sidebar-border: #1e2a44;
   --sidebar-text: #c3cde0;
-  --sidebar-text-muted: #7e8bA6;
+  --sidebar-text-muted: #7e8ba6;
   --sidebar-active: #4f6ef7;
   --text: #1c2740;
   --text-muted: #5a6b85;
@@ -113,7 +113,9 @@ p {
   font-weight: 600;
   padding: 9px 16px;
   cursor: pointer;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .btn:hover {
@@ -166,7 +168,9 @@ p {
   border-radius: 8px;
   padding: 9px 12px;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .input:focus,
@@ -584,7 +588,9 @@ p {
   font-weight: 500;
   text-decoration: none;
   margin-bottom: 2px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .dp-nav-link:hover {

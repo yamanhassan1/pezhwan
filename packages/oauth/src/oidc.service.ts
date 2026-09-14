@@ -32,7 +32,9 @@ export function decodeIdToken(token: string): {
     throw new Error('Malformed id_token');
   }
   const header = JSON.parse(Buffer.from(headerPart, 'base64url').toString('utf8')) as IdTokenHeader;
-  const claims = JSON.parse(Buffer.from(payloadPart, 'base64url').toString('utf8')) as IdTokenClaims;
+  const claims = JSON.parse(
+    Buffer.from(payloadPart, 'base64url').toString('utf8'),
+  ) as IdTokenClaims;
   return { header, claims };
 }
 
@@ -73,9 +75,7 @@ export async function verifyIdToken(
   if (claims.iss !== options.issuer) {
     throw new Error('id_token issuer mismatch');
   }
-  const allowedAudiences = Array.isArray(options.audience)
-    ? options.audience
-    : [options.audience];
+  const allowedAudiences = Array.isArray(options.audience) ? options.audience : [options.audience];
   const tokenAudiences = Array.isArray(claims.aud) ? claims.aud : [String(claims.aud)];
   if (!tokenAudiences.some((aud) => allowedAudiences.includes(aud))) {
     throw new Error('id_token audience mismatch');
@@ -115,7 +115,13 @@ export function buildDiscoveryMetadata(options: {
     grant_types_supported: ['authorization_code', 'client_credentials', 'refresh_token'],
     subject_types_supported: ['public'],
     id_token_signing_alg_values_supported: ['RS256', 'ES256', 'EdDSA'],
-    scopes_supported: options.supportedScopes ?? ['openid', 'profile', 'email', 'phone', 'offline_access'],
+    scopes_supported: options.supportedScopes ?? [
+      'openid',
+      'profile',
+      'email',
+      'phone',
+      'offline_access',
+    ],
     token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post', 'none'],
   };
 }

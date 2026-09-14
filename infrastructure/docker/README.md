@@ -9,12 +9,12 @@ observability assets in `nginx/` and `monitoring/`.
 
 `docker-compose.yml` defines three services:
 
-| Service          | Image       | Ports                | Purpose                                        |
-| ---------------- | ----------- | -------------------- | ---------------------------------------------- |
-| `mongo1`         | `mongo:7`   | `127.0.0.1:27017`    | Replica-set primary (`pezhwan-rs`)             |
-| `mongo2` / `mongo3` | `mongo:7` | —                    | Secondary nodes                                |
-| `redis`          | `redis:7-alpine` | `127.0.0.1:6379` | Rate limits, OTP, session cache                |
-| `identity-server`| built       | `4011` (host → 4011) | Reference identity server                      |
+| Service             | Image            | Ports                | Purpose                            |
+| ------------------- | ---------------- | -------------------- | ---------------------------------- |
+| `mongo1`            | `mongo:7`        | `127.0.0.1:27017`    | Replica-set primary (`pezhwan-rs`) |
+| `mongo2` / `mongo3` | `mongo:7`        | —                    | Secondary nodes                    |
+| `redis`             | `redis:7-alpine` | `127.0.0.1:6379`     | Rate limits, OTP, session cache    |
+| `identity-server`   | built            | `4011` (host → 4011) | Reference identity server          |
 
 Details:
 

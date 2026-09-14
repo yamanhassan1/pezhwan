@@ -8,3 +8,6 @@ package-lock.json
 *.pem
 *.key
 *.log
+# Helm chart templates embed Go template syntax ({{ }}), which the YAML parser
+# cannot read — they are validated by `helm lint` instead.
+infrastructure/kubernetes/helm/*/templates/

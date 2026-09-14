@@ -90,21 +90,21 @@ the field wiring:
 
 ## 5. Mapping
 
-| Supabase concept | Pezhwan concept |
-| --- | --- |
-| Project | `Tenant` (`slug`). |
-| `auth.users.id` (UUID) | `User._id` (if downstream refs) or `metadata.supabaseId`. |
-| `email` / `phone` | `User.email` / `User.phone`. |
-| `email_confirmed_at` / `phone_confirmed_at` | `User.emailVerified` / `phoneVerified`. |
-| `banned_until` / `deleted_at` | `User.isActive` (false when set). |
-| `raw_user_meta_data` | `User.metadata`. |
-| `raw_app_meta_data.role` etc. | `Role` + `UserRoleAssignment`; rest → `metadata`. |
-| `identities.provider` (`google`, `github`, `sso`, ...) | `LinkedIdentity` (`provider`, `subject`). |
-| goTrue JWT (`sub`, `role`, `app_metadata`) | Pezhwan RS256 access token (identity-derived claims). |
-| `auth.refresh_tokens` / session cookie | Pezhwan rotating refresh family + per-session revocation. |
-| `auth.mfa_factors` (TOTP/phone) | Re-enroll on Pezhwan (`User.mfaEnabled`). |
-| `encrypted_password` (bcrypt) | Not transferable — reset/forgot or temporary password. |
-| RLS `auth.uid()` policies | Replace with Pezhwan access-token `sub`/role checks in application policy. |
+| Supabase concept                                       | Pezhwan concept                                                            |
+| ------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Project                                                | `Tenant` (`slug`).                                                         |
+| `auth.users.id` (UUID)                                 | `User._id` (if downstream refs) or `metadata.supabaseId`.                  |
+| `email` / `phone`                                      | `User.email` / `User.phone`.                                               |
+| `email_confirmed_at` / `phone_confirmed_at`            | `User.emailVerified` / `phoneVerified`.                                    |
+| `banned_until` / `deleted_at`                          | `User.isActive` (false when set).                                          |
+| `raw_user_meta_data`                                   | `User.metadata`.                                                           |
+| `raw_app_meta_data.role` etc.                          | `Role` + `UserRoleAssignment`; rest → `metadata`.                          |
+| `identities.provider` (`google`, `github`, `sso`, ...) | `LinkedIdentity` (`provider`, `subject`).                                  |
+| goTrue JWT (`sub`, `role`, `app_metadata`)             | Pezhwan RS256 access token (identity-derived claims).                      |
+| `auth.refresh_tokens` / session cookie                 | Pezhwan rotating refresh family + per-session revocation.                  |
+| `auth.mfa_factors` (TOTP/phone)                        | Re-enroll on Pezhwan (`User.mfaEnabled`).                                  |
+| `encrypted_password` (bcrypt)                          | Not transferable — reset/forgot or temporary password.                     |
+| RLS `auth.uid()` policies                              | Replace with Pezhwan access-token `sub`/role checks in application policy. |
 
 ## 6. Rolling out
 

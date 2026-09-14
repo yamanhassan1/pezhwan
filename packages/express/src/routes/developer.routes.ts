@@ -36,7 +36,9 @@ export function createDeveloperRouter(runtime: PezhwanRuntime): Router {
         tenantId: runtime.config.tenantId,
         applicationId: runtime.config.applicationId,
         name,
-        scopes: Array.isArray(scopes) ? scopes.filter((s): s is string => typeof s === 'string') : [],
+        scopes: Array.isArray(scopes)
+          ? scopes.filter((s): s is string => typeof s === 'string')
+          : [],
       });
       ok(res, result, 201);
     },

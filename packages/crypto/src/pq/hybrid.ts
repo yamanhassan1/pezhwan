@@ -1,50 +1,63 @@
 /**
  * PEZHWAN — Hybrid classical + post-quantum cryptography.
  *
- * During the post-quantum transition, hybrid mode combines a classical
- * algorithm (RSA/ECDSA) with a PQ algorithm (Dilithium/Kyber) so that
- * security is maintained even if one algorithm is broken.
+ * During the post-quantum transition a hybrid scheme keeps security even if
+ * one of the two algorithms is later broken:
  *
- * Hybrid key exchange:  X25519 + Kyber-768 → shared secret
- * Hybrid signatures:    ECDSA-P256 + Dilithium3 → combined signature
+ *  Hybrid key exchange:   X25519 (WebCrypto ECDH) + ML-KEM-768/1024 → HKDF
+ *  Hybrid signatures:     RSA-2048 / ECDSA P-256 + ML-DSA-65 (Dilithium3)
  *
- * This provides "belt and suspenders" security for the transition period.
+ * Both legs must verify / be combined for the result to be trusted — a
+ * defensive, "belt and suspenders" posture for the transition period.
+ *
+ * Key material is Buffer-only (raw or PEM) so pairs can be persisted and
+ * restored by the KeyStore just like classical keys.
  */
 
+import {
+  generateKeyPairSync,
+  createPrivateKey,
+  createPublicKey,
+  sign as nodeSign,
+  verify as nodeVerify,
+} from 'node:crypto';
 import { randomBytes } from 'node:crypto';
-import { KyberKeyEncapsulation, type KyberKeyPair, type KyberCiphertext } from './kyber.ts';
-import { DilithiumSigner, type DilithiumKeyPair, type DilithiumSignature } from './dilithium.ts';
+import { KyberKeyEncapsulation } from './kyber.ts';
+import { DilithiumSigner } from './dilithium.ts';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type HybridMode = 'x25519+kyber768' | 'ecdsa+dilithium3' | 'rsa+dilithium3';
+export type HybridMode =
+  'x25519+kyber768' | 'x25519+kyber1024' | 'rsa+dilithium3' | 'ecdsa+dilithium3';
 
 export interface HybridKeyPair {
-  /** Classical key material (X25519, ECDSA, or RSA). */
-  classical: { publicKey: Buffer; privateKey: Buffer; algorithm: string };
-  /** PQ key material (Kyber or Dilithium). */
-  postQuantum: KyberKeyPair | DilithiumKeyPair;
-  /** The hybrid mode used. */
   mode: HybridMode;
+  /** Classical public key: SPKI PEM (signature modes) or raw X25519 pk (KEM). */
+  classicalPublicKey: Buffer;
+  /** Classical private key: PKCS8 PEM (signature modes) or PKCS8 X25519 sk (KEM). */
+  classicalPrivateKey: Buffer;
+  /** PQ public key (raw ML-KEM / ML-DSA bytes). */
+  pqPublicKey: Buffer;
+  /** PQ private key (raw ML-KEM / ML-DSA bytes). */
+  pqPrivateKey: Buffer;
 }
 
 export interface HybridEncapsulation {
-  /** Classical ciphertext (e.g. X25519 ephemeral public key). */
+  /** Ephemeral X25519 public key (the KEM leg of the ciphertext). */
   classical: Buffer;
-  /** PQ ciphertext (Kyber ciphertext). */
-  postQuantum: KyberCiphertext;
-  /** Combined shared secret. */
+  /** ML-KEM ciphertext (the PQ leg of the ciphertext). */
+  postQuantum: Buffer;
+  /** HKDF-combined 32-byte shared secret. */
   sharedSecret: Buffer;
 }
 
 export interface HybridSignature {
-  /** Classical signature (ECDSA or RSA). */
+  /** Classical signature bytes (RSA PKCS1v1.5 / ECDSA P-256 over SHA-256). */
   classical: Buffer;
-  /** PQ signature (Dilithium). */
-  postQuantum: DilithiumSignature;
-  /** The hybrid mode used. */
+  /** PQ signature bytes (ML-DSA-65). */
+  postQuantum: Buffer;
   mode: HybridMode;
 }
 
@@ -53,121 +66,153 @@ export interface HybridSignature {
 // ---------------------------------------------------------------------------
 
 export class HybridCrypto {
-  private readonly kyber: KyberKeyEncapsulation;
-  private readonly dilithium: DilithiumSigner;
   private readonly mode: HybridMode;
 
   constructor(mode: HybridMode = 'x25519+kyber768') {
-    this.mode = mode;
-    this.kyber = new KyberKeyEncapsulation('Kyber-768');
-    this.dilithium = new DilithiumSigner('Dilithium3');
-  }
-
-  /**
-   * Generate a hybrid key pair (classical + PQ).
-   */
-  async generateKeyPair(): Promise<HybridKeyPair> {
-    const classical = await this.generateClassicalKeyPair();
-    let postQuantum: KyberKeyPair | DilithiumKeyPair;
-
-    if (this.mode.startsWith('x25519') || this.mode.startsWith('rsa+dilithium')) {
-      // For key exchange modes, generate Kyber keys.
-      postQuantum = await this.kyber.generateKeyPair();
-    } else {
-      // For signature modes, generate Dilithium keys.
-      postQuantum = await this.dilithium.generateKeyPair();
+    if (
+      mode !== 'x25519+kyber768' &&
+      mode !== 'x25519+kyber1024' &&
+      mode !== 'rsa+dilithium3' &&
+      mode !== 'ecdsa+dilithium3'
+    ) {
+      throw new Error(`Unsupported hybrid mode: ${String(mode)}`);
     }
+    this.mode = mode;
+  }
 
-    return { classical, postQuantum, mode: this.mode };
+  get isKem(): boolean {
+    return this.mode.startsWith('x25519');
+  }
+
+  /** Generate a hybrid key pair (classical + PQ legs present in one object). */
+  async generateKeyPair(): Promise<HybridKeyPair> {
+    if (this.mode.startsWith('x25519')) {
+      const { publicKey: classicalPublicKey, privateKey: classicalPrivateKey } =
+        await this.generateX25519KeyPair();
+      const kem = new KyberKeyEncapsulation(
+        this.mode === 'x25519+kyber1024' ? 'Kyber-1024' : 'Kyber-768',
+      );
+      const { publicKey, privateKey } = await kem.generateKeyPair();
+      return {
+        mode: this.mode,
+        classicalPublicKey,
+        classicalPrivateKey,
+        pqPublicKey: publicKey.raw,
+        pqPrivateKey: privateKey.raw,
+      };
+    }
+    const classical =
+      this.mode === 'ecdsa+dilithium3'
+        ? generateKeyPairSync('ec', {
+            namedCurve: 'P-256',
+            publicKeyEncoding: { type: 'spki', format: 'pem' },
+            privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+          })
+        : generateKeyPairSync('rsa', {
+            modulusLength: 2048,
+            publicKeyEncoding: { type: 'spki', format: 'pem' },
+            privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+          });
+    const signer = new DilithiumSigner('Dilithium3');
+    const { publicKey: pqPub, privateKey: pqPriv } = await signer.generateKeyPair();
+    return {
+      mode: this.mode,
+      classicalPublicKey: Buffer.from(classical.publicKey, 'utf-8'),
+      classicalPrivateKey: Buffer.from(classical.privateKey, 'utf-8'),
+      pqPublicKey: pqPub.raw,
+      pqPrivateKey: pqPriv.raw,
+    };
   }
 
   /**
-   * Hybrid key encapsulation: combine classical ECDH with Kyber KEM.
-   * The shared secret is derived from both the classical and PQ shared
-   * secrets via HKDF.
+   * Hybrid key encapsulation: X25519 ECDH (ephemeral) + ML-KEM captured to a
+   * single shared secret via HKDF-SHA256 over both secrets.
    */
   async encapsulate(hybridPubKey: HybridKeyPair): Promise<HybridEncapsulation> {
-    if (!hybridPubKey.mode.startsWith('x25519')) {
-      throw new Error('HybridCrypto.encapsulate requires x25519+kyber mode');
+    if (!this.isKem) {
+      throw new Error('HybridCrypto.encapsulate requires an x25519+kyber mode');
     }
+    const kemAlg = this.mode === 'x25519+kyber1024' ? 'Kyber-1024' : 'Kyber-768';
+    const kem = new KyberKeyEncapsulation(kemAlg);
+    const pqPk = { algorithm: kemAlg as 'Kyber-768' | 'Kyber-1024', raw: hybridPubKey.pqPublicKey };
 
-    // Classical: ECDH with ephemeral X25519 key.
-    const ephPrivKey = randomBytes(32);
-    const classicalCt = ephPrivKey; // Simplified; real impl does X25519 DH.
-
-    // PQ: Kyber encapsulation.
-    const pqKeyPair = hybridPubKey.postQuantum as KyberKeyPair;
-    const { ciphertext, sharedSecret: pqSS } = await this.kyber.encapsulate(pqKeyPair.publicKey);
-
-    // Combine both shared secrets via HKDF.
-    const combined = Buffer.concat([classicalCt, pqSS.raw]);
-    const sharedSecret = await this.deriveHybridSecret(combined);
+    const { publicKey: ephPublic, privateKey: ephPrivate } = await this.generateX25519KeyPair();
+    const ecdhSecret = await this.x25519SharedSecret(ephPrivate, hybridPubKey.classicalPublicKey);
+    const { ciphertext, sharedSecret: kemSecret } = await kem.encapsulate(pqPk, randomBytes(32));
+    const sharedSecret = await this.deriveHybridSecret(ecdhSecret, kemSecret.raw);
 
     return {
-      classical: classicalCt,
-      postQuantum: ciphertext,
+      classical: ephPublic,
+      postQuantum: ciphertext.raw,
       sharedSecret,
     };
   }
 
-  /**
-   * Hybrid decapsulation: recover the shared secret from ciphertext.
-   */
+  /** Hybrid decapsulation: recover the shared secret from both ciphertext legs. */
   async decapsulate(
     encapsulation: HybridEncapsulation,
     hybridPrivKey: HybridKeyPair,
   ): Promise<Buffer> {
-    if (!hybridPrivKey.mode.startsWith('x25519')) {
-      throw new Error('HybridCrypto.decapsulate requires x25519+kyber mode');
+    if (!this.isKem) {
+      throw new Error('HybridCrypto.decapsulate requires an x25519+kyber mode');
     }
-
-    // PQ: Kyber decapsulation.
-    const pqKeyPair = hybridPrivKey.postQuantum as KyberKeyPair;
-    const { raw: pqSS } = await this.kyber.decapsulate(
-      encapsulation.postQuantum,
-      pqKeyPair.privateKey,
+    const kemAlg = this.mode === 'x25519+kyber1024' ? 'Kyber-1024' : 'Kyber-768';
+    const kem = new KyberKeyEncapsulation(kemAlg);
+    const ecdhSecret = await this.x25519SharedSecret(
+      hybridPrivKey.classicalPrivateKey,
+      encapsulation.classical,
     );
-
-    // Combine and derive.
-    const combined = Buffer.concat([encapsulation.classical, pqSS]);
-    return this.deriveHybridSecret(combined);
+    const kemSecret = await kem.decapsulate(
+      { algorithm: kemAlg as 'Kyber-768' | 'Kyber-1024', raw: encapsulation.postQuantum },
+      { algorithm: kemAlg as 'Kyber-768' | 'Kyber-1024', raw: hybridPrivKey.pqPrivateKey },
+    );
+    return this.deriveHybridSecret(ecdhSecret, kemSecret.raw);
   }
 
-  /**
-   * Hybrid signature: combine classical ECDSA with Dilithium.
-   */
+  /** Hybrid signature: classical (RSA/ECDSA PKCS#1/X9.62) + ML-DSA concatenated. */
   async sign(message: Buffer, hybridKey: HybridKeyPair): Promise<HybridSignature> {
-    // Classical signature (ECDSA-P256).
-    const classicalSig = await this.classicalSign(message, hybridKey.classical.privateKey);
-
-    // PQ signature (Dilithium).
-    const pqKey = hybridKey.postQuantum as DilithiumKeyPair;
-    const pqSig = await this.dilithium.sign(message, pqKey.privateKey);
-
-    return {
-      classical: classicalSig,
-      postQuantum: pqSig,
-      mode: this.mode,
-    };
+    if (this.isKem) {
+      throw new Error('HybridCrypto.sign requires a signature mode (rsa/ecdsa+dilithium3)');
+    }
+    const classicalSig = nodeSign(
+      'sha256',
+      message,
+      createPrivateKey(hybridKey.classicalPrivateKey.toString('utf-8')),
+    );
+    const signer = new DilithiumSigner('Dilithium3');
+    const pqSig = await signer.sign(message, {
+      algorithm: 'Dilithium3',
+      raw: hybridKey.pqPrivateKey,
+    });
+    return { classical: classicalSig, postQuantum: pqSig.raw, mode: this.mode };
   }
 
-  /**
-   * Hybrid signature verification: both classical and PQ must verify.
-   */
+  /** Hybrid verification: BOTH the classical and PQ legs must verify. */
   async verify(
     message: Buffer,
     signature: HybridSignature,
     hybridKey: HybridKeyPair,
   ): Promise<boolean> {
-    // Both must verify for the hybrid signature to be valid.
-    const classicalValid = await this.classicalVerify(
+    if (this.isKem) {
+      return false;
+    }
+    let classicalValid: boolean;
+    try {
+      classicalValid = nodeVerify(
+        'sha256',
+        message,
+        createPublicKey(hybridKey.classicalPublicKey.toString('utf-8')),
+        signature.classical,
+      );
+    } catch {
+      classicalValid = false;
+    }
+    const signer = new DilithiumSigner('Dilithium3');
+    const pqValid = await signer.verify(
       message,
-      signature.classical,
-      hybridKey.classical.publicKey,
+      { algorithm: 'Dilithium3', raw: signature.postQuantum },
+      { algorithm: 'Dilithium3', raw: hybridKey.pqPublicKey },
     );
-    const pqKey = hybridKey.postQuantum as DilithiumKeyPair;
-    const pqValid = await this.dilithium.verify(message, signature.postQuantum, pqKey.publicKey);
-
     return classicalValid && pqValid;
   }
 
@@ -175,74 +220,43 @@ export class HybridCrypto {
   // Internal helpers
   // -------------------------------------------------------------------------
 
-  private async generateClassicalKeyPair(): Promise<HybridKeyPair['classical']> {
-    if (this.mode.startsWith('x25519')) {
-      // X25519 (Curve25519 ECDH)
-      const privateKey = randomBytes(32);
-      const publicKey = await this.x25519PublicKey(privateKey);
-      return { publicKey, privateKey, algorithm: 'X25519' };
-    }
-    // ECDSA P-256
-    const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
-      'sign',
-      'verify',
-    ]);
-    const pubRaw = Buffer.from(await crypto.subtle.exportKey('raw', kp.publicKey));
-    const privRaw = Buffer.from(await crypto.subtle.exportKey('pkcs8', kp.privateKey));
-    return { publicKey: pubRaw, privateKey: privRaw, algorithm: 'ECDSA-P256' };
+  private async generateX25519KeyPair(): Promise<{ publicKey: Buffer; privateKey: Buffer }> {
+    const pair = (await crypto.subtle.generateKey({ name: 'X25519' }, true, [
+      'deriveBits',
+    ])) as unknown as { publicKey: CryptoKey; privateKey: CryptoKey };
+    const publicKey = Buffer.from(await crypto.subtle.exportKey('raw', pair.publicKey));
+    // WebCrypto (per spec) cannot export X25519 private keys as raw — PKCS8.
+    const privateKey = Buffer.from(await crypto.subtle.exportKey('pkcs8', pair.privateKey));
+    return { publicKey, privateKey };
   }
 
-  private async x25519PublicKey(privateKey: Buffer): Promise<Buffer> {
-    await crypto.subtle.importKey('raw', new Uint8Array(privateKey), 'X25519', false, []);
-    // X25519 public key derivation (simplified — real impl uses Curve25519 scalar mult).
-    const hash = await crypto.subtle.digest('SHA-256', new Uint8Array(privateKey));
-    return Buffer.from(hash);
-  }
-
-  private async classicalSign(message: Buffer, privateKey: Buffer): Promise<Buffer> {
-    const key = await crypto.subtle.importKey(
+  private async x25519SharedSecret(privateKeyRaw: Buffer, publicKeyRaw: Buffer): Promise<Buffer> {
+    const privateKey = await crypto.subtle.importKey(
       'pkcs8',
-      new Uint8Array(privateKey),
-      { name: 'ECDSA', hash: 'SHA-256' },
+      new Uint8Array(privateKeyRaw),
+      'X25519',
       false,
-      ['sign'],
+      ['deriveBits'],
     );
-    const sig = await crypto.subtle.sign(
-      { name: 'ECDSA', hash: 'SHA-256' },
-      key,
-      new Uint8Array(message),
+    const publicKey = await crypto.subtle.importKey(
+      'raw',
+      new Uint8Array(publicKeyRaw),
+      'X25519',
+      false,
+      [],
     );
-    return Buffer.from(sig);
+    const secret = await crypto.subtle.deriveBits(
+      { name: 'X25519', public: publicKey },
+      privateKey,
+      256,
+    );
+    return Buffer.from(secret);
   }
 
-  private async classicalVerify(
-    message: Buffer,
-    signature: Buffer,
-    publicKey: Buffer,
-  ): Promise<boolean> {
-    try {
-      const key = await crypto.subtle.importKey(
-        'raw',
-        new Uint8Array(publicKey),
-        { name: 'ECDSA', namedCurve: 'P-256' },
-        false,
-        ['verify'],
-      );
-      return await crypto.subtle.verify(
-        { name: 'ECDSA', hash: 'SHA-256' },
-        key,
-        new Uint8Array(signature),
-        new Uint8Array(message),
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  private async deriveHybridSecret(combined: Buffer): Promise<Buffer> {
+  private async deriveHybridSecret(ecdSecret: Buffer, kemSecret: Buffer): Promise<Buffer> {
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
-      new Uint8Array(combined),
+      new Uint8Array(Buffer.concat([ecdSecret, kemSecret])),
       { name: 'HKDF', hash: 'SHA-256' },
       false,
       ['deriveBits'],
@@ -252,7 +266,7 @@ export class HybridCrypto {
         name: 'HKDF',
         hash: 'SHA-256',
         salt: new Uint8Array(32),
-        info: new TextEncoder().encode('hybrid-ss'),
+        info: new TextEncoder().encode('pezhwan-hybrid-x25519-mlkem-v1'),
       },
       keyMaterial,
       256,

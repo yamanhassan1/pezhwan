@@ -22,7 +22,10 @@ export default function ApiKeysCreate() {
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
-      const body: { name: string; scopes: string[]; expiresIn?: number } = { name: name.trim(), scopes };
+      const body: { name: string; scopes: string[]; expiresIn?: number } = {
+        name: name.trim(),
+        scopes,
+      };
       const days = Number(expiryDays);
       if (expiryDays.trim() !== '' && Number.isFinite(days) && days > 0) {
         body.expiresIn = Math.round(days * 86400);
@@ -64,7 +67,10 @@ export default function ApiKeysCreate() {
           </div>
           <span className="label">Full key</span>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
-            <code className="code" style={{ flex: 1, padding: '10px 12px', fontSize: 13, wordBreak: 'break-all' }}>
+            <code
+              className="code"
+              style={{ flex: 1, padding: '10px 12px', fontSize: 13, wordBreak: 'break-all' }}
+            >
               {created.rawKey}
             </code>
             <button className="btn" onClick={() => void copyKey()}>
@@ -99,7 +105,14 @@ export default function ApiKeysCreate() {
             <label className="label" htmlFor="key-name">
               Name
             </label>
-            <input id="key-name" className="input" value={name} required onChange={(e) => setName(e.target.value)} placeholder="Production gateway key" />
+            <input
+              id="key-name"
+              className="input"
+              value={name}
+              required
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Production gateway key"
+            />
             <p className="hint">A human-readable label to identify this key.</p>
           </div>
 
@@ -135,9 +148,20 @@ export default function ApiKeysCreate() {
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="submit" className="btn btn-lg" disabled={submitting}>
-              {submitting ? <span className="loader" style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }} /> : 'Create key'}
+              {submitting ? (
+                <span
+                  className="loader"
+                  style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }}
+                />
+              ) : (
+                'Create key'
+              )}
             </button>
-            <button type="button" className="btn btn-secondary btn-lg" onClick={() => navigate('/api-keys')}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-lg"
+              onClick={() => navigate('/api-keys')}
+            >
               Cancel
             </button>
           </div>

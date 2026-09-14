@@ -13,17 +13,17 @@ pasted into the UI.
 - `auth.redeemMagicLink` — exchanges the token for new access + refresh tokens
   and a session.
 - **Address-enumeration protection** — the API answers `sent: true`
-  identically for unknown emails; unknown accounts get a *decoy* token that can
+  identically for unknown emails; unknown accounts get a _decoy_ token that can
   never be redeemed.
 - `/api/me` behind `createAuthenticate` + `requireAuth`.
 
 ## Key files
 
-| File | Role |
-|------|------|
-| `server.ts` | Express app: runtime, durable signing keys, magic-link + register + `/api/me` routes |
-| `index.html` | SPA with three steps: register, "send magic link", "sign in with the token" |
-| `keys/` | Durable signing keys created on first boot by `initKeyPersistence` |
+| File         | Role                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `server.ts`  | Express app: runtime, durable signing keys, magic-link + register + `/api/me` routes |
+| `index.html` | SPA with three steps: register, "send magic link", "sign in with the token"          |
+| `keys/`      | Durable signing keys created on first boot by `initKeyPersistence`                   |
 
 ### API surface (`server.ts`)
 
@@ -36,17 +36,17 @@ pasted into the UI.
 ## Required configuration
 
 **Self-contained.** The demo embeds `@pezhwan/core` and connects directly to
-MongoDB — it does *not* call the identity-server. `ISSUER` defaults to
+MongoDB — it does _not_ call the identity-server. `ISSUER` defaults to
 `http://localhost:4011` purely to stamp the same `iss` claim the identity-server
 uses, so tokens share the same contract.
 
-| Environment variable | Default | Purpose |
-|---|---|---|
-| `MONGODB_URI` | `mongodb://localhost:27017/pezhwan` | Shared database |
-| `PORT` | `5176` | HTTP listen port |
-| `TENANT_ID` | `dev-tenant` | Tenant the demo runs as |
-| `APPLICATION_ID` | `dev-app` | Application within the tenant |
-| `ISSUER` | `http://localhost:4011` | JWT `iss` claim |
+| Environment variable | Default                             | Purpose                       |
+| -------------------- | ----------------------------------- | ----------------------------- |
+| `MONGODB_URI`        | `mongodb://localhost:27017/pezhwan` | Shared database               |
+| `PORT`               | `5176`                              | HTTP listen port              |
+| `TENANT_ID`          | `dev-tenant`                        | Tenant the demo runs as       |
+| `APPLICATION_ID`     | `dev-app`                           | Application within the tenant |
+| `ISSUER`             | `http://localhost:4011`             | JWT `iss` claim               |
 
 Settings are read from `demos/.env` if present (`server.ts:6`), otherwise the
 defaults above apply. With a real provider you would configure SMTP/SendGrid in
@@ -62,7 +62,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
    npm install
    npm run build
    ```
-2. *Full-stack context only — not required.* Start the identity-server on 4011:
+2. _Full-stack context only — not required._ Start the identity-server on 4011:
    ```bash
    npm run dev -w @pezhwan/identity-server
    ```

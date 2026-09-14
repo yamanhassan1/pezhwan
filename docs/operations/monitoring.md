@@ -1,7 +1,8 @@
 # Monitoring
 
 Guide to collecting and visualising Pezhwan metrics. The stack is a Prometheus
-+ Grafana + Loki compose bundle under `infrastructure/docker/monitoring/`.
+
+- Grafana + Loki compose bundle under `infrastructure/docker/monitoring/`.
 
 > **Status:** The reference implementation exposes a defined metrics surface
 > and health endpoints, but the compose monitoring configs (`prometheus.yml`,
@@ -17,19 +18,19 @@ Pezhwan tracks counters through `MetricsRegistry`
 in-process registry. `runtime.metrics.increment(name, by)` bumps a counter,
 `snapshot()`/`get(name)` read it, `uptimeSeconds()` reports process uptime.
 
-| Metric name | Meaning |
-| ----------- | ------- |
-| `auth.login.success` / `auth.login.failed` | Successful / failed logins |
-| `auth.register.total` | New registrations |
-| `auth.refresh.success` / `auth.refresh.reuse` | Rotations / rejected reuse |
-| `auth.otp.sent` / `auth.otp.failed` | OTP send attempts / failures |
-| `auth.mfa.success` / `auth.mfa.failed` | MFA verify successes / failures |
-| `auth.oauth.authorized` / `auth.oauth.exchanged` | OAuth grants / exchanges |
-| `auth.api_key.total` | API-key-authenticated requests |
-| `authz.denied` | Authorization denials |
-| `ratelimit.hit` | Rate-limit rejections |
-| `security.event` | Security events (audit) |
-| `token.revoked` | Token revocations |
+| Metric name                                      | Meaning                         |
+| ------------------------------------------------ | ------------------------------- |
+| `auth.login.success` / `auth.login.failed`       | Successful / failed logins      |
+| `auth.register.total`                            | New registrations               |
+| `auth.refresh.success` / `auth.refresh.reuse`    | Rotations / rejected reuse      |
+| `auth.otp.sent` / `auth.otp.failed`              | OTP send attempts / failures    |
+| `auth.mfa.success` / `auth.mfa.failed`           | MFA verify successes / failures |
+| `auth.oauth.authorized` / `auth.oauth.exchanged` | OAuth grants / exchanges        |
+| `auth.api_key.total`                             | API-key-authenticated requests  |
+| `authz.denied`                                   | Authorization denials           |
+| `ratelimit.hit`                                  | Rate-limit rejections           |
+| `security.event`                                 | Security events (audit)         |
+| `token.revoked`                                  | Token revocations               |
 
 ### Metric pattern
 
@@ -48,12 +49,12 @@ signals (credential stuffing, OTP brute force, token reuse).
 
 ### Scrape targets
 
-| Target | Endpoint | Notes |
-| ------ | -------- | ----- |
-| Identity server | `/metrics` (add) or OTLP exporter | Private network / mTLS |
-| Node exporter | `:9100/metrics` | Host CPU/mem/disk/net |
-| MongoDB Exporter | `:9216/metrics` | Connections, oplog lag, replication |
-| Redis Exporter | `:9121/metrics` | Clients, memory, evictions |
+| Target           | Endpoint                          | Notes                               |
+| ---------------- | --------------------------------- | ----------------------------------- |
+| Identity server  | `/metrics` (add) or OTLP exporter | Private network / mTLS              |
+| Node exporter    | `:9100/metrics`                   | Host CPU/mem/disk/net               |
+| MongoDB Exporter | `:9216/metrics`                   | Connections, oplog lag, replication |
+| Redis Exporter   | `:9121/metrics`                   | Clients, memory, evictions          |
 
 ## Prometheus
 
@@ -67,16 +68,16 @@ server metrics endpoint, jobs for node/MongoDB/Redis exporters, an
 `dashboards/pezhwan.json` is a placeholder. Recommended panels
 (`rate(counter[5m])`):
 
-| Panel | Recommended query |
-| ----- | ----------------- |
-| Login rate | `rate(auth_login_success_total[5m])` |
-| Login failure rate | `rate(auth_login_failed_total[5m])` |
-| OTP failure ratio | `rate(auth_otp_failed_total[5m]) / rate(auth_otp_sent_total[5m])` |
-| MFA failure ratio | `rate(auth_mfa_failed_total[5m]) / rate(auth_mfa_success_total[5m])` |
-| Refresh reuse | `rate(auth_refresh_reuse_total[5m])` |
-| Authz denials / rate-limit hits | `rate(authz_denied_total[5m])` / `rate(ratelimit_hit_total[5m])` |
-| Security events | `increase(security_event_total[5m])` |
-| Uptime | `time() - process_start_time_seconds` |
+| Panel                           | Recommended query                                                    |
+| ------------------------------- | -------------------------------------------------------------------- |
+| Login rate                      | `rate(auth_login_success_total[5m])`                                 |
+| Login failure rate              | `rate(auth_login_failed_total[5m])`                                  |
+| OTP failure ratio               | `rate(auth_otp_failed_total[5m]) / rate(auth_otp_sent_total[5m])`    |
+| MFA failure ratio               | `rate(auth_mfa_failed_total[5m]) / rate(auth_mfa_success_total[5m])` |
+| Refresh reuse                   | `rate(auth_refresh_reuse_total[5m])`                                 |
+| Authz denials / rate-limit hits | `rate(authz_denied_total[5m])` / `rate(ratelimit_hit_total[5m])`     |
+| Security events                 | `increase(security_event_total[5m])`                                 |
+| Uptime                          | `time() - process_start_time_seconds`                                |
 
 Configure the Prometheus and Loki datasources in `grafana/datasources.yml`.
 

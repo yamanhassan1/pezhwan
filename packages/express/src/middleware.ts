@@ -6,6 +6,7 @@
  *
  *   - extractToken / createAuthenticate / requireAuth
  *   - requireRole / requirePermission
+ *   - requireFreshPermissions / requireFreshPermission (zero revocation latency)
  *   - jwksHandler
  *   - PezhwanRequest (type)
  */
@@ -16,6 +17,8 @@ export {
   requireAuth,
   requireRole,
   requirePermission,
+  requireFreshPermissions,
+  requireFreshPermission,
   jwksHandler,
   type PezhwanRequest,
 } from './index.ts';

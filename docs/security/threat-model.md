@@ -18,18 +18,18 @@ changes to the security posture.
 
 ## Primary threat surface
 
-| Domain | Primary threats |
-| ------ | --------------- |
-| Credentials | Credential stuffing, password/OTP brute force, re-use |
-| Secrets | DB leak of usable secrets, timing side channels, token replay |
-| OAuth/OIDC | Authorization-code interception, mixed-mode downgrade, token confusion |
-| MFA/TOTP | TOTP brute force, backup-code theft, disable bypass |
-| OTP | Brute force, regen/cooldown abuse, account enumeration |
-| Sessions | Stolen/CORS-exposed tokens, stale tokens, storage-outage bypass |
-| Tenancy | Cross-tenant data access, tenant injection via key/client |
-| JWKS | Weak keys, algorithm confusion, stale keys, unknown `kid` |
-| Transport | Request flooding, CSRF, oversized bodies, browser-side attacks |
-| Observability | Missing audit records, tampered audit trail |
+| Domain        | Primary threats                                                        |
+| ------------- | ---------------------------------------------------------------------- |
+| Credentials   | Credential stuffing, password/OTP brute force, re-use                  |
+| Secrets       | DB leak of usable secrets, timing side channels, token replay          |
+| OAuth/OIDC    | Authorization-code interception, mixed-mode downgrade, token confusion |
+| MFA/TOTP      | TOTP brute force, backup-code theft, disable bypass                    |
+| OTP           | Brute force, regen/cooldown abuse, account enumeration                 |
+| Sessions      | Stolen/CORS-exposed tokens, stale tokens, storage-outage bypass        |
+| Tenancy       | Cross-tenant data access, tenant injection via key/client              |
+| JWKS          | Weak keys, algorithm confusion, stale keys, unknown `kid`              |
+| Transport     | Request flooding, CSRF, oversized bodies, browser-side attacks         |
+| Observability | Missing audit records, tampered audit trail                            |
 
 ## Control summary
 

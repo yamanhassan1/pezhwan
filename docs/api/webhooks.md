@@ -43,9 +43,12 @@ Responds `201` with the endpoint plus a `secret` **shown exactly once**:
 {
   "success": true,
   "data": {
-    "id": "...", "url": "https://example.com/hooks/pezhwan",
+    "id": "...",
+    "url": "https://example.com/hooks/pezhwan",
     "events": ["user.created", "session.revoked"],
-    "active": true, "maxRetries": 5, "secret": "Azn4..."
+    "active": true,
+    "maxRetries": 5,
+    "secret": "Azn4..."
   }
 }
 ```
@@ -57,12 +60,12 @@ registers them under the running runtime's `tenantId`/`applicationId`.
 
 Management surface (all ADMIN, all draw from the `api` rate-limit budget):
 
-| Method | Path                    | Purpose                                  |
-| ------ | ----------------------- | ---------------------------------------- |
-| GET    | `/v1/webhooks`          | List endpoints for this tenant           |
-| GET    | `/v1/webhooks/:id`      | Fetch one endpoint (list is searched)    |
-| GET    | `/v1/webhooks/:id/deliveries` | Delivery ledger (latest 50)       |
-| POST   | `/v1/webhooks/:id/test` | Fire a synthetic event through the queue |
+| Method | Path                          | Purpose                                  |
+| ------ | ----------------------------- | ---------------------------------------- |
+| GET    | `/v1/webhooks`                | List endpoints for this tenant           |
+| GET    | `/v1/webhooks/:id`            | Fetch one endpoint (list is searched)    |
+| GET    | `/v1/webhooks/:id/deliveries` | Delivery ledger (latest 50)              |
+| POST   | `/v1/webhooks/:id/test`       | Fire a synthetic event through the queue |
 
 ## Delivery payload and headers
 

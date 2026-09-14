@@ -1,207 +1,411 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pezhwan Multi-Tenant Demo</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6fb;color:#0f172a;min-height:100vh;padding:24px 16px 64px}
-    .wrap{max-width:1100px;margin:0 auto}
-    h1{font-size:2rem;text-align:center;margin-bottom:4px}
-    .sub{text-align:center;color:#475569;margin-bottom:24px;font-size:.92rem}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media(max-width:700px){.row{grid-template-columns:1fr}}
-    .card{background:#fff;border:1px solid #dfe7f3;border-radius:12px;padding:20px;margin-bottom:14px;box-shadow:0 6px 16px rgba(15,23,42,.06)}
-    .card h2{font-size:1rem;margin-bottom:4px}
-    .card .tid{font-size:.75rem;color:#64748b;margin-bottom:12px;font-family:'SF Mono','Fira Code',monospace}
-    hr{border:none;border-top:1px solid #dfe7f3;margin:14px 0}
-    label{display:block;font-size:.78rem;color:#475569;margin-bottom:4px;font-weight:600}
-    input[type=text],input[type=password],input[type=email]{width:100%;padding:9px 10px;border:1px solid #ccd9ec;border-radius:8px;font-size:.88rem;font-family:monospace;margin-bottom:10px;background:#f8fafc}
-    input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-    .btn{padding:8px 14px;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-    .btn-primary{background:#2563eb;color:#fff}
-    .btn-primary:hover:not(:disabled){background:#1d4ed8}
-    .btn-outline{background:#fff;color:#0f172a;border:1px solid #dfe7f3}
-    .btn-outline:hover:not(:disabled){background:#f8fafc}
-    .btn-danger{background:#dc2626;color:#fff}
-    .btn-sm{padding:5px 10px;font-size:.73rem}
-    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700;font-family:monospace}
-    .badge-ok{background:rgba(21,128,61,.1);color:#15803d}
-    .badge-fail{background:rgba(220,38,38,.1);color:#dc2626}
-    pre{background:#f8fafc;border:1px solid #dfe7f3;border-radius:10px;padding:10px;font-size:.72rem;font-family:'SF Mono','Fira Code',monospace;max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-top:8px;line-height:1.6}
-    .log-box{background:#f8fafc;border:1px solid #dfe7f3;border-radius:10px;padding:10px;font-size:.72rem;font-family:monospace;max-height:200px;overflow-y:auto;line-height:1.6;margin-top:14px}
-    .footer{text-align:center;color:#94a3b8;font-size:.75rem;margin-top:32px}
-    .section-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#64748b;margin-bottom:8px}
-    .btn-group{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>Pezhwan Multi-Tenant</h1>
-    <p class="sub">Same email, separate accounts. Tokens from Tenant A are rejected by Tenant B.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pezhwan Multi-Tenant Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #f4f6fb;
+        color: #0f172a;
+        min-height: 100vh;
+        padding: 24px 16px 64px;
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 2rem;
+        text-align: center;
+        margin-bottom: 4px;
+      }
+      .sub {
+        text-align: center;
+        color: #475569;
+        margin-bottom: 24px;
+        font-size: 0.92rem;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 700px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #dfe7f3;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 14px;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+      }
+      .card h2 {
+        font-size: 1rem;
+        margin-bottom: 4px;
+      }
+      .card .tid {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-bottom: 12px;
+        font-family: 'SF Mono', 'Fira Code', monospace;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid #dfe7f3;
+        margin: 14px 0;
+      }
+      label {
+        display: block;
+        font-size: 0.78rem;
+        color: #475569;
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+      input[type='text'],
+      input[type='password'],
+      input[type='email'] {
+        width: 100%;
+        padding: 9px 10px;
+        border: 1px solid #ccd9ec;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        font-family: monospace;
+        margin-bottom: 10px;
+        background: #f8fafc;
+      }
+      input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+      .btn {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: #2563eb;
+        color: #fff;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: #1d4ed8;
+      }
+      .btn-outline {
+        background: #fff;
+        color: #0f172a;
+        border: 1px solid #dfe7f3;
+      }
+      .btn-outline:hover:not(:disabled) {
+        background: #f8fafc;
+      }
+      .btn-danger {
+        background: #dc2626;
+        color: #fff;
+      }
+      .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.73rem;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        font-family: monospace;
+      }
+      .badge-ok {
+        background: rgba(21, 128, 61, 0.1);
+        color: #15803d;
+      }
+      .badge-fail {
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+      }
+      pre {
+        background: #f8fafc;
+        border: 1px solid #dfe7f3;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 0.72rem;
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        max-height: 220px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        margin-top: 8px;
+        line-height: 1.6;
+      }
+      .log-box {
+        background: #f8fafc;
+        border: 1px solid #dfe7f3;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 0.72rem;
+        font-family: monospace;
+        max-height: 200px;
+        overflow-y: auto;
+        line-height: 1.6;
+        margin-top: 14px;
+      }
+      .footer {
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.75rem;
+        margin-top: 32px;
+      }
+      .section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 8px;
+      }
+      .btn-group {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Pezhwan Multi-Tenant</h1>
+      <p class="sub">
+        Same email, separate accounts. Tokens from Tenant A are rejected by Tenant B.
+      </p>
 
-    <div class="row">
-      <!-- Tenant A -->
-      <div class="card" id="cardA">
-        <h2>Tenant A</h2>
-        <div class="tid">tenant: dev-tenant &middot; app: dev-app</div>
+      <div class="row">
+        <!-- Tenant A -->
+        <div class="card" id="cardA">
+          <h2>Tenant A</h2>
+          <div class="tid">tenant: dev-tenant &middot; app: dev-app</div>
 
-        <div class="section-title">Register</div>
-        <input type="email"    id="regEmailA"  placeholder="ada@example.com" value="ada@example.com">
-        <input type="password" id="regPassA"   placeholder="Password"        value="Pass1word">
-        <button class="btn btn-primary btn-sm" onclick="doRegister('a')">Register</button>
+          <div class="section-title">Register</div>
+          <input
+            type="email"
+            id="regEmailA"
+            placeholder="ada@example.com"
+            value="ada@example.com"
+          />
+          <input type="password" id="regPassA" placeholder="Password" value="Pass1word" />
+          <button class="btn btn-primary btn-sm" onclick="doRegister('a')">Register</button>
 
-        <hr>
-        <div class="section-title">Login</div>
-        <input type="email"    id="logEmailA"  placeholder="ada@example.com" value="ada@example.com">
-        <input type="password" id="logPassA"   placeholder="Password"        value="Pass1word">
-        <button class="btn btn-primary btn-sm" onclick="doLogin('a')">Login</button>
+          <hr />
+          <div class="section-title">Login</div>
+          <input
+            type="email"
+            id="logEmailA"
+            placeholder="ada@example.com"
+            value="ada@example.com"
+          />
+          <input type="password" id="logPassA" placeholder="Password" value="Pass1word" />
+          <button class="btn btn-primary btn-sm" onclick="doLogin('a')">Login</button>
 
-        <hr>
-        <div class="section-title">Token Inspector</div>
-        <pre id="tokenPreA">No token yet</pre>
+          <hr />
+          <div class="section-title">Token Inspector</div>
+          <pre id="tokenPreA">No token yet</pre>
 
-        <hr>
-        <div class="section-title">Cross-Tenant Validation</div>
-        <div class="btn-group">
-          <button class="btn btn-outline btn-sm" onclick="validate('a','a')">A token → A</button>
-          <button class="btn btn-outline btn-sm" onclick="validate('a','b')">A token → B</button>
-          <button class="btn btn-outline btn-sm" onclick="validate('b','a')">B token → A</button>
-          <button class="btn btn-outline btn-sm" onclick="validate('b','b')">B token → B</button>
+          <hr />
+          <div class="section-title">Cross-Tenant Validation</div>
+          <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="validate('a', 'a')">A token → A</button>
+            <button class="btn btn-outline btn-sm" onclick="validate('a', 'b')">A token → B</button>
+            <button class="btn btn-outline btn-sm" onclick="validate('b', 'a')">B token → A</button>
+            <button class="btn btn-outline btn-sm" onclick="validate('b', 'b')">B token → B</button>
+          </div>
+        </div>
+
+        <!-- Tenant B -->
+        <div class="card" id="cardB">
+          <h2>Tenant B</h2>
+          <div class="tid">tenant: tenant-b &middot; app: app-b</div>
+
+          <div class="section-title">Register</div>
+          <input
+            type="email"
+            id="regEmailB"
+            placeholder="ada@example.com"
+            value="ada@example.com"
+          />
+          <input type="password" id="regPassB" placeholder="Password" value="Pass1word" />
+          <button class="btn btn-primary btn-sm" onclick="doRegister('b')">Register</button>
+
+          <hr />
+          <div class="section-title">Login</div>
+          <input
+            type="email"
+            id="logEmailB"
+            placeholder="ada@example.com"
+            value="ada@example.com"
+          />
+          <input type="password" id="logPassB" placeholder="Password" value="Pass1word" />
+          <button class="btn btn-primary btn-sm" onclick="doLogin('b')">Login</button>
+
+          <hr />
+          <div class="section-title">Token Inspector</div>
+          <pre id="tokenPreB">No token yet</pre>
+
+          <hr />
+          <div class="section-title">Event Log</div>
+          <div class="log-box" id="logBox"></div>
         </div>
       </div>
 
-      <!-- Tenant B -->
-      <div class="card" id="cardB">
-        <h2>Tenant B</h2>
-        <div class="tid">tenant: tenant-b &middot; app: app-b</div>
-
-        <div class="section-title">Register</div>
-        <input type="email"    id="regEmailB"  placeholder="ada@example.com" value="ada@example.com">
-        <input type="password" id="regPassB"   placeholder="Password"        value="Pass1word">
-        <button class="btn btn-primary btn-sm" onclick="doRegister('b')">Register</button>
-
-        <hr>
-        <div class="section-title">Login</div>
-        <input type="email"    id="logEmailB"  placeholder="ada@example.com" value="ada@example.com">
-        <input type="password" id="logPassB"   placeholder="Password"        value="Pass1word">
-        <button class="btn btn-primary btn-sm" onclick="doLogin('b')">Login</button>
-
-        <hr>
-        <div class="section-title">Token Inspector</div>
-        <pre id="tokenPreB">No token yet</pre>
-
-        <hr>
-        <div class="section-title">Event Log</div>
-        <div class="log-box" id="logBox"></div>
-      </div>
+      <p class="footer">PEZHWAN SDK demo</p>
     </div>
 
-    <p class="footer">PEZHWAN SDK demo</p>
-  </div>
+    <script>
+      // Tokens held in memory only
+      const tokens = { a: null, b: null };
 
-<script>
-  // Tokens held in memory only
-  const tokens = { a: null, b: null };
-
-  function decodeJwtPayload(token) {
-    try {
-      const b64 = token.split('.')[1];
-      const json = atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
-      return JSON.parse(json);
-    } catch { return null; }
-  }
-
-  function renderTokenPre(pre, token) {
-    if (!token) { pre.textContent = 'No token yet'; return; }
-    const p = decodeJwtPayload(token);
-    pre.textContent = p
-      ? JSON.stringify({
-          sub: p.sub,
-          tenantId: p.tenantId,
-          applicationId: p.applicationId,
-          roles: p.roles,
-          authMethod: p.authMethod,
-          exp: p.exp ? new Date(p.exp*1000).toLocaleString() : null,
-        }, null, 2)
-      : 'Could not decode';
-  }
-
-  function addLog(msg) {
-    const box = document.getElementById('logBox');
-    const ts = new Date().toLocaleTimeString();
-    box.textContent = `[${ts}] ${msg}\n` + box.textContent;
-  }
-
-  async function apiFetch(path, opts) {
-    const res = await fetch(path, opts);
-    const body = await res.json();
-    return { ok: res.ok, status: res.status, body };
-  }
-
-  // Register
-  async function doRegister(tenant) {
-    const emailEl = document.getElementById('regEmail' + tenant.toUpperCase());
-    const passEl  = document.getElementById('regPass' + tenant.toUpperCase());
-    const email = emailEl.value.trim();
-    const password = passEl.value;
-    if (!email || !password) return addLog('MISSING FIELDS');
-    try {
-      const r = await apiFetch(`/api/tenants/${tenant}/register`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ email, password }),
-      });
-      if (r.ok) {
-        tokens[tenant] = r.body.data.tokens.accessToken;
-        renderTokenPre(document.getElementById('tokenPre' + tenant.toUpperCase()), tokens[tenant]);
-        addLog(`REGISTER ${tenant.toUpperCase()} OK — user ${r.body.data.user.id.slice(0,8)}…`);
-      } else {
-        addLog(`REGISTER ${tenant.toUpperCase()} FAIL — ${r.body.error?.code}: ${r.body.error?.message}`);
+      function decodeJwtPayload(token) {
+        try {
+          const b64 = token.split('.')[1];
+          const json = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+          return JSON.parse(json);
+        } catch {
+          return null;
+        }
       }
-    } catch(e) { addLog(`REGISTER ${tenant.toUpperCase()} ERROR — ${e.message}`); }
-  }
 
-  // Login
-  async function doLogin(tenant) {
-    const emailEl = document.getElementById('logEmail' + tenant.toUpperCase());
-    const passEl  = document.getElementById('logPass' + tenant.toUpperCase());
-    const email = emailEl.value.trim();
-    const password = passEl.value;
-    if (!email || !password) return addLog('MISSING FIELDS');
-    try {
-      const r = await apiFetch(`/api/tenants/${tenant}/login`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ email, password }),
-      });
-      if (r.ok) {
-        tokens[tenant] = r.body.data.tokens.accessToken;
-        renderTokenPre(document.getElementById('tokenPre' + tenant.toUpperCase()), tokens[tenant]);
-        addLog(`LOGIN ${tenant.toUpperCase()} OK — user ${r.body.data.user.id.slice(0,8)}…`);
-      } else {
-        addLog(`LOGIN ${tenant.toUpperCase()} FAIL — ${r.body.error?.code}: ${r.body.error?.message}`);
+      function renderTokenPre(pre, token) {
+        if (!token) {
+          pre.textContent = 'No token yet';
+          return;
+        }
+        const p = decodeJwtPayload(token);
+        pre.textContent = p
+          ? JSON.stringify(
+              {
+                sub: p.sub,
+                tenantId: p.tenantId,
+                applicationId: p.applicationId,
+                roles: p.roles,
+                authMethod: p.authMethod,
+                exp: p.exp ? new Date(p.exp * 1000).toLocaleString() : null,
+              },
+              null,
+              2,
+            )
+          : 'Could not decode';
       }
-    } catch(e) { addLog(`LOGIN ${tenant.toUpperCase()} ERROR — ${e.message}`); }
-  }
 
-  // Cross-tenant validation
-  async function validate(tokenTenant, routeTenant) {
-    const token = tokens[tokenTenant];
-    if (!token) return addLog(`VALIDATE ${tokenTenant.toUpperCase()}→${routeTenant.toUpperCase()} — no token for ${tokenTenant.toUpperCase()}`);
-    try {
-      const r = await apiFetch(`/api/tenants/${routeTenant}/me`, {
-        headers: { Authorization: 'Bearer ' + token },
-      });
-      const badge = r.ok ? '✓ ACCEPTED' : '✗ REJECTED';
-      const detail = r.ok
-        ? `user=${r.body.data.userId.slice(0,8)}… tenant=${r.body.data.tenantId}`
-        : `${r.body.error?.code}: ${r.body.error?.message}`;
-      addLog(`${badge}  ${tokenTenant.toUpperCase()}→${routeTenant.toUpperCase()} — ${detail}`);
-    } catch(e) { addLog(`ERROR ${tokenTenant.toUpperCase()}→${routeTenant.toUpperCase()} — ${e.message}`); }
-  }
-</script>
-</body>
+      function addLog(msg) {
+        const box = document.getElementById('logBox');
+        const ts = new Date().toLocaleTimeString();
+        box.textContent = `[${ts}] ${msg}\n` + box.textContent;
+      }
+
+      async function apiFetch(path, opts) {
+        const res = await fetch(path, opts);
+        const body = await res.json();
+        return { ok: res.ok, status: res.status, body };
+      }
+
+      // Register
+      async function doRegister(tenant) {
+        const emailEl = document.getElementById('regEmail' + tenant.toUpperCase());
+        const passEl = document.getElementById('regPass' + tenant.toUpperCase());
+        const email = emailEl.value.trim();
+        const password = passEl.value;
+        if (!email || !password) return addLog('MISSING FIELDS');
+        try {
+          const r = await apiFetch(`/api/tenants/${tenant}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          if (r.ok) {
+            tokens[tenant] = r.body.data.tokens.accessToken;
+            renderTokenPre(
+              document.getElementById('tokenPre' + tenant.toUpperCase()),
+              tokens[tenant],
+            );
+            addLog(
+              `REGISTER ${tenant.toUpperCase()} OK — user ${r.body.data.user.id.slice(0, 8)}…`,
+            );
+          } else {
+            addLog(
+              `REGISTER ${tenant.toUpperCase()} FAIL — ${r.body.error?.code}: ${r.body.error?.message}`,
+            );
+          }
+        } catch (e) {
+          addLog(`REGISTER ${tenant.toUpperCase()} ERROR — ${e.message}`);
+        }
+      }
+
+      // Login
+      async function doLogin(tenant) {
+        const emailEl = document.getElementById('logEmail' + tenant.toUpperCase());
+        const passEl = document.getElementById('logPass' + tenant.toUpperCase());
+        const email = emailEl.value.trim();
+        const password = passEl.value;
+        if (!email || !password) return addLog('MISSING FIELDS');
+        try {
+          const r = await apiFetch(`/api/tenants/${tenant}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          if (r.ok) {
+            tokens[tenant] = r.body.data.tokens.accessToken;
+            renderTokenPre(
+              document.getElementById('tokenPre' + tenant.toUpperCase()),
+              tokens[tenant],
+            );
+            addLog(`LOGIN ${tenant.toUpperCase()} OK — user ${r.body.data.user.id.slice(0, 8)}…`);
+          } else {
+            addLog(
+              `LOGIN ${tenant.toUpperCase()} FAIL — ${r.body.error?.code}: ${r.body.error?.message}`,
+            );
+          }
+        } catch (e) {
+          addLog(`LOGIN ${tenant.toUpperCase()} ERROR — ${e.message}`);
+        }
+      }
+
+      // Cross-tenant validation
+      async function validate(tokenTenant, routeTenant) {
+        const token = tokens[tokenTenant];
+        if (!token)
+          return addLog(
+            `VALIDATE ${tokenTenant.toUpperCase()}→${routeTenant.toUpperCase()} — no token for ${tokenTenant.toUpperCase()}`,
+          );
+        try {
+          const r = await apiFetch(`/api/tenants/${routeTenant}/me`, {
+            headers: { Authorization: 'Bearer ' + token },
+          });
+          const badge = r.ok ? '✓ ACCEPTED' : '✗ REJECTED';
+          const detail = r.ok
+            ? `user=${r.body.data.userId.slice(0, 8)}… tenant=${r.body.data.tenantId}`
+            : `${r.body.error?.code}: ${r.body.error?.message}`;
+          addLog(`${badge}  ${tokenTenant.toUpperCase()}→${routeTenant.toUpperCase()} — ${detail}`);
+        } catch (e) {
+          addLog(`ERROR ${tokenTenant.toUpperCase()}→${routeTenant.toUpperCase()} — ${e.message}`);
+        }
+      }
+    </script>
+  </body>
 </html>

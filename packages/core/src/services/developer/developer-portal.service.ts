@@ -26,7 +26,10 @@ export interface DeveloperPortalView {
   onboarding: 'started' | 'configured' | 'live';
 }
 
-export type ApiKeyListFn = (filter: { tenantId: string; applicationId?: string }) => Promise<ApiKeySummary[]>;
+export type ApiKeyListFn = (filter: {
+  tenantId: string;
+  applicationId?: string;
+}) => Promise<ApiKeySummary[]>;
 
 export class DeveloperPortalService {
   constructor(

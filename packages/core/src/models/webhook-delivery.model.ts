@@ -43,4 +43,5 @@ const WebhookDeliverySchema = new Schema<WebhookDeliveryDoc>(
 );
 
 export const WebhookDeliveryModel: Model<WebhookDeliveryDoc> =
-  (models.WebhookDelivery as Model<WebhookDeliveryDoc>) ?? model<WebhookDeliveryDoc>('WebhookDelivery', WebhookDeliverySchema);
+  (models.WebhookDelivery as Model<WebhookDeliveryDoc>) ??
+  model<WebhookDeliveryDoc>('WebhookDelivery', WebhookDeliverySchema);

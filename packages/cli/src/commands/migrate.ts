@@ -16,7 +16,7 @@ export default {
   async run(ctx: CliContext, args: string[]): Promise<number> {
     const { flags } = parseFlags(args);
     if (typeof flags.dir !== 'string') {
-      return ctx.err('usage: pezhwan migrate --dir <migrations-dir>'), 1;
+      return (ctx.err('usage: pezhwan migrate --dir <migrations-dir>'), 1);
     }
     const data = await ctx.api('/v1/admin/migrate', {
       method: 'POST',

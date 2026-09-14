@@ -22,10 +22,12 @@ SUPPORT LAYER  shared · crypto · oauth · infrastructure (docker/k8s/terraform
   HSM sub-modules.
 - **`@pezhwan/oauth`** — OAuth 2.1 / OIDC provider adapters, PKCE, federation
   (SAML, OIDC, OAuth) and SCIM 2.0 provisioning.
-- **`@pezhwan/core`** — the auth engine. `createPezhwan(config)` wires 22 service
-  singletons (auth, session, mfa, oauth, authorization, audit, rate limit,
-  quotas, usage, webhooks, …), 23 Mongoose models, 13 middleware helpers, and
-  pluggable email/SMS/payment/storage adapters.
+- **`@pezhwan/core`** — the auth engine. `createPezhwan(config)` wires a runtime
+  of service singletons — auth, sessions, MFA/OTP, OAuth/OIDC, RBAC+ABAC
+  authorization, audit, rate limiting, passwordless, WebAuthn, API keys, quotas,
+  usage, webhooks, event sourcing, risk detection, compliance, billing, and
+  observability — backed by 25 Mongoose models and 13 frame-agnostic middleware
+  helpers, with pluggable email/SMS/payment/storage adapters.
 - **Framework SDKs** — facade over the core (`node`, `express`) or REST client
   over the identity server (`react`, `angular`, `vue`, `python`, `go`, `java`,
   `dotnet`, `cli`).
@@ -50,13 +52,13 @@ builds on this single runtime.
 
 ## Where to go next
 
-| Document | Purpose |
-| -------- | ------- |
-| [`architecture.md`](./architecture.md) | Full deep-dive: system context, package graph, auth/refresh sequences, data model, security layers, scaling, KPIs |
-| [`../../docs/ARCHITECTURE.md`](../ARCHITECTURE.md) | Concise architecture & design reference |
-| [`data-flow.md`](./data-flow.md) | Authentication data flows |
-| [`../../../docs/THREAT-MODEL.md`](../THREAT-MODEL.md) | STRIDE threat model |
-| [`multi-tenancy.md`](./multi-tenancy.md) | Multi-tenancy design |
-| [`scaling.md`](./scaling.md) | Horizontal scaling guide |
-| [`deployment-patterns.md`](./deployment-patterns.md) | Deployment patterns |
-| [`diagrams/`](./diagrams/) | PlantUML diagrams (system-overview, auth-flow, deployment) |
+| Document                                             | Purpose                                                                                                           |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [`architecture.md`](./architecture.md)               | Full deep-dive: system context, package graph, auth/refresh sequences, data model, security layers, scaling, KPIs |
+| [`ARCHITECTURE.md`](../ARCHITECTURE.md)              | Concise architecture & design reference                                                                           |
+| [`data-flow.md`](./data-flow.md)                     | Authentication data flows                                                                                         |
+| [`THREAT-MODEL.md`](../THREAT-MODEL.md)              | STRIDE threat model                                                                                               |
+| [`multi-tenancy.md`](./multi-tenancy.md)             | Multi-tenancy design                                                                                              |
+| [`scaling.md`](./scaling.md)                         | Horizontal scaling guide                                                                                          |
+| [`deployment-patterns.md`](./deployment-patterns.md) | Deployment patterns                                                                                               |
+| [`diagrams/`](./diagrams/)                           | PlantUML diagrams (system-overview, auth-flow, deployment)                                                        |

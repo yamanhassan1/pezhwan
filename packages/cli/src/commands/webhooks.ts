@@ -27,7 +27,10 @@ export default {
         ctx.err('Error: --events is required for --create (comma-separated event names)');
         return 1;
       }
-      const events = eventsRaw.split(',').map((e: string) => e.trim()).filter(Boolean);
+      const events = eventsRaw
+        .split(',')
+        .map((e: string) => e.trim())
+        .filter(Boolean);
       if (events.length === 0) {
         ctx.err('Error: --events must list at least one event');
         return 1;

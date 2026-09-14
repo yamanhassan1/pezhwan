@@ -34,7 +34,10 @@ export class AuthMiddleware {
     }
     const token = bearerToken.slice('Bearer '.length).trim();
     const identity = this.tokens.verifyAccessToken(token);
-    const accountValid = await this.accountState.validate(identity.userId, identity.tokenVersion ?? 0);
+    const accountValid = await this.accountState.validate(
+      identity.userId,
+      identity.tokenVersion ?? 0,
+    );
     if (!accountValid) {
       throw new AuthenticationError('Session revoked', 'SESSION_REVOKED');
     }

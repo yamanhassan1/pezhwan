@@ -9,12 +9,7 @@ import { TenantQuotaModel, type TenantQuotaDoc } from '../../models/tenant-quota
 import { RateLimitError } from '@pezhwan/shared';
 
 export type QuotaResource =
-  | 'users'
-  | 'sessions'
-  | 'api_keys'
-  | 'oath_clients'
-  | 'webhooks'
-  | 'storage_bytes';
+  'users' | 'sessions' | 'api_keys' | 'oath_clients' | 'webhooks' | 'storage_bytes';
 
 export interface QuotaOptions {
   limits: Partial<Record<QuotaResource, number>>;

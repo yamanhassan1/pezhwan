@@ -4,12 +4,7 @@
 
 /** Signals the risk engine can observe. */
 export type RiskEventType =
-  | 'login'
-  | 'password_change'
-  | 'otp_verify'
-  | 'sensitive_read'
-  | 'admin_action'
-  | 'token_reuse';
+  'login' | 'password_change' | 'otp_verify' | 'sensitive_read' | 'admin_action' | 'token_reuse';
 
 /** A single risk factor with a normalized score. */
 export interface RiskFactor {

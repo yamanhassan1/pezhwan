@@ -18,7 +18,7 @@ export default {
     if (typeof flags.set === 'string') {
       const value = flags.value ?? flags[flags.set as string];
       if (typeof value !== 'string') {
-        return ctx.err('usage: pezhwan config --set <key> <value>'), 1;
+        return (ctx.err('usage: pezhwan config --set <key> <value>'), 1);
       }
       const profile = ctx.requireConfig();
       if (flags.set === 'token') {
@@ -26,7 +26,7 @@ export default {
       } else if (flags.set === 'baseUrl') {
         profile.baseUrl = value;
       } else {
-        return ctx.err(`unknown config key "${flags.set}" (baseUrl | token)`), 1;
+        return (ctx.err(`unknown config key "${flags.set}" (baseUrl | token)`), 1);
       }
       ctx.saveConfig(profile);
       ctx.ok(`${flags.set} updated`);

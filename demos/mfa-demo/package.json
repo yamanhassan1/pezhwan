@@ -2,6 +2,11 @@
   "name": "@pezhwan/demo-mfa-demo",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
-  "scripts": { "start": "node server.ts", "dev": "node --watch server.ts" }
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server.ts",
+    "dev": "node --watch server.ts"
+  }
 }

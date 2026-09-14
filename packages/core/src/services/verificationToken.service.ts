@@ -14,6 +14,7 @@ import { NotFoundError, TokenError, AUDIT_EVENT } from '@pezhwan/shared';
 import type { VerificationTokenKind } from '@pezhwan/shared';
 import { VerificationTokenModel } from '../models/index.ts';
 import type { AuditService } from './audit.service.ts';
+import type { TokenHashAlgorithm } from '../config/env.ts';
 
 export interface IssueTokenInput {
   kind: VerificationTokenKind;
@@ -36,16 +37,21 @@ export interface RedeemResult {
 
 const DEFAULT_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-function hashToken(token: string): string {
-  return createHash('sha256').update(token).digest('base64');
-}
-
 export class VerificationTokenService {
+  private readonly tokenHashAlgorithm: TokenHashAlgorithm;
+
   constructor(
     private readonly tenantId: string,
     private readonly applicationId: string,
     private readonly audit?: AuditService,
-  ) {}
+    tokenHashAlgorithm: TokenHashAlgorithm = 'sha256',
+  ) {
+    this.tokenHashAlgorithm = tokenHashAlgorithm;
+  }
+
+  private hashToken(token: string): string {
+    return createHash(this.tokenHashAlgorithm).update(token).digest('base64');
+  }
 
   /** Issue a fresh token for a purpose. Returns the RAW token (shown once). */
   async issue(input: IssueTokenInput): Promise<{ token: string; expiresIn: number }> {
@@ -69,7 +75,7 @@ export class VerificationTokenService {
       tenantId: input.tenantId,
       applicationId: input.applicationId,
       userId: input.userId,
-      tokenHash: hashToken(token),
+      tokenHash: this.hashToken(token),
       target: input.target,
       redirectUri: input.redirectUri,
       expiresAt: new Date(Date.now() + ttlMs),
@@ -92,7 +98,7 @@ export class VerificationTokenService {
    * same token throws a hard TokenError (no info leak about why it failed).
    */
   async redeem(token: string): Promise<RedeemResult> {
-    const tokenHash = hashToken(token);
+    const tokenHash = this.hashToken(token);
     const doc = await VerificationTokenModel.findOneAndUpdate(
       { tokenHash, consumedAt: null },
       { $set: { consumedAt: new Date() } },

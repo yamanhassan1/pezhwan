@@ -94,12 +94,17 @@ function indexMatches(spec: IndexSpec, ix: Record<string, unknown>): boolean {
   if (JSON.stringify(ix.key) !== JSON.stringify(spec.key)) return false;
   if ((spec.unique ?? false) !== Boolean(ix.unique)) return false;
   if ((spec.sparse ?? false) !== Boolean(ix.sparse)) return false;
-  if (spec.expireAfterSeconds !== undefined &&
-      Number(ix.expireAfterSeconds) !== spec.expireAfterSeconds) {
+  if (
+    spec.expireAfterSeconds !== undefined &&
+    Number(ix.expireAfterSeconds) !== spec.expireAfterSeconds
+  ) {
     return false;
   }
-  if (spec.partialFilterExpression !== undefined &&
-      JSON.stringify(ix.partialFilterExpression ?? null) !== JSON.stringify(spec.partialFilterExpression)) {
+  if (
+    spec.partialFilterExpression !== undefined &&
+    JSON.stringify(ix.partialFilterExpression ?? null) !==
+      JSON.stringify(spec.partialFilterExpression)
+  ) {
     return false;
   }
   return true;
@@ -212,8 +217,12 @@ async function main(): Promise<void> {
 
     console.log('\n=== 005-add-tenants-applications complete ===');
     console.log(`Mode:              ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
-    console.log(`Tenant indexes:    ${tenantIndexes.length ? tenantIndexes.join(', ') : 'all present'}`);
-    console.log(`Application indexes: ${appIndexes.length ? appIndexes.join(', ') : 'all present'}`);
+    console.log(
+      `Tenant indexes:    ${tenantIndexes.length ? tenantIndexes.join(', ') : 'all present'}`,
+    );
+    console.log(
+      `Application indexes: ${appIndexes.length ? appIndexes.join(', ') : 'all present'}`,
+    );
     console.log(`Documents to/backfilled: ${backfilled}`);
     if (skipped.length) console.log(`Already present:   ${skipped.length} (skipped)`);
 
@@ -221,7 +230,10 @@ async function main(): Promise<void> {
       const cols = ['tenants', 'applications'];
       const missing: string[] = [];
       for (const name of cols) {
-        const catalog = (await mongoose.connection.collection(name).indexes()) as unknown as Record<string, unknown>[];
+        const catalog = (await mongoose.connection.collection(name).indexes()) as unknown as Record<
+          string,
+          unknown
+        >[];
         const specs = name === 'tenants' ? TENANT_INDEXES : APPLICATION_INDEXES;
         for (const spec of specs) {
           if (!catalog.some((ix) => indexMatches(spec, ix))) {
@@ -236,7 +248,8 @@ async function main(): Promise<void> {
         const leftover = await mongoose.connection
           .collection(b.collection)
           .countDocuments({ [b.field]: { $exists: false } });
-        if (leftover > 0) missing.push(`${b.collection}.${b.field} still missing → ${leftover} docs`);
+        if (leftover > 0)
+          missing.push(`${b.collection}.${b.field} still missing → ${leftover} docs`);
       }
       if (missing.length) {
         console.log('\nValidation FAILED:');
@@ -247,7 +260,9 @@ async function main(): Promise<void> {
     }
 
     if (DRY_RUN) {
-      console.log('\nRun with `--apply` to write changes. Set PEZHWAN_TENANT_ID / PEZHWAN_APPLICATION_ID to enable backfill.');
+      console.log(
+        '\nRun with `--apply` to write changes. Set PEZHWAN_TENANT_ID / PEZHWAN_APPLICATION_ID to enable backfill.',
+      );
     }
   } finally {
     await mongoose.disconnect();

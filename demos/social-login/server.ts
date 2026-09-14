@@ -14,11 +14,7 @@ import {
   FederatedIdentityService,
   type PezhwanRuntime,
 } from '@pezhwan/core';
-import {
-  createAuthenticate,
-  requireAuth,
-  type PezhwanRequest,
-} from '@pezhwan/express';
+import { createAuthenticate, requireAuth, type PezhwanRequest } from '@pezhwan/express';
 
 const PORT = Number(process.env.PORT ?? 5179);
 const TENANT_ID = process.env.TENANT_ID ?? 'dev-tenant';
@@ -26,7 +22,8 @@ const APPLICATION_ID = process.env.APPLICATION_ID ?? 'dev-app';
 const ISSUER = process.env.ISSUER ?? 'http://localhost:4011';
 const AUDIENCE = 'pezhwan.clients';
 const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/pezhwan';
-const MFA_ENC_KEY = process.env.MFA_ENCRYPTION_KEY ?? 'cGV6aHdhbi1kZW1vLW1mYS1rZXktMDEyMzQ1Njc4OWE=';
+const MFA_ENC_KEY =
+  process.env.MFA_ENCRYPTION_KEY ?? 'cGV6aHdhbi1kZW1vLW1mYS1rZXktMDEyMzQ1Njc4OWE=';
 
 await mongoose.connect(MONGODB_URI);
 
@@ -47,7 +44,11 @@ await initKeyPersistence(runtime, { directory: path.resolve(__dirname, 'keys') }
 
 function mintTokens(userId: string, authMethod: 'oidc' | 'password' | 'oauth') {
   return Promise.resolve().then(async () => {
-    const sessions = await runtime.sessions.create({ userId, tenantId: TENANT_ID, applicationId: APPLICATION_ID });
+    const sessions = await runtime.sessions.create({
+      userId,
+      tenantId: TENANT_ID,
+      applicationId: APPLICATION_ID,
+    });
     return {
       accessToken: runtime.tokens.signAccessToken({
         userId,
@@ -69,48 +70,65 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.resolve(__dirname, '.')));
 
-const h = (fn: (req: PezhwanRequest, res: express.Response) => Promise<unknown>) => (
-  req: PezhwanRequest,
-  res: express.Response,
-): void => {
-  fn(req, res).then(
-    (data) => res.json({ success: true, data }),
-    (err: { code?: string; message?: string; status?: number }) => {
-      const status = err.status ?? (err.code ? 400 : 500);
-      res.status(status).json({ success: false, error: { code: err.code ?? 'ERROR', message: err.message ?? 'Unexpected error' } });
-    },
-  );
-};
+const h =
+  (fn: (req: PezhwanRequest, res: express.Response) => Promise<unknown>) =>
+  (req: PezhwanRequest, res: express.Response): void => {
+    fn(req, res).then(
+      (data) => res.json({ success: true, data }),
+      (err: { code?: string; message?: string; status?: number }) => {
+        const status = err.status ?? (err.code ? 400 : 500);
+        res.status(status).json({
+          success: false,
+          error: { code: err.code ?? 'ERROR', message: err.message ?? 'Unexpected error' },
+        });
+      },
+    );
+  };
 
 const googleSubject = (email: string): string => email.trim().toLowerCase();
 
-app.post('/api/password/register', h(async (req) => {
-  const { email, password } = req.body as { email?: string; password?: string };
-  if (!email || !password) throw { code: 'MISSING_FIELDS', message: 'email and password are required', status: 400 };
-  const { user, tokens } = await runtime.auth.register({
-    tenantId: TENANT_ID,
-    applicationId: APPLICATION_ID,
-    email: email.trim(),
-    password,
-  });
-  return {
-    user: { id: String(user._id), email: user.email ?? email },
-    tokens,
-  };
-}));
+app.post(
+  '/api/password/register',
+  h(async (req) => {
+    const { email, password } = req.body as { email?: string; password?: string };
+    if (!email || !password)
+      throw { code: 'MISSING_FIELDS', message: 'email and password are required', status: 400 };
+    const { user, tokens } = await runtime.auth.register({
+      tenantId: TENANT_ID,
+      applicationId: APPLICATION_ID,
+      email: email.trim(),
+      password,
+    });
+    return {
+      user: { id: String(user._id), email: user.email ?? email },
+      tokens,
+    };
+  }),
+);
 
-app.post('/api/password/login', h(async (req) => {
-  const { email, password } = req.body as { email?: string; password?: string };
-  if (!email || !password) throw { code: 'MISSING_FIELDS', message: 'email and password are required', status: 400 };
-  const result = await runtime.auth.loginPassword({ applicationId: APPLICATION_ID, email: email.trim(), password });
-  if (result.mfaRequired || !result.tokens) {
-    throw { code: 'MFA_REQUIRED', message: 'MFA is enabled on this account', status: 400 };
-  }
-  return {
-    user: { id: String((result.user as { _id: unknown })._id ?? result.userId), email: result.user?.email ?? email },
-    tokens: result.tokens,
-  };
-}));
+app.post(
+  '/api/password/login',
+  h(async (req) => {
+    const { email, password } = req.body as { email?: string; password?: string };
+    if (!email || !password)
+      throw { code: 'MISSING_FIELDS', message: 'email and password are required', status: 400 };
+    const result = await runtime.auth.loginPassword({
+      applicationId: APPLICATION_ID,
+      email: email.trim(),
+      password,
+    });
+    if (result.mfaRequired || !result.tokens) {
+      throw { code: 'MFA_REQUIRED', message: 'MFA is enabled on this account', status: 400 };
+    }
+    return {
+      user: {
+        id: String((result.user as { _id: unknown })._id ?? result.userId),
+        email: result.user?.email ?? email,
+      },
+      tokens: result.tokens,
+    };
+  }),
+);
 
 app.get('/mock-idp/authorize', (req, res) => {
   const email = String(req.query.email ?? '');
@@ -154,7 +172,9 @@ app.get('/mock-idp/authorize', (req, res) => {
 });
 
 app.post('/mock-idp/consent', async (req, res) => {
-  const email = String((req.body as { email?: string })?.email ?? '').trim().toLowerCase();
+  const email = String((req.body as { email?: string })?.email ?? '')
+    .trim()
+    .toLowerCase();
   const state = String((req.body as { state?: string })?.state ?? '');
   try {
     if (!email) throw { code: 'EMAIL_REQUIRED', message: 'Email is required' };
@@ -200,43 +220,75 @@ app.get('/social/callback', (_req, res) => {
   res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
-app.get('/api/me', createAuthenticate(runtime), requireAuth(), h(async (req) => {
-  const userId = String(req.pezhwan!.userId);
-  const user = await UserModel.findById(userId).select('email identities').lean();
-  if (!user) throw { code: 'USER_NOT_FOUND', message: 'User not found', status: 404 };
-  const googleId = (user.identities ?? []).find((i) => i.provider === 'google');
-  return {
-    ...req.pezhwan,
-    email: user.email,
-    googleSubject: googleId?.subject ?? null,
-    linked: Boolean(googleId),
-  };
-}));
+app.get(
+  '/api/me',
+  createAuthenticate(runtime),
+  requireAuth(),
+  h(async (req) => {
+    const userId = String(req.pezhwan!.userId);
+    const user = await UserModel.findById(userId).select('email identities').lean();
+    if (!user) throw { code: 'USER_NOT_FOUND', message: 'User not found', status: 404 };
+    const googleId = (user.identities ?? []).find((i) => i.provider === 'google');
+    return {
+      ...req.pezhwan,
+      email: user.email,
+      googleSubject: googleId?.subject ?? null,
+      linked: Boolean(googleId),
+    };
+  }),
+);
 
-app.post('/api/link', createAuthenticate(runtime), requireAuth(), h(async (req) => {
-  const email = String((req.body as { email?: string })?.email ?? '');
-  if (!email) throw { code: 'MISSING_FIELDS', message: 'email is required', status: 400 };
-  const subject = googleSubject(email);
-  await new FederatedIdentityService().link(String(req.pezhwan!.userId), 'google', subject);
-  return { linked: true, provider: 'google', subject };
-}));
+app.post(
+  '/api/link',
+  createAuthenticate(runtime),
+  requireAuth(),
+  h(async (req) => {
+    const email = String((req.body as { email?: string })?.email ?? '');
+    if (!email) throw { code: 'MISSING_FIELDS', message: 'email is required', status: 400 };
+    const subject = googleSubject(email);
+    await new FederatedIdentityService().link(String(req.pezhwan!.userId), 'google', subject);
+    return { linked: true, provider: 'google', subject };
+  }),
+);
 
-app.post('/api/unlink', createAuthenticate(runtime), requireAuth(), h(async (req) => {
-  const email = String((req.body as { email?: string })?.email ?? '');
-  if (!email) throw { code: 'MISSING_FIELDS', message: 'email is required', status: 400 };
-  await new FederatedIdentityService().unlink(String(req.pezhwan!.userId), 'google', googleSubject(email));
-  return { unlinked: true };
-}));
+app.post(
+  '/api/unlink',
+  createAuthenticate(runtime),
+  requireAuth(),
+  h(async (req) => {
+    const email = String((req.body as { email?: string })?.email ?? '');
+    if (!email) throw { code: 'MISSING_FIELDS', message: 'email is required', status: 400 };
+    await new FederatedIdentityService().unlink(
+      String(req.pezhwan!.userId),
+      'google',
+      googleSubject(email),
+    );
+    return { unlinked: true };
+  }),
+);
 
-app.post('/api/logout', createAuthenticate(runtime), requireAuth(), h(async (req) => {
-  await runtime.sessions.revoke(String(req.pezhwan!.sessionId));
-  return { loggedOut: true };
-}));
+app.post(
+  '/api/logout',
+  createAuthenticate(runtime),
+  requireAuth(),
+  h(async (req) => {
+    await runtime.sessions.revoke(String(req.pezhwan!.sessionId));
+    return { loggedOut: true };
+  }),
+);
 
 app.use(
-  (err: { status?: number; code?: string; message?: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  (
+    err: { status?: number; code?: string; message?: string },
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
     const status = err.status ?? 500;
-    res.status(status).json({ success: false, error: { code: err.code ?? 'ERROR', message: err.message ?? 'Unexpected error' } });
+    res.status(status).json({
+      success: false,
+      error: { code: err.code ?? 'ERROR', message: err.message ?? 'Unexpected error' },
+    });
   },
 );
 

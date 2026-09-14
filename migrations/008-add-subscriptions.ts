@@ -78,12 +78,17 @@ function indexMatches(spec: IndexSpec, ix: Record<string, unknown>): boolean {
   if (JSON.stringify(ix.key) !== JSON.stringify(spec.key)) return false;
   if ((spec.unique ?? false) !== Boolean(ix.unique)) return false;
   if ((spec.sparse ?? false) !== Boolean(ix.sparse)) return false;
-  if (spec.expireAfterSeconds !== undefined &&
-      Number(ix.expireAfterSeconds) !== spec.expireAfterSeconds) {
+  if (
+    spec.expireAfterSeconds !== undefined &&
+    Number(ix.expireAfterSeconds) !== spec.expireAfterSeconds
+  ) {
     return false;
   }
-  if (spec.partialFilterExpression !== undefined &&
-      JSON.stringify(ix.partialFilterExpression ?? null) !== JSON.stringify(spec.partialFilterExpression)) {
+  if (
+    spec.partialFilterExpression !== undefined &&
+    JSON.stringify(ix.partialFilterExpression ?? null) !==
+      JSON.stringify(spec.partialFilterExpression)
+  ) {
     return false;
   }
   return true;

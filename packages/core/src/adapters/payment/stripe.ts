@@ -33,13 +33,16 @@ export class StripeAdapter implements BillingProviderClient {
     this.webhookSecret = options.webhookSecret;
   }
 
-  async createCheckout(plan: string, customerRef: string): Promise<{ url: string; externalId: string }> {
+  async createCheckout(
+    plan: string,
+    customerRef: string,
+  ): Promise<{ url: string; externalId: string }> {
     const body = new URLSearchParams({
       mode: 'subscription',
       'line_items[0][price]': plan,
-      'client_reference_id': customerRef,
-      'success_url': 'https://console.pezhwan.local/billing/success',
-      'cancel_url': 'https://console.pezhwan.local/billing/cancel',
+      client_reference_id: customerRef,
+      success_url: 'https://console.pezhwan.local/billing/success',
+      cancel_url: 'https://console.pezhwan.local/billing/cancel',
     });
     const response = await this.fetchImpl(`${this.baseUrl}/checkout/sessions`, {
       method: 'POST',
@@ -66,7 +69,9 @@ export class StripeAdapter implements BillingProviderClient {
   /** Verifies a Stripe webhook signature (hex-encoded SHA-256 HMAC). */
   verifyWebhookSignature(payload: string, signature: string, receivedAt: number): boolean {
     if (!this.webhookSecret) return false;
-    const mac = createHmac('sha256', this.webhookSecret).update(`${receivedAt}.${payload}`).digest();
+    const mac = createHmac('sha256', this.webhookSecret)
+      .update(`${receivedAt}.${payload}`)
+      .digest();
     const supplied = signature.split(',')[1] ?? '';
     const suppliedBuffer = Buffer.from(supplied, 'hex');
     return mac.length === suppliedBuffer.length && timingSafeEqual(mac, suppliedBuffer);

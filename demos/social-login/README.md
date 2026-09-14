@@ -21,11 +21,11 @@ identity **linking** and **unlinking** against a password account.
 
 ## Key files
 
-| File | Role |
-|------|------|
-| `server.ts` | Express app: runtime, durable keys, mock IdP routes, federated link/unlink, callbacks |
-| `index.html` | SPA — "Continue with Mock Google", password forms, profile + linked-identities panel |
-| `keys/` | Durable signing keys created on first boot by `initKeyPersistence` |
+| File         | Role                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------- |
+| `server.ts`  | Express app: runtime, durable keys, mock IdP routes, federated link/unlink, callbacks |
+| `index.html` | SPA — "Continue with Mock Google", password forms, profile + linked-identities panel  |
+| `keys/`      | Durable signing keys created on first boot by `initKeyPersistence`                    |
 
 ### API surface (`server.ts`)
 
@@ -40,19 +40,19 @@ works with the same address you used at the mock IdP.
 ## Required configuration
 
 **Self-contained.** The demo embeds `@pezhwan/core` and connects directly to
-MongoDB — it does *not* call the identity-server. `ISSUER` defaults to
+MongoDB — it does _not_ call the identity-server. `ISSUER` defaults to
 `http://localhost:4011` purely to stamp the same `iss` claim the identity-server
 uses, so tokens share the same contract.
 
-| Environment variable | Default | Purpose |
-|---|---|---|
-| `MONGODB_URI` | `mongodb://localhost:27017/pezhwan` | Shared database |
-| `PORT` | `5179` | HTTP listen port |
-| `TENANT_ID` | `dev-tenant` | Tenant the demo runs as |
-| `APPLICATION_ID` | `dev-app` | Application within the tenant |
-| `ISSUER` | `http://localhost:4011` | JWT `iss` claim |
+| Environment variable | Default                             | Purpose                       |
+| -------------------- | ----------------------------------- | ----------------------------- |
+| `MONGODB_URI`        | `mongodb://localhost:27017/pezhwan` | Shared database               |
+| `PORT`               | `5179`                              | HTTP listen port              |
+| `TENANT_ID`          | `dev-tenant`                        | Tenant the demo runs as       |
+| `APPLICATION_ID`     | `dev-app`                           | Application within the tenant |
+| `ISSUER`             | `http://localhost:4011`             | JWT `iss` claim               |
 
-With a *real* Google OAuth provider you would instead configure a client
+With a _real_ Google OAuth provider you would instead configure a client
 ID/secret plus authorized redirect URI (`http://localhost:5179/social/callback`)
 on the identity-server; this demo deliberately skips that so nothing external
 is required.
@@ -67,7 +67,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
    npm install
    npm run build
    ```
-2. *Full-stack context only — not required.* Start the identity-server on 4011:
+2. _Full-stack context only — not required._ Start the identity-server on 4011:
    ```bash
    npm run dev -w @pezhwan/identity-server
    ```

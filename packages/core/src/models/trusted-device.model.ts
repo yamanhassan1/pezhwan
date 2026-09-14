@@ -32,4 +32,5 @@ const TrustedDeviceSchema = new Schema<TrustedDeviceDoc>(
 TrustedDeviceSchema.index({ userId: 1, deviceId: 1 }, { unique: true });
 
 export const TrustedDeviceModel: Model<TrustedDeviceDoc> =
-  (models.TrustedDevice as Model<TrustedDeviceDoc>) ?? model<TrustedDeviceDoc>('TrustedDevice', TrustedDeviceSchema);
+  (models.TrustedDevice as Model<TrustedDeviceDoc>) ??
+  model<TrustedDeviceDoc>('TrustedDevice', TrustedDeviceSchema);

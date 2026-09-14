@@ -1,6 +1,7 @@
 import type { ApiEnvelope } from '../types';
 
-const base: string = (import.meta as unknown as { env: Record<string, string | undefined> }).env?.VITE_API_URL ?? '';
+const base: string =
+  (import.meta as unknown as { env: Record<string, string | undefined> }).env?.VITE_API_URL ?? '';
 
 let accessToken: string | null = null;
 let csrfToken: string | null = null;
@@ -74,7 +75,14 @@ export async function getCsrf(): Promise<string> {
   return csrfToken;
 }
 
-export async function login(email: string, password: string): Promise<{ mfaRequired: boolean; tokens: { accessToken: string; refreshToken: string; expiresIn: number }; user?: import('../types').User }> {
+export async function login(
+  email: string,
+  password: string,
+): Promise<{
+  mfaRequired: boolean;
+  tokens: { accessToken: string; refreshToken: string; expiresIn: number };
+  user?: import('../types').User;
+}> {
   return request('POST', '/v1/auth/login', { email, password });
 }
 

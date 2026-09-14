@@ -15,6 +15,7 @@ export interface RedisLike {
   del(...args: unknown[]): Promise<unknown>;
   connect?(): Promise<unknown>;
   disconnect?(): Promise<unknown> | void;
+  on?(event: string, listener: (...args: unknown[]) => void): unknown;
   /** Optional atomic counter ops used by the rate limiter. */
   incr?(key: string): Promise<number>;
   expire?(key: string, seconds: number): Promise<unknown>;
@@ -227,10 +228,29 @@ export function createRedisCache(client: RedisLike | null, namespace = 'pezhwan'
   return new RedisCacheImpl(client, namespace);
 }
 
+/** Deployment topologies the RedisManager can talk to. */
+export type RedisConnectionMode = 'single' | 'sentinel' | 'cluster';
+
 /** Options for the low-level ioredis client lifecycle. */
 export interface RedisManagerOptions {
-  /** Full connect string, e.g. `redis://127.0.0.1:6379/0`. */
-  url: string;
+  /**
+   * Full connect string, e.g. `redis://127.0.0.1:6379/0`. Required for
+   * `mode: 'single'`; ignored for `sentinel`/`cluster`.
+   */
+  url?: string;
+  /**
+   * Deployment topology. Defaults to `'single'`. `'sentinel'` requires
+   * `name` + `sentinels`; `'cluster'` requires `clusterNodes`.
+   */
+  mode?: RedisConnectionMode;
+  /** Sentinel master name (mode: `'sentinel'`). */
+  name?: string;
+  /** Sentinel nodes, e.g. `[{ host: 'sentinel1', port: 26379 }]`. */
+  sentinels?: Array<{ host: string; port: number }>;
+  /** Redis Cluster seed nodes, e.g. `[{ host: 'redis1', port: 6379 }]`. */
+  clusterNodes?: Array<{ host: string; port: number }>;
+  /** Optional password (sentinel/cluster auth). */
+  password?: string;
   /** Namespace prefix for every key. */
   namespace?: string;
   /** ms to wait for an initial connection before failing (default 3000). */
@@ -261,14 +281,42 @@ export class RedisManager {
   readonly cache: RedisCacheImpl;
 
   private client: RedisLike | null = null;
-  private readonly opts: Required<Omit<RedisManagerOptions, 'url'>>;
+  private readonly opts: Required<
+    Pick<RedisManagerOptions, 'mode' | 'namespace' | 'connectTimeoutMs' | 'maxRetriesPerRequest'>
+  > &
+    Pick<
+      RedisManagerOptions,
+      'url' | 'name' | 'sentinels' | 'clusterNodes' | 'password' | 'retryStrategy'
+    >;
   private connected = false;
 
-  constructor(private readonly options: RedisManagerOptions) {
+  constructor(options: RedisManagerOptions) {
+    const mode = options.mode ?? 'single';
+    if (mode === 'sentinel') {
+      if (!options.name || !options.sentinels || options.sentinels.length === 0) {
+        throw new Error(
+          "RedisManager (mode: 'sentinel') requires a `name` and at least one `sentinels` entry",
+        );
+      }
+    } else if (mode === 'cluster') {
+      if (!options.clusterNodes || options.clusterNodes.length === 0) {
+        throw new Error(
+          "RedisManager (mode: 'cluster') requires at least one `clusterNodes` entry",
+        );
+      }
+    } else if (!options.url) {
+      throw new Error("RedisManager (mode: 'single') requires a `url`");
+    }
     this.opts = {
+      mode,
       namespace: options.namespace ?? 'pezhwan',
       connectTimeoutMs: options.connectTimeoutMs ?? 3000,
       maxRetriesPerRequest: options.maxRetriesPerRequest ?? 2,
+      url: options.url,
+      name: options.name,
+      sentinels: options.sentinels,
+      clusterNodes: options.clusterNodes,
+      password: options.password,
       retryStrategy:
         options.retryStrategy ??
         ((times: number) => (times > 10 ? null : Math.min(times * 200, 5000))),
@@ -285,30 +333,48 @@ export class RedisManager {
   }
 
   /**
-   * Establish the Redis connection. Safe to call once; throws only if the
-   * retry strategy exhausts (i.e. Redis is genuinely unreachable).
+   * Establish the Redis connection for the configured topology (single,
+   * Sentinel HA, or Cluster). Safe to call once; throws only if the retry
+   * strategy exhausts (i.e. Redis is genuinely unreachable).
    */
   async connect(): Promise<void> {
     if (this.client || this.connected) {
       return;
     }
-    const { Redis } = await import('ioredis');
-    const client = new Redis(this.options.url, {
+    const { Redis, Cluster } = await import('ioredis');
+    const common = {
       lazyConnect: true,
       connectTimeout: this.opts.connectTimeoutMs,
       maxRetriesPerRequest: this.opts.maxRetriesPerRequest,
       retryStrategy: this.opts.retryStrategy,
-    });
+      ...(this.opts.password ? { password: this.opts.password } : {}),
+    };
+    let client: RedisLike;
+    if (this.opts.mode === 'sentinel') {
+      // Mode gates these fields (constructor validation), so they are present.
+      client = new Redis({
+        sentinels: this.opts.sentinels!,
+        name: this.opts.name!,
+        ...common,
+      }) as unknown as RedisLike;
+    } else if (this.opts.mode === 'cluster') {
+      client = new Cluster(this.opts.clusterNodes!, {
+        ...common,
+        clusterRetryStrategy: this.opts.retryStrategy,
+      }) as unknown as RedisLike;
+    } else {
+      client = new Redis(this.opts.url!, common) as unknown as RedisLike;
+    }
     // Guard against ioredis emitting unhandled 'error' events that would
     // otherwise crash the process on connection loss/refusal. Without a
     // listener, a refused connection surfaces as an unhandled error event.
-    client.on('error', () => {
+    client.on?.('error', () => {
       /* connection-level errors are non-fatal: cache degrades to in-memory */
     });
     // Re-bind the cache to the live client once connected.
     this.cache.setClient(client);
     this.client = client;
-    await client.connect();
+    await client.connect?.();
     this.connected = true;
   }
 

@@ -14,7 +14,7 @@ and environment for each run.
 - [ ] `PEZHWAN_SIGNING_KEY_ROTATION_MS` is set (rotation enabled)
 - [ ] `PEZHWAN_ALLOWED_ORIGINS` contains no wildcard (`*`) entries
 - [ ] All required environment variables validated by Zod schema at startup
-  (`apps/identity-server/src/config/env.ts`)
+      (`apps/identity-server/src/config/env.ts`)
 - [ ] `PEZHWAN_BODY_LIMIT` set (default `100kb` acceptable)
 - [ ] Redis configured and `RedisManager.isHealthy()` returning true
 - [ ] MongoDB replica set running and `initKeyPersistence()` completed

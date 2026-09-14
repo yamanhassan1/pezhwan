@@ -24,13 +24,14 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@noble/post-quantum": "^0.7.1",
     "@pezhwan/shared": "*",
     "argon2": "^0.45.1",
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
+    "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^26.4.0",
-    "@types/jsonwebtoken": "^9.0.6"
+    "typescript": "^5.5.0"
   }
 }

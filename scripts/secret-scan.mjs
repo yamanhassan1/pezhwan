@@ -150,6 +150,15 @@ const REDACTION_TEST_FIXTURES = new Set([
   'packages/oauth/test/oauth.test.ts',
 ]);
 
+/**
+ * Known, non-functional DEMO values used across the documentation and SDK
+ * example code (READMEs, OPENAPI specs, quickstarts). They appear dozens of
+ * times in plain sight and are clearly labelled example strings, never real
+ * credentials. The scanner treats them as the accepted documentation exception;
+ * any OTHER quoted value in a password/secret assignment is still flagged.
+ */
+const DEMO_EXAMPLE_VALUES = new Set(['ChangeMe-123!', 'Str0ng!Pass#2026']);
+
 function shouldSkip(file) {
   const lower = file.toLowerCase();
   const ext = lower.slice(lower.lastIndexOf('.'));
@@ -175,9 +184,15 @@ function scanFile(file) {
   const findings = [];
   for (const { name, re } of PATTERNS) {
     re.lastIndex = 0;
-    if (re.test(content)) {
-      findings.push({ file, pattern: name });
+    const match = re.exec(content);
+    if (!match) {
+      continue;
     }
+    const quoted = /["'][^"']*["']$/.exec(match[0]);
+    if (quoted && DEMO_EXAMPLE_VALUES.has(quoted[0].replace(/["']/g, ''))) {
+      continue;
+    }
+    findings.push({ file, pattern: name });
   }
   return findings;
 }

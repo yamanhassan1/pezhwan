@@ -59,20 +59,30 @@ import { createPezhwan, UserModel } from '@pezhwan/core';
 import { hashPassword } from '@pezhwan/crypto';
 
 await mongoose.connect(process.env.PEZHWAN_MONGODB_URI!);
-const runtime = createPezhwan({ tenantId: 'acme', applicationId: 'app', /* ... */ otpDelivery: {} });
+const runtime = createPezhwan({
+  tenantId: 'acme',
+  applicationId: 'app',
+  /* ... */ otpDelivery: {},
+});
 for (const u of exportedUsers) {
   const doc = await UserModel.create({
-    tenantId: 'acme', email: u.profile.email?.toLowerCase(),
-    emailVerified: true, isActive: u.status === 'ACTIVE',
+    tenantId: 'acme',
+    email: u.profile.email?.toLowerCase(),
+    emailVerified: true,
+    isActive: u.status === 'ACTIVE',
     passwordHash: u.temporaryPassword ? await hashPassword(u.temporaryPassword) : null,
     metadata: { source: 'okta', oktaId: u.id, ...u.profile },
   }).catch(() => undefined);
   if (!doc) continue;
   for (const group of u.groups ?? []) {
-    await runtime.authorization.assignRole({
-      userId: String(doc._id), tenantId: 'acme', applicationId: 'app',
-      roleName: group.toUpperCase(),
-    }).catch(() => undefined);
+    await runtime.authorization
+      .assignRole({
+        userId: String(doc._id),
+        tenantId: 'acme',
+        applicationId: 'app',
+        roleName: group.toUpperCase(),
+      })
+      .catch(() => undefined);
   }
 }
 ```
@@ -82,20 +92,20 @@ re-enrollment.
 
 ## 5. Mapping
 
-| Okta concept | Pezhwan concept |
-| --- | --- |
-| Okta org | `Tenant` (`slug` = org subdomain). |
-| OIDC app (client) | `Application` / OAuth client (`clientId`, `redirectUris`). |
-| `users.id` | `User._id` (or `metadata.oktaId`). |
-| `profile.login` / `profile.email` | `User.email`. |
-| `profile.*` attributes | `User.metadata`. |
-| `status` (ACTIVE/SUSPENDED/DEPROVISIONED) | `User.isActive` (true for ACTIVE). |
-| Groups (incl. group rules / app groups) | `Role` + `UserRoleAssignment` (`roles[]`). |
-| Saml/OIDC group claims (`groups`, `app_groups`) | Role-derived claims in the Pezhwan access token. |
-| TOTP/SMS/WebAuthn factors | Re-enroll on Pezhwan (`User.mfaEnabled`). |
-| AD/LDAP directory | Decide: become the source of truth (import) or keep as federated `LinkedIdentity`. |
-| Session/SSO cookies, ID tokens | Pezhwan access + rotating refresh family. |
-| Password hashes | Not transferable — reset/forgot or temporary password. |
+| Okta concept                                    | Pezhwan concept                                                                    |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Okta org                                        | `Tenant` (`slug` = org subdomain).                                                 |
+| OIDC app (client)                               | `Application` / OAuth client (`clientId`, `redirectUris`).                         |
+| `users.id`                                      | `User._id` (or `metadata.oktaId`).                                                 |
+| `profile.login` / `profile.email`               | `User.email`.                                                                      |
+| `profile.*` attributes                          | `User.metadata`.                                                                   |
+| `status` (ACTIVE/SUSPENDED/DEPROVISIONED)       | `User.isActive` (true for ACTIVE).                                                 |
+| Groups (incl. group rules / app groups)         | `Role` + `UserRoleAssignment` (`roles[]`).                                         |
+| Saml/OIDC group claims (`groups`, `app_groups`) | Role-derived claims in the Pezhwan access token.                                   |
+| TOTP/SMS/WebAuthn factors                       | Re-enroll on Pezhwan (`User.mfaEnabled`).                                          |
+| AD/LDAP directory                               | Decide: become the source of truth (import) or keep as federated `LinkedIdentity`. |
+| Session/SSO cookies, ID tokens                  | Pezhwan access + rotating refresh family.                                          |
+| Password hashes                                 | Not transferable — reset/forgot or temporary password.                             |
 
 ## 6. Rolling out
 

@@ -91,24 +91,15 @@ export class OAuthService {
     return client;
   }
 
-  private authenticateClient(
-    client: OAuthClientRecord,
-    clientSecret: string | undefined,
-  ): void {
+  private authenticateClient(client: OAuthClientRecord, clientSecret: string | undefined): void {
     if (!client.isConfidential) {
       return;
     }
     if (!client.clientSecretHash || !clientSecret) {
-      throw new AuthorizationError(
-        'Client authentication failed',
-        CLIENT_AUTH_FAILED,
-      );
+      throw new AuthorizationError('Client authentication failed', CLIENT_AUTH_FAILED);
     }
     if (sha256Hex(clientSecret) !== client.clientSecretHash) {
-      throw new AuthorizationError(
-        'Client authentication failed',
-        CLIENT_AUTH_FAILED,
-      );
+      throw new AuthorizationError('Client authentication failed', CLIENT_AUTH_FAILED);
     }
   }
 
@@ -120,10 +111,7 @@ export class OAuthService {
   }> {
     const client = await this.requireActiveClient(params.clientId);
     if (!client.redirectUris.includes(params.redirectUri)) {
-      throw new ValidationError(
-        'Redirect URI mismatch',
-        'OAUTH_REDIRECT_URI_MISMATCH',
-      );
+      throw new ValidationError('Redirect URI mismatch', 'OAUTH_REDIRECT_URI_MISMATCH');
     }
     const { code } = await this.deps.codes.issue({
       tenantId: params.tenantId,
@@ -149,10 +137,7 @@ export class OAuthService {
     const client = await this.requireActiveClient(request.clientId);
     this.authenticateClient(client, request.clientSecret);
     if (!client.redirectUris.includes(request.redirectUri)) {
-      throw new TokenError(
-        'Redirect URI mismatch',
-        'OAUTH_REDIRECT_URI_MISMATCH',
-      );
+      throw new TokenError('Redirect URI mismatch', 'OAUTH_REDIRECT_URI_MISMATCH');
     }
 
     const record = await this.deps.codes.redeem(request.code);
@@ -160,18 +145,11 @@ export class OAuthService {
       throw new TokenError('Invalid authorization code', 'INVALID_AUTHORIZATION_CODE');
     }
     if (record.redirectUri !== request.redirectUri) {
-      throw new TokenError(
-        'Redirect URI mismatch',
-        'OAUTH_REDIRECT_URI_MISMATCH',
-      );
+      throw new TokenError('Redirect URI mismatch', 'OAUTH_REDIRECT_URI_MISMATCH');
     }
     if (
       record.codeChallenge &&
-      !verifyPkce(
-        request.codeVerifier ?? '',
-        record.codeChallenge,
-        record.codeChallengeMethod,
-      )
+      !verifyPkce(request.codeVerifier ?? '', record.codeChallenge, record.codeChallengeMethod)
     ) {
       throw new TokenError('PKCE verification failed', 'PKCE_VERIFICATION_FAILED');
     }

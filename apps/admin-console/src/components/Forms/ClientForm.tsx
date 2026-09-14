@@ -66,9 +66,15 @@ export default function ClientForm({ initial, onSave, saveLabel }: ClientFormPro
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      {error && <div className="toast toast-error" style={{ marginBottom: 16 }}>{error}</div>}
+      {error && (
+        <div className="toast toast-error" style={{ marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
       <div className="form-group">
-        <label className="label" htmlFor="cname">Name</label>
+        <label className="label" htmlFor="cname">
+          Name
+        </label>
         <input
           id="cname"
           className="input"
@@ -79,7 +85,9 @@ export default function ClientForm({ initial, onSave, saveLabel }: ClientFormPro
         />
       </div>
       <div className="form-group">
-        <label className="label" htmlFor="curis">Redirect URIs (one per line)</label>
+        <label className="label" htmlFor="curis">
+          Redirect URIs (one per line)
+        </label>
         <textarea
           id="curis"
           className="textarea"
@@ -112,7 +120,11 @@ export default function ClientForm({ initial, onSave, saveLabel }: ClientFormPro
       </div>
       <div className="form-group">
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" checked={confidential} onChange={(e) => setConfidential(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={confidential}
+            onChange={(e) => setConfidential(e.target.checked)}
+          />
           Confidential (client requires client secret)
         </label>
       </div>

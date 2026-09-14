@@ -8,7 +8,7 @@ Complements:
 
 - `README.md` — quick start + security promises (extended in Phase B)
 - `docs/THREAT-MODEL.md` — STRIDE threats mapped to source-verified mitigations
-- `docs/OPENAPI.yaml` — OpenAPI 3.0.3 description of the full HTTP surface
+- `docs/api/OPENAPI.yaml` — OpenAPI 3.0.3 description of the full HTTP surface
 
 ---
 
@@ -67,7 +67,7 @@ Phase B adds the OAuth/OIDC client and reference-server containerization:
 
 ---
 
-## 4. Phase B API surface (see `docs/OPENAPI.yaml`)
+## 4. Phase B API surface (see `docs/api/OPENAPI.yaml`)
 
 All endpoints use the `{ success, data, error: { code, message, requestId } }`
 envelope except OAuth/OIDC, which use RFC 6749 `{ error, error_description }`.

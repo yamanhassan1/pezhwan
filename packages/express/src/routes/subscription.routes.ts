@@ -20,9 +20,24 @@ function ok(res: Response, data: unknown, status = 200): void {
 }
 
 const PLANS = [
-  { id: 'starter', name: 'Starter', priceMonthly: 0, quota: { users: 100, api_keys: 5, webhooks: 2 } },
-  { id: 'growth', name: 'Growth', priceMonthly: 99, quota: { users: 1_000, api_keys: 20, webhooks: 10 } },
-  { id: 'enterprise', name: 'Enterprise', priceMonthly: 499, quota: { users: 10_000, api_keys: 100, webhooks: 50 } },
+  {
+    id: 'starter',
+    name: 'Starter',
+    priceMonthly: 0,
+    quota: { users: 100, api_keys: 5, webhooks: 2 },
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    priceMonthly: 99,
+    quota: { users: 1_000, api_keys: 20, webhooks: 10 },
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    priceMonthly: 499,
+    quota: { users: 10_000, api_keys: 100, webhooks: 50 },
+  },
 ] as const;
 
 export function createSubscriptionRouter(runtime: PezhwanRuntime): Router {
@@ -37,7 +52,10 @@ export function createSubscriptionRouter(runtime: PezhwanRuntime): Router {
   router.post('/subscribe', linked, async (req: Request, res: Response) => {
     const body = (req.body ?? {}) as { plan?: unknown };
     if (typeof body.plan !== 'string' || !PLANS.some((p) => p.id === body.plan)) {
-      throw new ValidationError('plan must be one of ' + PLANS.map((p) => p.id).join(', '), 'PLAN_INVALID');
+      throw new ValidationError(
+        'plan must be one of ' + PLANS.map((p) => p.id).join(', '),
+        'PLAN_INVALID',
+      );
     }
     const result = await runtime.billing.checkout({
       tenantId: runtime.config.tenantId,
@@ -57,7 +75,8 @@ export function createSubscriptionRouter(runtime: PezhwanRuntime): Router {
   });
 
   router.get('/entitlements', linked, async (req: Request, res: Response) => {
-    const tenantId = typeof req.query.tenantId === 'string' ? req.query.tenantId : runtime.config.tenantId;
+    const tenantId =
+      typeof req.query.tenantId === 'string' ? req.query.tenantId : runtime.config.tenantId;
     const [subscription, usage] = await Promise.all([
       runtime.subscriptions.getByTenant(tenantId),
       runtime.usage.summarize(tenantId),
@@ -70,7 +89,8 @@ export function createSubscriptionRouter(runtime: PezhwanRuntime): Router {
   });
 
   router.get('/', linked, async (req: Request, res: Response) => {
-    const tenantId = typeof req.query.tenantId === 'string' ? req.query.tenantId : runtime.config.tenantId;
+    const tenantId =
+      typeof req.query.tenantId === 'string' ? req.query.tenantId : runtime.config.tenantId;
     const subscription = await runtime.subscriptions.getByTenant(tenantId);
     ok(res, { subscription });
   });

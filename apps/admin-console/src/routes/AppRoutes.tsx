@@ -25,7 +25,9 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}
+      >
         <div className="card">Loading...</div>
       </div>
     );
@@ -37,7 +39,9 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
   if (!isAdmin) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}
+      >
         <div className="card" style={{ textAlign: 'center' }}>
           <h2 style={{ marginBottom: 12 }}>403 - Access Denied</h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>

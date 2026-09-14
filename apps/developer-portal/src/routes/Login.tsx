@@ -36,13 +36,32 @@ export default function Login() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', padding: 20 }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg)',
+        padding: 20,
+      }}
+    >
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 26, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text)' }}>
+          <div
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 26,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              color: 'var(--text)',
+            }}
+          >
             PEZHWAN
           </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>Developer Portal</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>
+            Developer Portal
+          </div>
         </div>
         <form className="card" onSubmit={handleSubmit} style={{ padding: 28 }}>
           <h2 className="mb-3" style={{ fontSize: 18 }}>
@@ -79,8 +98,20 @@ export default function Login() {
               placeholder="••••••••"
             />
           </div>
-          <button type="submit" className="btn btn-lg" disabled={submitting} style={{ width: '100%' }}>
-            {submitting ? <span className="loader" style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }} /> : 'Sign in'}
+          <button
+            type="submit"
+            className="btn btn-lg"
+            disabled={submitting}
+            style={{ width: '100%' }}
+          >
+            {submitting ? (
+              <span
+                className="loader"
+                style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }}
+              />
+            ) : (
+              'Sign in'
+            )}
           </button>
         </form>
         <p className="muted" style={{ textAlign: 'center', fontSize: 12.5, marginTop: 16 }}>

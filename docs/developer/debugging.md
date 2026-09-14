@@ -49,21 +49,21 @@ re-emitting `dist/` as described in [`local-development.md`](./local-development
 All errors derive from `PezhwanError`
 (`packages/shared/src/errors.ts`) and carry `code`, `status`, `requestId`.
 
-| Code | HTTP | Meaning |
-| --- | --- | --- |
-| `AUTHENTICATION_FAILED` | 401 | Credentials missing/invalid; the base `AuthenticationError`. |
-| `INVALID_CREDENTIALS` / `ACCOUNT_DISABLED` / `ACCOUNT_LOCKED` | 401 | Login-specific failures from `AuthEngine`. |
-| `AUTH_REQUIRED` | 401 | Bearer token missing on a gated route. |
-| `INVALID_TOKEN` / `TOKEN_EXPIRED` / `INVALID_JWT` / `UNKNOWN_KEY` | 401 | Access-token verification failures. |
-| `INVALID_SESSION` / `SESSION_REVOKED` / `REFRESH_TOKEN_UNKNOWN` | 401 | Session/refresh-token failures. |
-| `SESSION_CONTEXT_INVALID` | 401 | Tenant/application on the token differs from the runtime context. |
-| `VALIDATION_FAILED` / `VALIDATION_ERROR` / `DUPLICATE` | 400/409 | Input validation and unique-constraint violations. |
-| `AUTHORIZATION_FAILED` / `TENANT_NOT_FOUND` / `TENANT_DISABLED` | 403 | Authorization rejected. |
-| `RATE_LIMIT_EXCEEDED` | 429 | Rate-limit budget exhausted; `retryAfterSeconds` is set. |
-| `FAILED_SECURITY_DEPENDENCY` | 503 | Account state could not be verified → fail-closed, no identity attached. |
-| `CSRF_REJECTED` / `ORIGIN_REJECTED` | 403 | CSRF header/cookie mismatch or disallowed CORS origin. |
-| `MFA_NOT_CONFIGURED`, `INVALID_TOTP`, `MFA_ALREADY_ENABLED`, ... | 400/401 | MFA lifecycle failures from `MfaService`. |
-| `INVALID_SCOPE` / `PKCE_REQUIRED` / `INVALID_GRANT` / `INVALID_CLIENT` | 400/401 | OAuth 2.1 wire-protocol failures. |
+| Code                                                                   | HTTP    | Meaning                                                                  |
+| ---------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------ |
+| `AUTHENTICATION_FAILED`                                                | 401     | Credentials missing/invalid; the base `AuthenticationError`.             |
+| `INVALID_CREDENTIALS` / `ACCOUNT_DISABLED` / `ACCOUNT_LOCKED`          | 401     | Login-specific failures from `AuthEngine`.                               |
+| `AUTH_REQUIRED`                                                        | 401     | Bearer token missing on a gated route.                                   |
+| `INVALID_TOKEN` / `TOKEN_EXPIRED` / `INVALID_JWT` / `UNKNOWN_KEY`      | 401     | Access-token verification failures.                                      |
+| `INVALID_SESSION` / `SESSION_REVOKED` / `REFRESH_TOKEN_UNKNOWN`        | 401     | Session/refresh-token failures.                                          |
+| `SESSION_CONTEXT_INVALID`                                              | 401     | Tenant/application on the token differs from the runtime context.        |
+| `VALIDATION_FAILED` / `VALIDATION_ERROR` / `DUPLICATE`                 | 400/409 | Input validation and unique-constraint violations.                       |
+| `AUTHORIZATION_FAILED` / `TENANT_NOT_FOUND` / `TENANT_DISABLED`        | 403     | Authorization rejected.                                                  |
+| `RATE_LIMIT_EXCEEDED`                                                  | 429     | Rate-limit budget exhausted; `retryAfterSeconds` is set.                 |
+| `FAILED_SECURITY_DEPENDENCY`                                           | 503     | Account state could not be verified → fail-closed, no identity attached. |
+| `CSRF_REJECTED` / `ORIGIN_REJECTED`                                    | 403     | CSRF header/cookie mismatch or disallowed CORS origin.                   |
+| `MFA_NOT_CONFIGURED`, `INVALID_TOTP`, `MFA_ALREADY_ENABLED`, ...       | 400/401 | MFA lifecycle failures from `MfaService`.                                |
+| `INVALID_SCOPE` / `PKCE_REQUIRED` / `INVALID_GRANT` / `INVALID_CLIENT` | 400/401 | OAuth 2.1 wire-protocol failures.                                        |
 
 Grep the `src` tree for a code to find the exact throw site.
 

@@ -1,10 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  generateCodeVerifier,
-  generateCodeChallenge,
-  verifyPkce,
-} from '@pezhwan/oauth';
+import { generateCodeVerifier, generateCodeChallenge, verifyPkce } from '@pezhwan/oauth';
 
 describe('PKCE (RFC 7636)', () => {
   it('generates a 43+ char verifier', () => {

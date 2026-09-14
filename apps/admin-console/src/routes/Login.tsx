@@ -61,7 +61,9 @@ export default function Login() {
         )}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="label" htmlFor="email">Email</label>
+            <label className="label" htmlFor="email">
+              Email
+            </label>
             <input
               id="email"
               className="input"
@@ -73,7 +75,9 @@ export default function Login() {
             />
           </div>
           <div className="form-group">
-            <label className="label" htmlFor="password">Password</label>
+            <label className="label" htmlFor="password">
+              Password
+            </label>
             <input
               id="password"
               className="input"
@@ -84,7 +88,12 @@ export default function Login() {
               autoComplete="current-password"
             />
           </div>
-          <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
+          <button
+            className="btn btn-primary"
+            type="submit"
+            disabled={loading}
+            style={{ width: '100%' }}
+          >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>

@@ -19,7 +19,7 @@ export default {
   async run(ctx: CliContext): Promise<number> {
     const dir = join(process.cwd(), 'pezhwan-keys');
     if (existsSync(join(dir, 'private.pem')) || existsSync(join(dir, 'public.pem'))) {
-      return ctx.err('pezhwan-keys/ already contains keys; move them away first'), 1;
+      return (ctx.err('pezhwan-keys/ already contains keys; move them away first'), 1);
     }
     const { privateKey, publicKey } = generateKeyPairSync('rsa', {
       modulusLength: 2048,

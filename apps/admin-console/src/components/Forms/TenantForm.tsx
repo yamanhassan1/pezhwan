@@ -47,7 +47,13 @@ export default function TenantForm({ initial, onSave, saveLabel }: TenantFormPro
     }
     setSaving(true);
     try {
-      await onSave({ name, slug, plan, isActive, config: parsedConfig ? JSON.stringify(parsedConfig) : '' });
+      await onSave({
+        name,
+        slug,
+        plan,
+        isActive,
+        config: parsedConfig ? JSON.stringify(parsedConfig) : '',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -57,9 +63,15 @@ export default function TenantForm({ initial, onSave, saveLabel }: TenantFormPro
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      {error && <div className="toast toast-error" style={{ marginBottom: 16 }}>{error}</div>}
+      {error && (
+        <div className="toast toast-error" style={{ marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
       <div className="form-group">
-        <label className="label" htmlFor="tname">Name</label>
+        <label className="label" htmlFor="tname">
+          Name
+        </label>
         <input
           id="tname"
           className="input"
@@ -70,7 +82,9 @@ export default function TenantForm({ initial, onSave, saveLabel }: TenantFormPro
         />
       </div>
       <div className="form-group">
-        <label className="label" htmlFor="tslug">Slug (optional)</label>
+        <label className="label" htmlFor="tslug">
+          Slug (optional)
+        </label>
         <input
           id="tslug"
           className="input"
@@ -81,7 +95,9 @@ export default function TenantForm({ initial, onSave, saveLabel }: TenantFormPro
         />
       </div>
       <div className="form-group">
-        <label className="label" htmlFor="tplan">Plan</label>
+        <label className="label" htmlFor="tplan">
+          Plan
+        </label>
         <select
           id="tplan"
           className="select"
@@ -96,7 +112,9 @@ export default function TenantForm({ initial, onSave, saveLabel }: TenantFormPro
         </select>
       </div>
       <div className="form-group">
-        <label className="label" htmlFor="tconfig">Config JSON (optional)</label>
+        <label className="label" htmlFor="tconfig">
+          Config JSON (optional)
+        </label>
         <textarea
           id="tconfig"
           className="textarea"
@@ -104,11 +122,17 @@ export default function TenantForm({ initial, onSave, saveLabel }: TenantFormPro
           onChange={(e) => setConfig(e.target.value)}
           placeholder='{"subscription":{"status":"active"}}'
         />
-        {configError && <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>{configError}</div>}
+        {configError && (
+          <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>{configError}</div>
+        )}
       </div>
       <div className="form-group">
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+          />
           Active
         </label>
       </div>

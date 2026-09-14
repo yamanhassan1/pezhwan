@@ -2,7 +2,11 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateRsaKeyPair, signJwt, verifyJwt } from '@pezhwan/crypto';
 
-function signedToken(payload: Record<string, unknown>, privateKey: string, options: Record<string, unknown> = {}) {
+function signedToken(
+  payload: Record<string, unknown>,
+  privateKey: string,
+  options: Record<string, unknown> = {},
+) {
   return signJwt(payload, privateKey, 'kid1', 'RS256', options);
 }
 

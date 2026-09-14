@@ -8,8 +8,7 @@
  */
 
 import { promises as fs } from 'node:fs';
-import { KeyStore, type SigningKey } from '@pezhwan/crypto';
-import type { JwtAlgorithm } from '@pezhwan/shared';
+import { KeyStore, type SigningKey, type JwtSigningAlgorithm } from '@pezhwan/crypto';
 
 export interface KeyStorePersistAdapter {
   load(): Promise<SigningKey[]>;
@@ -20,7 +19,7 @@ export interface KeyStorePersistAdapter {
 export class FileKeyStoreAdapter implements KeyStorePersistAdapter {
   constructor(
     private readonly directory: string,
-    private readonly algorithm: JwtAlgorithm = 'RS256',
+    private readonly algorithm: JwtSigningAlgorithm = 'RS256',
   ) {}
 
   /** Serialises concurrent save() calls (rotation storms / overlapping init). */

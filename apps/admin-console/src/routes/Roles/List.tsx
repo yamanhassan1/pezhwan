@@ -36,10 +36,7 @@ export default function RolesList() {
     load();
   }, []);
 
-  const permById = useMemo(
-    () => new Map(permissions.map((p) => [p.id, p])),
-    [permissions],
-  );
+  const permById = useMemo(() => new Map(permissions.map((p) => [p.id, p])), [permissions]);
 
   const deleteRole = async (r: Role) => {
     try {
@@ -71,9 +68,7 @@ export default function RolesList() {
   };
 
   const togglePerm = (id: string) =>
-    setSelectedPerms((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
-    );
+    setSelectedPerms((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
 
   return (
     <div>
@@ -94,7 +89,9 @@ export default function RolesList() {
         <div className="card" style={{ marginBottom: 20 }}>
           <div className="grid-2">
             <div className="form-group">
-              <label className="label" htmlFor="rname">Name</label>
+              <label className="label" htmlFor="rname">
+                Name
+              </label>
               <input
                 id="rname"
                 className="input"
@@ -104,7 +101,9 @@ export default function RolesList() {
               />
             </div>
             <div className="form-group">
-              <label className="label" htmlFor="rdesc">Description</label>
+              <label className="label" htmlFor="rdesc">
+                Description
+              </label>
               <input
                 id="rdesc"
                 className="input"
@@ -123,7 +122,10 @@ export default function RolesList() {
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {permissions.map((p) => (
-                  <label key={p.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <label
+                    key={p.id}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedPerms.includes(p.id)}

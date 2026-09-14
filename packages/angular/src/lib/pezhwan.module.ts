@@ -12,11 +12,7 @@ import { SessionService } from './session/session.service.ts';
 import { AUTH_INTERCEPTOR_PROVIDER } from './auth/auth.interceptor.ts';
 
 @NgModule({
-  providers: [
-    AuthService,
-    SessionService,
-    AUTH_INTERCEPTOR_PROVIDER,
-  ],
+  providers: [AuthService, SessionService, AUTH_INTERCEPTOR_PROVIDER],
 })
 export class PezhwanModule {
   static forRoot(config: PezhwanAuthConfig): ModuleWithProviders<PezhwanModule> {

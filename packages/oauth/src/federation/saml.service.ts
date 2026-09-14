@@ -19,11 +19,27 @@ export function buildAuthnRequest(
   const samlRequest =
     '<samlp:AuthnRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"' +
     ' xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"' +
-    ' ID="' + requestId + '" Version="2.0" IssueInstant="' + now + '"' +
-    ' Destination="' + config.idpSsoUrl + '" ProtocolBinding="' + config.binding + '"' +
-    ' AssertionConsumerServiceURL="' + config.acsUrl + '"' + forceAuthn + '>' +
-    '<saml:Issuer>' + config.entityId + '</saml:Issuer>' +
-    '<samlp:NameIDPolicy Format="' + config.nameIdFormat + '" AllowCreate="true"/>' +
+    ' ID="' +
+    requestId +
+    '" Version="2.0" IssueInstant="' +
+    now +
+    '"' +
+    ' Destination="' +
+    config.idpSsoUrl +
+    '" ProtocolBinding="' +
+    config.binding +
+    '"' +
+    ' AssertionConsumerServiceURL="' +
+    config.acsUrl +
+    '"' +
+    forceAuthn +
+    '>' +
+    '<saml:Issuer>' +
+    config.entityId +
+    '</saml:Issuer>' +
+    '<samlp:NameIDPolicy Format="' +
+    config.nameIdFormat +
+    '" AllowCreate="true"/>' +
     '</samlp:AuthnRequest>';
   return { samlRequest, relayState: options.relayState };
 }
@@ -76,12 +92,14 @@ export function parseSamlResponse(raw: string, config: SamlConfig): SamlAssertio
   const issuers = extractAll(xml, /<saml:Issuer[^>]*>([^<]+)<\/saml:Issuer>/);
   const audiences = extractAll(xml, /<saml:Audience[^>]*>([^<]+)<\/saml:Audience>/);
   const attributes: SamlAssertion['attributes'] = [];
-  const attributeRe =
-    /<saml:Attribute\s+Name="([^"]+)"[^>]*>([\s\S]*?)<\/saml:Attribute>/g;
+  const attributeRe = /<saml:Attribute\s+Name="([^"]+)"[^>]*>([\s\S]*?)<\/saml:Attribute>/g;
   let m: RegExpExecArray | null;
   while ((m = attributeRe.exec(xml)) !== null) {
     const name = m[1] ?? '';
-    const values = extractAll(m[2] ?? '', /<saml:AttributeValue[^>]*>([^<]*)<\/saml:AttributeValue>/);
+    const values = extractAll(
+      m[2] ?? '',
+      /<saml:AttributeValue[^>]*>([^<]*)<\/saml:AttributeValue>/,
+    );
     attributes.push({ name, values });
   }
   if (audiences.length > 0 && !audiences.includes(config.entityId)) {

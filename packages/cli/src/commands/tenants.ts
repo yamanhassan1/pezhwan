@@ -10,7 +10,9 @@ export default {
   command: 'tenants',
   describe: 'List tenants',
   async run(ctx: CliContext): Promise<number> {
-    const data = (await ctx.api('/v1/admin/tenants')) as { data?: { tenants?: Array<Record<string, unknown>> } };
+    const data = (await ctx.api('/v1/admin/tenants')) as {
+      data?: { tenants?: Array<Record<string, unknown>> };
+    };
     const tenants = data.data?.tenants ?? [];
     ctx.out(
       ctx.table(

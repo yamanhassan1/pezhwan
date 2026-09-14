@@ -176,19 +176,19 @@ function LoginButton() {
 
 ## Troubleshooting
 
-| Problem | Cause / fix |
-| --- | --- |
-| `401 UNAUTHENTICATED` at authorize | Caller has no bearer session — the reference server requires an authenticated user. |
-| `invalid_request` / no redirect | `redirect_uri` not registered on the client, or `response_type` not `code`. |
-| `invalid_grant` at exchange | Code already used (one-time), expired, or `code_verifier` mismatch. |
-| `INVALID_SCOPE` at authorize | Requested scope not in the client's registered `scopes`. |
-| Missing `id_token` | `openid` scope omitted. |
-| `client_secret` required | Client was registered `confidential: true`. |
-| Refresh rejects after password change | Refresh session's `tokenVersion` bumped — issue new tokens. |
+| Problem                               | Cause / fix                                                                         |
+| ------------------------------------- | ----------------------------------------------------------------------------------- |
+| `401 UNAUTHENTICATED` at authorize    | Caller has no bearer session — the reference server requires an authenticated user. |
+| `invalid_request` / no redirect       | `redirect_uri` not registered on the client, or `response_type` not `code`.         |
+| `invalid_grant` at exchange           | Code already used (one-time), expired, or `code_verifier` mismatch.                 |
+| `INVALID_SCOPE` at authorize          | Requested scope not in the client's registered `scopes`.                            |
+| Missing `id_token`                    | `openid` scope omitted.                                                             |
+| `client_secret` required              | Client was registered `confidential: true`.                                         |
+| Refresh rejects after password change | Refresh session's `tokenVersion` bumped — issue new tokens.                         |
 
 ## Further reading
 
-- OAuth/OIDC endpoints: `docs/OPENAPI.yaml` (OAuth, Well-known tags)
+- OAuth/OIDC endpoints: `docs/api/OPENAPI.yaml` (OAuth, Well-known tags)
 - Routers: `packages/express/src/routes.oauth.ts`
 - OAuth engine + PKCE: `packages/oauth/src/oauth.service.ts`,
   `packages/oauth/src/pkce.ts`, `packages/oauth/src/oidc.service.ts`

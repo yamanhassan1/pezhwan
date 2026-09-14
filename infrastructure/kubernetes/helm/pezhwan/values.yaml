@@ -5,7 +5,7 @@ replicaCount: 2
 
 image:
   repository: pezhwan/identity-server
-  tag: "latest"
+  tag: 'latest'
   pullPolicy: IfNotPresent
 
 service:
@@ -39,16 +39,16 @@ autoscaling:
   targetMemoryUtilizationPercentage: 80
 
 env:
-  PEZHWAN_PORT: "4011"
-  PEZHWAN_TENANT_ID: "default"
-  PEZHWAN_APPLICATION_ID: "default"
-  PEZHWAN_ALLOWED_ORIGINS: "https://auth.example.com,https://app.example.com"
+  PEZHWAN_PORT: '4011'
+  PEZHWAN_TENANT_ID: 'default'
+  PEZHWAN_APPLICATION_ID: 'default'
+  PEZHWAN_ALLOWED_ORIGINS: 'https://auth.example.com,https://app.example.com'
 
 # Secrets — set via --set or values-<env>.yaml; never commit plaintext.
 secrets:
-  PEZHWAN_ISSUER: "https://auth.example.com"
-  PEZHWAN_MONGODB_URI: "mongodb://pezhwan-mongo-0.pezhwan-mongo:27017,pezhwan-mongo-1.pezhwan-mongo:27017,pezhwan-mongo-2.pezhwan-mongo:27017/pezhwan?replicaSet=pezhwan-rs"
-  PEZHWAN_REDIS_URL: "redis://pezhwan-redis:6379"
+  PEZHWAN_ISSUER: 'https://auth.example.com'
+  PEZHWAN_MONGODB_URI: 'mongodb://pezhwan-mongo-0.pezhwan-mongo:27017,pezhwan-mongo-1.pezhwan-mongo:27017,pezhwan-mongo-2.pezhwan-mongo:27017/pezhwan?replicaSet=pezhwan-rs'
+  PEZHWAN_REDIS_URL: 'redis://pezhwan-redis:6379'
 
 mongodb:
   enabled: true

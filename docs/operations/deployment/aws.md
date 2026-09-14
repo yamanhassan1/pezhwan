@@ -9,15 +9,15 @@ The module is organized by concern. **Files are currently placeholders (0
 bytes) and must be implemented before `terraform apply`**; this table is the
 intended contract:
 
-| File | Intended resources |
-| ---- | ------------------ |
-| `vpc.tf` | VPC, public/private subnets across AZs, Internet Gateway, NAT Gateways, route tables |
-| `security-groups.tf` | Network boundary: ALB→ECS ingress, ECS→DocumentDB/Mongo (27017), ECS→ElastiCache (6379), managed-services-only traffic |
-| `alb.tf` | Application Load Balancer, HTTP/HTTPS listeners, target group pointing at the ECS/ECS-Fargate service |
-| `ecs.tf` | ECS cluster, Fargate task definition (the identity-server image, port `4011`), service with autoscaling, `trust proxy` behavior |
-| `rds.tf` | The MongoDB-compatible data tier — DocumentDB cluster (or an EC2-hosted `mongo:7` replica set) with encrypted storage + backups |
-| `elasticache.tf` | ElastiCache Redis (cluster mode on/off) with automatic failover |
-| `variables.tf` / `outputs.tf` | Inputs (region, CIDR, image tag, instance sizing) and outputs (ALB DNS name, endpoints, SG ids) |
+| File                          | Intended resources                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `vpc.tf`                      | VPC, public/private subnets across AZs, Internet Gateway, NAT Gateways, route tables                                            |
+| `security-groups.tf`          | Network boundary: ALB→ECS ingress, ECS→DocumentDB/Mongo (27017), ECS→ElastiCache (6379), managed-services-only traffic          |
+| `alb.tf`                      | Application Load Balancer, HTTP/HTTPS listeners, target group pointing at the ECS/ECS-Fargate service                           |
+| `ecs.tf`                      | ECS cluster, Fargate task definition (the identity-server image, port `4011`), service with autoscaling, `trust proxy` behavior |
+| `rds.tf`                      | The MongoDB-compatible data tier — DocumentDB cluster (or an EC2-hosted `mongo:7` replica set) with encrypted storage + backups |
+| `elasticache.tf`              | ElastiCache Redis (cluster mode on/off) with automatic failover                                                                 |
+| `variables.tf` / `outputs.tf` | Inputs (region, CIDR, image tag, instance sizing) and outputs (ALB DNS name, endpoints, SG ids)                                 |
 
 All encrypted at rest; KMS keys applied to DocumentDB/ElastiCache and the ECS
 task role's secrets.
@@ -74,4 +74,4 @@ Clients ──► Route53 (auth.example.com)
    `/.well-known/jwks.json` through the ALB and configured Route53 record.
 6. Point Atlas/on-prem Mongo backups at S3 and run the first
    `drill:backup-restore` for an RPO/RTO baseline (see
-   [../../backup-restore.md](../../backup-restore.md)).
+   [../backup-restore.md](../backup-restore.md)).

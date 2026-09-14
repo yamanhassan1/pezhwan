@@ -10,8 +10,8 @@ The module is organized as `main.tf`, `variables.tf`, and `outputs.tf`.
 **The files are currently placeholders (0 bytes) and must be implemented
 before `terraform apply`**; the intended contract:
 
-| Inputs (`variables.tf`) | Outputs (`outputs.tf`) |
-| ----------------------- | ---------------------- |
+| Inputs (`variables.tf`)                                                                                                                     | Outputs (`outputs.tf`)                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Project ID, region/zones, GKE cluster + node-pool sizing, GCE instance type (Mongo), Memorystore Redis tier, DNS zone/records, KMS key ring | GKE cluster name, Mongo instance IPs, Redis endpoint, ingress IP/host, KMS key id, storage bucket name |
 
 `main.tf` should provision: VPC + subnets, a private GKE cluster (or GCE

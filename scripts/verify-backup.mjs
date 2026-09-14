@@ -22,11 +22,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { basename } from 'node:path';
 
-import {
-  requireBackupKey,
-  unpackageBackup,
-  logicalRestore,
-} from './lib/backup-util.mjs';
+import { requireBackupKey, unpackageBackup, logicalRestore } from './lib/backup-util.mjs';
 
 function parseArgs(argv) {
   const flags = { restore: false, keep: false, checksum: null };
@@ -87,9 +83,7 @@ async function main() {
     console.log(`[verify] checksum   : ${checksum}`);
 
     if (flags.checksum && flags.checksum !== checksum) {
-      throw new Error(
-        `Checksum mismatch: expected ${flags.checksum}, got ${checksum}`,
-      );
+      throw new Error(`Checksum mismatch: expected ${flags.checksum}, got ${checksum}`);
     }
 
     await verifyFileIntegrity(header, dumpDir);

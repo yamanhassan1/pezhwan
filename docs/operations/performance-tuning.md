@@ -12,12 +12,12 @@ tiers, bottlenecks, and how to measure and tune.
 Token/session lifetimes (`packages/shared/src/constants.ts`, overridable via
 `PEZHWAN_*` env in `apps/identity-server/src/config/env.ts`):
 
-| Parameter | Default | | Parameter | Default |
-| --------- | ------- | - | --------- | ------- |
-| Access token TTL | 15 min | | Session TTL | 30 days |
-| Refresh token TTL | 30 days | | Verification token TTL | 24 h |
-| Password-reset token TTL | 15 min | | OTP TTL / length | 5 min / 6 digits |
-| OTP max attempts / cooldown | 5 / 30 s | | Max active sessions | runtime-config |
+| Parameter                   | Default  |     | Parameter              | Default          |
+| --------------------------- | -------- | --- | ---------------------- | ---------------- |
+| Access token TTL            | 15 min   |     | Session TTL            | 30 days          |
+| Refresh token TTL           | 30 days  |     | Verification token TTL | 24 h             |
+| Password-reset token TTL    | 15 min   |     | OTP TTL / length       | 5 min / 6 digits |
+| OTP max attempts / cooldown | 5 / 30 s |     | Max active sessions    | runtime-config   |
 
 Rate limits (`PEZHWAN_RATE_LIMIT_*`): login 10 / 15 min, register 10 / 15 min,
 OTP 5 / 10 min, refresh 30 / 15 min, API 100 / 15 min. Lockout: 5 failed
@@ -34,12 +34,12 @@ backup/restore — the backup-drill seed mirrors the real schema.
 
 ## Redis cache tiers
 
-| Key pattern | TTL | Purpose |
-| ----------- | --- | ------- |
-| `accountState:<userId>` | 30 s | Token-version gate on every request |
-| `session:<id>` | 30 s | Cheap `isSessionActive` liveness |
-| `rl:<type>:<scope>` | window-based | Fixed-window rate-limit counters |
-| OTP counters | OTP TTL | Attempt caps, resend cooldown |
+| Key pattern                        | TTL                  | Purpose                             |
+| ---------------------------------- | -------------------- | ----------------------------------- |
+| `accountState:<userId>`            | 30 s                 | Token-version gate on every request |
+| `session:<id>`                     | 30 s                 | Cheap `isSessionActive` liveness    |
+| `rl:<type>:<scope>`                | window-based         | Fixed-window rate-limit counters    |
+| OTP counters                       | OTP TTL              | Attempt caps, resend cooldown       |
 | Locks / JWKS cache / region probes | short / 300 s / 15 s | Rotation, key cache, nearest region |
 
 Redis is an **optimiser, never a gate**: on Redis loss, account-state falls
@@ -79,14 +79,14 @@ OAuth 3,000, MFA 2,000, audit 1,000 RPS.
 
 ## Bottlenecks and mitigations
 
-| Bottleneck | Mitigation |
-| ---------- | ---------- |
-| Argon2id CPU cost | Parallelizes to CPU count; vertical-size or dedicated sign-in workers; tune `memoryCost`/`timeCost` |
-| Mongo pool / slow queries | Bounded pool (100/node); read replicas for session/account reads; profiler on `system.profile` |
-| Redis saturation | Cluster mode; durable Mongo counter as outage fallback |
-| RSA sign/verify | Local-only; cached JWKS; rotate ~30-day keys so `kid` stays hot |
-| Audit writes | Fire-and-forget sink, buffered flush (`/v1/admin/metrics/flush`), off the hot path |
-| Refresh rotation contention | Mongo transaction + atomic `active → rotating` claim: one winner per token |
+| Bottleneck                  | Mitigation                                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------------------------- |
+| Argon2id CPU cost           | Parallelizes to CPU count; vertical-size or dedicated sign-in workers; tune `memoryCost`/`timeCost` |
+| Mongo pool / slow queries   | Bounded pool (100/node); read replicas for session/account reads; profiler on `system.profile`      |
+| Redis saturation            | Cluster mode; durable Mongo counter as outage fallback                                              |
+| RSA sign/verify             | Local-only; cached JWKS; rotate ~30-day keys so `kid` stays hot                                     |
+| Audit writes                | Fire-and-forget sink, buffered flush (`/v1/admin/metrics/flush`), off the hot path                  |
+| Refresh rotation contention | Mongo transaction + atomic `active → rotating` claim: one winner per token                          |
 
 ## How to measure
 

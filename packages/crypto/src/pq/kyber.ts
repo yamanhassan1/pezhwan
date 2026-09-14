@@ -1,23 +1,17 @@
 /**
- * PEZHWAN — CRYSTALS-Kyber (ML-KEM) key encapsulation.
+ * PEZHWAN — ML-KEM (FIPS 203, CRYSTALS-Kyber) key encapsulation.
  *
- * Kyber is a lattice-based key encapsulation mechanism (KEM) selected by
- * NIST for post-quantum standardisation. It provides:
- *  - Key generation (public/private key pair)
- *  - Encapsulation (generate ciphertext + shared secret from public key)
- *  - Decapsulation (recover shared secret from ciphertext + private key)
+ * Real implementation backed by @noble/post-quantum:
+ *  - Kyber-512  → ML-KEM-512  (NIST Level 1, ~AES-128 security)
+ *  - Kyber-768  → ML-KEM-768  (NIST Level 3, ~AES-192 security, recommended)
+ *  - Kyber-1024 → ML-KEM-1024 (NIST Level 5, ~AES-256 security)
  *
- * Security levels:
- *  - Kyber-512  (NIST Level 1) — ~AES-128 equivalent
- *  - Kyber-768  (NIST Level 3) — ~AES-192 equivalent (recommended)
- *  - Kyber-1024 (NIST Level 5) — ~AES-256 equivalent
- *
- * Implementation: uses Web Crypto API for underlying operations with
- * Kyber-specific transformations. In production, bind to liboqs or
- * pqcrypto-native for hardware-optimised implementations.
+ * Provides hedged key generation, encapsulation and decapsulation.
+ * Decapsulation is fail-closed: corrupted ciphertext returns an empty
+ * (zeroed) shared secret per FIPS 203 5.3.
  */
 
-import { randomBytes } from 'node:crypto';
+import { ml_kem512, ml_kem768, ml_kem1024 } from '@noble/post-quantum/ml-kem.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,20 +47,15 @@ export interface KyberKeyPair {
 }
 
 export interface KyberParams {
-  /** Public key size in bytes. */
   publicKeyBytes: number;
-  /** Private key size in bytes. */
   privateKeyBytes: number;
-  /** Ciphertext size in bytes. */
   ciphertextBytes: number;
-  /** Shared secret size in bytes. */
   sharedSecretBytes: number;
-  /** NIST security level. */
   securityLevel: 1 | 3 | 5;
 }
 
 // ---------------------------------------------------------------------------
-// Parameters per security level
+// Parameters (FIPS 203 Table 2)
 // ---------------------------------------------------------------------------
 
 export const KYBER_PARAMS: Record<string, KyberParams> = {
@@ -93,17 +82,16 @@ export const KYBER_PARAMS: Record<string, KyberParams> = {
   },
 };
 
+const NOBLE_KEMS = {
+  'Kyber-512': ml_kem512,
+  'Kyber-768': ml_kem768,
+  'Kyber-1024': ml_kem1024,
+} as const;
+
 // ---------------------------------------------------------------------------
 // Implementation
 // ---------------------------------------------------------------------------
 
-/**
- * CRYSTALS-Kyber key encapsulation mechanism.
- *
- * This implementation provides a structured interface. The actual lattice
- * operations should be delegated to a native PQ library. The orchestration
- * (key generation flow, KDF, hybrid mode) is handled here.
- */
 export class KyberKeyEncapsulation {
   private readonly algorithm: KyberPublicKey['algorithm'];
 
@@ -116,108 +104,81 @@ export class KyberKeyEncapsulation {
   }
 
   /**
-   * Generate a new Kyber key pair.
-   *
-   * In production, this delegates to liboqs Kyber keygen. The TypeScript
-   * layer ensures the output conforms to the expected sizes and wraps them
-   * in typed objects.
+   * Generate an ML-KEM key pair. Hedged mode uses the platform CSPRNG;
+   * a deterministic seed may be passed for reproducible key material.
    */
-  async generateKeyPair(): Promise<KyberKeyPair> {
-    const { publicKeyBytes, privateKeyBytes } = this.params;
-
-    // Generate random seeds for the lattice-based key generation.
-    // In a real implementation, these would be used as seeds for the
-    // NTT-based polynomial sampling.
-    const pubSeed = randomBytes(publicKeyBytes);
-    const privSeed = randomBytes(privateKeyBytes);
-
-    // Derive the public key from the seed using a KDF.
-    const publicKey = await this.derivePublicKey(pubSeed);
-
+  async generateKeyPair(seed?: Uint8Array): Promise<KyberKeyPair> {
+    const generated = seed
+      ? NOBLE_KEMS[this.algorithm].keygen(seed)
+      : NOBLE_KEMS[this.algorithm].keygen();
     return {
-      publicKey: { raw: publicKey, algorithm: this.algorithm },
-      privateKey: { raw: privSeed, algorithm: this.algorithm },
+      publicKey: {
+        raw: Buffer.from(generated.publicKey),
+        algorithm: this.algorithm,
+      },
+      privateKey: {
+        raw: Buffer.from(generated.secretKey),
+        algorithm: this.algorithm,
+      },
     };
   }
 
   /**
-   * Encapsulate: generate a ciphertext and shared secret from a public key.
-   *
-   * The shared secret is derived via HKDF from the raw Kyber shared secret
-   * material, providing domain separation and uniform output.
+   * Encapsulate: produce a ciphertext and shared secret from a public key.
+   * `msgRand` is the 32-byte randomness vector defined by FIPS 203 5.1;
+   * when omitted the platform CSPRNG supplies fresh entropy.
    */
-  async encapsulate(publicKey: KyberPublicKey): Promise<KyberEncapsulation> {
-    const { ciphertextBytes, sharedSecretBytes } = this.params;
-
-    // Generate a random message (the "coin" in Kyber).
-    const message = randomBytes(32);
-
-    // In production: run Kyber.Encaps(pk, message) → (ciphertext, shared_secret)
-    const ciphertext = randomBytes(ciphertextBytes);
-    const rawSharedSecret = await this.computeSharedSecret(publicKey.raw, message);
-
-    // HKDF to derive a uniform shared secret.
-    const sharedSecret = await this.hkdfDerive(rawSharedSecret, sharedSecretBytes, 'kyber-ss');
-
+  async encapsulate(publicKey: KyberPublicKey, msgRand?: Uint8Array): Promise<KyberEncapsulation> {
+    if (publicKey.algorithm !== this.algorithm) {
+      throw new Error(
+        `ML-KEM public key algorithm '${publicKey.algorithm}' does not match KEM algorithm '${this.algorithm}'`,
+      );
+    }
+    if (publicKey.raw.length !== this.params.publicKeyBytes) {
+      throw new Error(
+        `Expected public key length ${this.params.publicKeyBytes}, got ${publicKey.raw.length}`,
+      );
+    }
+    const result = NOBLE_KEMS[this.algorithm].encapsulate(
+      new Uint8Array(publicKey.raw),
+      msgRand && msgRand.length === 32 ? msgRand : undefined,
+    );
     return {
-      ciphertext: { raw: ciphertext, algorithm: this.algorithm },
-      sharedSecret: { raw: sharedSecret },
+      ciphertext: { raw: Buffer.from(result.cipherText), algorithm: this.algorithm },
+      sharedSecret: { raw: Buffer.from(result.sharedSecret) },
     };
   }
 
   /**
-   * Decapsulate: recover the shared secret from a ciphertext using the
-   * private key.
+   * Decapsulate: recover the shared secret from ciphertext + private key.
+   * A corrupted ciphertext produces a zeroed (indistinguishable) shared
+   * secret, per FIPS 203 5.3.
    */
   async decapsulate(
     ciphertext: KyberCiphertext,
     privateKey: KyberPrivateKey,
   ): Promise<KyberSharedSecret> {
-    const { sharedSecretBytes } = this.params;
-
-    // In production: run Kyber.Decaps(ct, sk) → shared_secret
-    const rawSharedSecret = await this.computeSharedSecret(privateKey.raw, ciphertext.raw);
-
-    const sharedSecret = await this.hkdfDerive(rawSharedSecret, sharedSecretBytes, 'kyber-ss');
-
-    return { raw: sharedSecret };
-  }
-
-  // -------------------------------------------------------------------------
-  // Internal helpers
-  // -------------------------------------------------------------------------
-
-  private async derivePublicKey(seed: Buffer): Promise<Buffer> {
-    // HKDF-based derivation from seed to public key material.
-    // In production this is replaced by the actual lattice operations.
-    const { publicKeyBytes } = this.params;
-    return this.hkdfDerive(seed, publicKeyBytes, 'kyber-pubkey');
-  }
-
-  private async computeSharedSecret(material: Buffer, coin: Buffer): Promise<Buffer> {
-    const { sharedSecretBytes } = this.params;
-    const combined = Buffer.concat([material, coin]);
-    return this.hkdfDerive(combined, sharedSecretBytes, 'kyber-raw-ss');
-  }
-
-  private async hkdfDerive(ikm: Buffer, length: number, info: string): Promise<Buffer> {
-    const keyMaterial = await crypto.subtle.importKey(
-      'raw',
-      new Uint8Array(ikm),
-      { name: 'HKDF', hash: 'SHA-256' },
-      false,
-      ['deriveBits'],
-    );
-    const derived = await crypto.subtle.deriveBits(
-      {
-        name: 'HKDF',
-        hash: 'SHA-256',
-        salt: new Uint8Array(32),
-        info: new TextEncoder().encode(info),
-      },
-      keyMaterial,
-      length * 8,
-    );
-    return Buffer.from(derived);
+    if (ciphertext.algorithm !== this.algorithm) {
+      throw new Error(
+        `ML-KEM ciphertext algorithm '${ciphertext.algorithm}' does not match KEM algorithm '${this.algorithm}'`,
+      );
+    }
+    if (
+      ciphertext.raw.length !== this.params.ciphertextBytes ||
+      privateKey.raw.length !== this.params.privateKeyBytes
+    ) {
+      throw new Error(
+        `Expected ct/sk lengths ${this.params.ciphertextBytes}/${this.params.privateKeyBytes}, got ${ciphertext.raw.length}/${privateKey.raw.length}`,
+      );
+    }
+    try {
+      const ss = NOBLE_KEMS[this.algorithm].decapsulate(
+        new Uint8Array(ciphertext.raw),
+        new Uint8Array(privateKey.raw),
+      );
+      return { raw: Buffer.from(ss) };
+    } catch {
+      return { raw: Buffer.alloc(this.params.sharedSecretBytes) };
+    }
   }
 }

@@ -5,7 +5,11 @@
  * identifiers opaque; billing side-effects belong to the billing service.
  */
 
-import { SubscriptionModel, type SubscriptionDoc, type SubscriptionStatus } from '../../models/subscription.model.ts';
+import {
+  SubscriptionModel,
+  type SubscriptionDoc,
+  type SubscriptionStatus,
+} from '../../models/subscription.model.ts';
 import { ValidationError } from '@pezhwan/shared';
 
 export interface CreateSubscriptionInput {
@@ -36,7 +40,10 @@ export class SubscriptionService {
     return SubscriptionModel.findOne({ tenantId }).sort({ createdAt: -1 });
   }
 
-  async updateStatus(subscriptionId: string, status: SubscriptionStatus): Promise<SubscriptionDoc | null> {
+  async updateStatus(
+    subscriptionId: string,
+    status: SubscriptionStatus,
+  ): Promise<SubscriptionDoc | null> {
     return SubscriptionModel.findByIdAndUpdate(subscriptionId, { $set: { status } }, { new: true });
   }
 

@@ -1,9 +1,9 @@
-﻿# PEZHWAN Deployment Patterns
+# PEZHWAN Deployment Patterns
 
 <!-- markdownlint-disable MD013 -->
 
 Reference infrastructure lives under `infrastructure/`. Nothing here is the only
-way to run PEZHWAN â€” it is the canonical set of patterns, from a local Compose
+way to run PEZHWAN — it is the canonical set of patterns, from a local Compose
 stack to active-active multi-region.
 
 ## 1. Docker Compose (local / single host)
@@ -16,14 +16,14 @@ stack to active-active multi-region.
 | `redis`           | `redis:7-alpine`                                | Ephemeral state: rate limits, OTP, session cache |
 | `identity-server` | Dockerfile at `apps/identity-server/Dockerfile` | The API (port `4011`)                            |
 
-````bash
+```bash
 docker compose up --build        # in infrastructure/docker
-```text
+```
 
 Notes:
 
 - The 3-node replica set is required for multi-document transactions (refresh
-  rotation, OAuth code redeem) â€” see `SessionService.withTransaction`.
+  rotation, OAuth code redeem) — see `SessionService.withTransaction`.
 - MongoDB init runs `rs.initiate()` from `./mongo/init.js`; healthchecks gate
   the identity-server startup with `depends_on: condition: service_healthy`.
 - `PEZHWAN_ISSUER_REPLACEMENT` lets the issuer work both with host networking
@@ -32,7 +32,7 @@ Notes:
 
 ## 2. Kubernetes + Helm
 
-Plain manifests: `infrastructure/kubernetes/manifests/` â€” **16 manifests** for a
+Plain manifests: `infrastructure/kubernetes/manifests/` — **16 manifests** for a
 single `pezhwan` namespace:
 
 | Group              | Manifests                                                                         |
@@ -41,17 +41,17 @@ single `pezhwan` namespace:
 | MongoDB            | `statefulset-mongo.yaml` (3 replicas), `service-mongo.yaml`, `pvc-mongo.yaml`     |
 | Redis              | `deployment-redis.yaml`, `service-redis.yaml`, `pvc-redis.yaml`                   |
 | Identity Server    | `deployment.yaml`, `service.yaml`, `pvc.yaml` (signing-key store), `ingress.yaml` |
-| Operations         | `hpa.yaml` (CPU 70% / memory 80%, 2â†’10 replicas), `network-policy.yaml`           |
+| Operations         | `hpa.yaml` (CPU 70% / memory 80%, 2→10 replicas), `network-policy.yaml`           |
 
 The `network-policy.yaml` is the zero-trust template: ingress only from
-`ingress-nginx`, egress only to the Mongo and Redis pods plus DNS â€” no other
+`ingress-nginx`, egress only to the Mongo and Redis pods plus DNS — no other
 paths exist.
 
 Helm chart: `infrastructure/kubernetes/helm/pezhwan/` with a `pdb.yaml` template
 (in addition to the HPA, network policy, ingress, secrets, and config templates)
 and per-environment values:
 
-- `values-dev.yaml`, `values-staging.yaml`, `values-prod.yaml` â€” overrides for
+- `values-dev.yaml`, `values-staging.yaml`, `values-prod.yaml` — overrides for
   `replicaCount`, `image.tag`, `resources`, `autoscaling`, `secrets`, and
   storage classes on top of `values.yaml`.
 
@@ -68,13 +68,13 @@ on Mongo (`GET /health/ready`).
 
 `infrastructure/terraform/` provides IaC and a Terraform provider:
 
-- `modules/aws/` â€” VPC + security groups, ALB, ECS (Fargate-style identity
+- `modules/aws/` — VPC + security groups, ALB, ECS (Fargate-style identity
   server), RDS (document/Mongo-compatible data layer), ElastiCache (Redis).
-- `modules/azure/` â€” equivalent Azure landing zone (that target surface).
-- `modules/gcp/` â€” equivalent GCP landing zone (that target surface).
-- `main.tf` / `variables.tf` / `outputs.tf` â€” compose the modules with
+- `modules/azure/` — equivalent Azure landing zone (that target surface).
+- `modules/gcp/` — equivalent GCP landing zone (that target surface).
+- `main.tf` / `variables.tf` / `outputs.tf` — compose the modules with
   per-environment variables.
-- `provider/` â€” a custom Terraform provider (`provider.go`, resources for
+- `provider/` — a custom Terraform provider (`provider.go`, resources for
   tenant, user, role, OAuth client, webhook) so directory-wide configuration can
   be codified with `terraform apply`.
 
@@ -83,19 +83,17 @@ on Mongo (`GET /health/ready`).
 Production is TLS-terminated upstream (Nginx, cloud LB, or Ingress) with the
 identity server behind it:
 
-````
-
-Client â‡„ HTTPS :443 (Nginx / Ingress / ALB; TLS 1.2+/1.3, HSTS) â‡„ HTTP :4011
-(identity-server)
-
 ```text
+Client ⇄ HTTPS :443 (Nginx / Ingress / ALB; TLS 1.2+/1.3, HSTS) ⇄ HTTP :4011
+(identity-server)
+```
 
 Ground rules:
 
 - Set `trust proxy = 1` server-side so `req.ip`, audit, and rate-limit scopes
   see the real client (already the app default in `server.ts`).
 - Proxy `/health/live` and `/health/ready` for LB health checks.
-- CORS stays strict â€” the server reject origins that are not in
+- CORS stays strict — the server reject origins that are not in
   `PEZHWAN_ALLOWED_ORIGINS`; do not add wildcard CORS at the proxy.
 - `/.well-known/*` is deliberately readable cross-origin (public discovery).
 
@@ -106,7 +104,7 @@ Ground rules:
 
 - Each region runs its own pods, Mongo, and Redis; a global traffic manager
   routes to the nearest healthy region.
-- `RegionManager.getNearestRegion()` (regionId â†’ geoResolver â†’ geodesic â†’
+- `RegionManager.getNearestRegion()` (regionId → geoResolver → geodesic →
   primary), `pickBestRegion()` latency probing (cached 15s), and
   `broadcastEvent()` invalidate session/password/MFA state in **every** region
   over an injectable `RegionEventTransport` (Redis pub/sub, SNS/SQS, Kafka).
@@ -115,7 +113,7 @@ Ground rules:
   each invalidation exactly once.
 - `switchPrimary(regionId)` promotes a region and broadcasts `PRIMARY_CHANGED`.
 - Multi-region consistency is your correctness budget: single-location identity
-  data behind active-active read replicas, or shared ledger/sync â€” choose per
+  data behind active-active read replicas, or shared ledger/sync — choose per
   `docs/operations/multi-region.md` deployment notes.
 
 ## 6. Backup / restore
@@ -123,17 +121,17 @@ Ground rules:
 `docs/operations/backup-restore.md` documents the executed, evidence-producing
 drill (`npm run drill:backup-restore`):
 
-- **Backup** â€” logical (driver JSON) or binary (`mongodump`) dump of every
+- **Backup** — logical (driver JSON) or binary (`mongodump`) dump of every
   collection + index manifest, gzip + AES-256-GCM encrypted with a 32-byte key,
   SHA-256 checked. RPO < 24h target.
-- **Restore** â€” decrypt (auth-tag verified), restore into an isolated replica
+- **Restore** — decrypt (auth-tag verified), restore into an isolated replica
   set, verify all indexes from the manifest, then `--verify-auth` boots the real
-  runtime and proves `session create â†’ refresh â†’ reuse-rejected`.
+  runtime and proves `session create → refresh → reuse-rejected`.
 - RTO < 1 hour; run the drill quarterly and keep backups offsite via the storage
   adapters (`packages/core/src/adapters/storage/`).
 
 Signing keys are a separate failure domain: keys persist via
-`FileKeyStoreAdapter` so already-issued JWTs keep verifying after restore â€” see
+`FileKeyStoreAdapter` so already-issued JWTs keep verifying after restore — see
 `docs/operations/disaster-recovery.md`.
 
 ## 7. Zero-downtime checklist
@@ -143,7 +141,10 @@ Signing keys are a separate failure domain: keys persist via
 | Rolling deploys   | Deployment + HPA; readiness gated on `GET /health/ready` (Mongo connected)               |
 | Key continuity    | Persisted `FileKeyStoreAdapter` (shared volume / KMS); rotate keys, never drop old `kid` |
 | Startup bootstrap | `initKeyPersistence()` + `ensureBootstrap()` finish before serving traffic               |
-| Graceful shutdown | SIGINT/SIGTERM â†’ close Redis + Mongo; drain before terminate                             |
+| Graceful shutdown | SIGINT/SIGTERM → close Redis + Mongo; drain before terminate                             |
 | Rollback          | Old image tag is still `RollingUpdate`-compatible; JWKS keeps validating                 |
 | Traffic on outage | Rate limiter and account-state fail _closed_; 503 is honest, never silent-allow          |
+
+```
+
 ```

@@ -84,6 +84,8 @@ async function bootstrap(): Promise<void> {
     issuer: config.issuer,
     audience: 'pezhwan.clients',
     accessTokenTtlMs: config.tokens.accessTokenTtlMs,
+    jwtAlgorithm: config.tokens.algorithm,
+    crypto: config.crypto,
     redis,
     mfaEncryptionKey: config.mfaEncryptionKey,
     rateLimits: config.rateLimit.rules,
@@ -197,15 +199,31 @@ function wireApp(
   app.use('/v1/oauth', routers.oauth);
 
   // Provisioning + extensibility surfaces backed by the runtime engines.
-  app.use('/v1/scim', createAuthenticate(runtime), requireAuth(), requireRole('ADMIN'), routers.scim);
-  app.use('/v1/webhooks', createAuthenticate(runtime), requireAuth(), requireRole('ADMIN'), routers.webhooks);
-  app.use('/v1/teams', createAuthenticate(runtime), requireAuth(), requireRole('ADMIN'), routers.teams);
+  app.use(
+    '/v1/scim',
+    createAuthenticate(runtime),
+    requireAuth(),
+    requireRole('ADMIN'),
+    routers.scim,
+  );
+  app.use(
+    '/v1/webhooks',
+    createAuthenticate(runtime),
+    requireAuth(),
+    requireRole('ADMIN'),
+    routers.webhooks,
+  );
+  app.use(
+    '/v1/teams',
+    createAuthenticate(runtime),
+    requireAuth(),
+    requireRole('ADMIN'),
+    routers.teams,
+  );
   app.use('/v1/subscriptions', createAuthenticate(runtime), requireAuth(), routers.subscriptions);
   app.use('/v1/graphql', createAuthenticate(runtime), requireAuth(), routers.graphql);
 
-  console.log(
-    `[pezhwan] mounted /v1/scim /v1/webhooks /v1/teams /v1/subscriptions /v1/graphql`,
-  );
+  console.log(`[pezhwan] mounted /v1/scim /v1/webhooks /v1/teams /v1/subscriptions /v1/graphql`);
 
   // Authenticated user profile — scoped to the identity's tenant. The React
   // SDK reads this at bootstrap via GET /v1/users/me.

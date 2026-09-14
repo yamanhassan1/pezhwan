@@ -44,4 +44,5 @@ const SubscriptionSchema = new Schema<SubscriptionDoc>(
 );
 
 export const SubscriptionModel: Model<SubscriptionDoc> =
-  (models.Subscription as Model<SubscriptionDoc>) ?? model<SubscriptionDoc>('Subscription', SubscriptionSchema);
+  (models.Subscription as Model<SubscriptionDoc>) ??
+  model<SubscriptionDoc>('Subscription', SubscriptionSchema);

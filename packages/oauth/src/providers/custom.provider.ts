@@ -18,10 +18,7 @@ export interface CustomProviderOptions {
   scope?: string;
   extraAuthParams?: Record<string, string>;
   /** Preferred: resolves the profile without assumptions about the IdP. */
-  profileResolver?: (
-    accessToken: string,
-    idToken?: string,
-  ) => Promise<ProviderProfile>;
+  profileResolver?: (accessToken: string, idToken?: string) => Promise<ProviderProfile>;
   /** Fallback mapping used when no resolver is supplied (id_token claims). */
   fieldMapping?: {
     subject?: string;

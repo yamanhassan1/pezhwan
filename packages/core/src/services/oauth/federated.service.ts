@@ -34,7 +34,11 @@ export interface FederatedResolution {
 
 export class FederatedIdentityService {
   /** Finds a local user by provider+subject within a tenant. */
-  async findByProvider(tenantId: string, provider: string, subject: string): Promise<UserDoc | null> {
+  async findByProvider(
+    tenantId: string,
+    provider: string,
+    subject: string,
+  ): Promise<UserDoc | null> {
     return UserModel.findOne({
       tenantId,
       'identities.provider': provider,
@@ -44,11 +48,7 @@ export class FederatedIdentityService {
 
   /** Links an identity to an existing user or provisions a new one. */
   async resolve(input: LinkIdentityInput): Promise<FederatedResolution> {
-    const existing = await this.findByProvider(
-      input.tenantId,
-      input.provider,
-      input.subject,
-    );
+    const existing = await this.findByProvider(input.tenantId, input.provider, input.subject);
     if (existing) {
       return { user: existing, linked: false };
     }

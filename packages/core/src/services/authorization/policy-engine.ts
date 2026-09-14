@@ -7,16 +7,7 @@
  */
 
 export type PolicyOperator =
-  | 'eq'
-  | 'ne'
-  | 'in'
-  | 'not_in'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'exists'
-  | 'match';
+  'eq' | 'ne' | 'in' | 'not_in' | 'gt' | 'gte' | 'lt' | 'lte' | 'exists' | 'match';
 
 export interface PolicyRule {
   /** Dot-notation path into the decision context (e.g. "user.roles"). */

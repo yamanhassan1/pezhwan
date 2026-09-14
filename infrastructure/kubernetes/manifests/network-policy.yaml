@@ -39,7 +39,7 @@ spec:
       ports:
         - port: 6379
           protocol: TCP
-    - to: []    # allow DNS resolution
+    - to: [] # allow DNS resolution
       ports:
         - port: 53
           protocol: UDP

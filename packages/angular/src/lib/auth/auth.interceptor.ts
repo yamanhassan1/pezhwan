@@ -7,7 +7,13 @@
  */
 
 import { Injectable, inject } from '@angular/core';
-import { HTTP_INTERCEPTORS, type HttpEvent, type HttpHandler, type HttpInterceptor, type HttpRequest } from '@angular/common/http';
+import {
+  HTTP_INTERCEPTORS,
+  type HttpEvent,
+  type HttpHandler,
+  type HttpInterceptor,
+  type HttpRequest,
+} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service.ts';
 

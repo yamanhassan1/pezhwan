@@ -53,8 +53,9 @@ export class SecurityHeaders {
     };
     const csp = this.options.csp ?? DEFAULT_CSP;
     headers['Content-Security-Policy'] = csp;
-    const frame =
-      this.options.frameAncestors?.length ? `frame-ancestors ${this.options.frameAncestors.join(' ')}` : undefined;
+    const frame = this.options.frameAncestors?.length
+      ? `frame-ancestors ${this.options.frameAncestors.join(' ')}`
+      : undefined;
     if (frame && this.options.csp) {
       headers['Content-Security-Policy'] = `${this.options.csp}; ${frame}`;
     }

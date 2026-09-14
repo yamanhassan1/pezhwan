@@ -15,11 +15,7 @@ import {
   WebAuthnCredentialModel,
   type PezhwanRuntime,
 } from '@pezhwan/core';
-import {
-  createAuthenticate,
-  requireAuth,
-  type PezhwanRequest,
-} from '@pezhwan/express';
+import { createAuthenticate, requireAuth, type PezhwanRequest } from '@pezhwan/express';
 
 const PORT = Number(process.env.PORT ?? 5178);
 const TENANT_ID = process.env.TENANT_ID ?? 'dev-tenant';
@@ -29,7 +25,8 @@ const AUDIENCE = 'pezhwan.clients';
 const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/pezhwan';
 // 32 bytes: must decode to exactly 32 bytes for AES-256-GCM (MfaService throws
 // INVALID_MFA_ENCRYPTION_KEY otherwise). Override via MFA_ENCRYPTION_KEY in .env.
-const MFA_ENC_KEY = process.env.MFA_ENCRYPTION_KEY ?? 'cGV6aHdhbi1kZW1vLW1mYS1rZXktMDEyMzQ1Njc4OWE=';
+const MFA_ENC_KEY =
+  process.env.MFA_ENCRYPTION_KEY ?? 'cGV6aHdhbi1kZW1vLW1mYS1rZXktMDEyMzQ1Njc4OWE=';
 
 await mongoose.connect(MONGODB_URI);
 
@@ -63,24 +60,23 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, '.')));
 
-const h = (fn: (req: PezhwanRequest, res: express.Response) => Promise<unknown>) => (
-  req: PezhwanRequest,
-  res: express.Response,
-): void => {
-  fn(req, res).then(
-    (data) => res.json({ success: true, data }),
-    (err: { code?: string; message?: string; status?: number }) => {
-      const status = err.status ?? (err.code ? 400 : 500);
-      res.status(status).json({
-        success: false,
-        error: {
-          code: err.code ?? 'ERROR',
-          message: err.message ?? 'Unexpected error',
-        },
-      });
-    },
-  );
-};
+const h =
+  (fn: (req: PezhwanRequest, res: express.Response) => Promise<unknown>) =>
+  (req: PezhwanRequest, res: express.Response): void => {
+    fn(req, res).then(
+      (data) => res.json({ success: true, data }),
+      (err: { code?: string; message?: string; status?: number }) => {
+        const status = err.status ?? (err.code ? 400 : 500);
+        res.status(status).json({
+          success: false,
+          error: {
+            code: err.code ?? 'ERROR',
+            message: err.message ?? 'Unexpected error',
+          },
+        });
+      },
+    );
+  };
 
 const auth = createAuthenticate(runtime);
 
@@ -178,12 +174,7 @@ app.post(
     const existingIds = (await webauthn.listCredentials(identity.userId)).map(
       (c) => c.credentialId,
     );
-    const result = await webauthn.beginRegistration(
-      identity.userId,
-      email,
-      email,
-      existingIds,
-    );
+    const result = await webauthn.beginRegistration(identity.userId, email, email, existingIds);
     return { options: result.options, expectedChallenge: result.expectedChallenge };
   }),
 );

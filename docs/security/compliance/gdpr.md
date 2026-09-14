@@ -9,12 +9,12 @@ and what remains the organization's responsibility.
 
 ## 1. Personal data Pezhwan processes
 
-| Category           | Examples                                                        |
-| ------------------ | --------------------------------------------------------------- |
-| Identifiers        | Email, phone, user ID, tenant ID, IP address                   |
-| Authentication     | Argon2id password hash, MFA secret, backup codes, session data |
-| Security metadata  | Login IP/geo, user agent, device, risk scores                  |
-| Account metadata   | Roles, permissions, timestamps, lockout state                  |
+| Category          | Examples                                                       |
+| ----------------- | -------------------------------------------------------------- |
+| Identifiers       | Email, phone, user ID, tenant ID, IP address                   |
+| Authentication    | Argon2id password hash, MFA secret, backup codes, session data |
+| Security metadata | Login IP/geo, user agent, device, risk scores                  |
+| Account metadata  | Roles, permissions, timestamps, lockout state                  |
 
 Passwords exist only as Argon2id hashes; MFA secrets are base64 with
 `select:false`. Neither is ever included in exports.
@@ -47,15 +47,15 @@ endpoint after the organization verifies the requester's identity.
 
 ## 3. What requires deployment process
 
-| Requirement                       | Responsibility                                            |
-| --------------------------------- | --------------------------------------------------------- |
-| Lawful basis for processing       | Organization documents (consent/contract/legitimate interest) |
-| Consent management                | Organization implements collection and withdrawal         |
-| DPIA                              | Organization conducts under Art. 35                       |
-| Processor agreements / SCCs       | Organization executes DPAs and transfer safeguards        |
-| Retention schedule                | Organization defines windows; Pezhwan hard-purge is the enforcement step |
-| Breach notification (72h)         | Organization notifies the supervisory authority           |
-| Privacy notice                    | Organization publishes; data categories above feed the notice |
+| Requirement                 | Responsibility                                                           |
+| --------------------------- | ------------------------------------------------------------------------ |
+| Lawful basis for processing | Organization documents (consent/contract/legitimate interest)            |
+| Consent management          | Organization implements collection and withdrawal                        |
+| DPIA                        | Organization conducts under Art. 35                                      |
+| Processor agreements / SCCs | Organization executes DPAs and transfer safeguards                       |
+| Retention schedule          | Organization defines windows; Pezhwan hard-purge is the enforcement step |
+| Breach notification (72h)   | Organization notifies the supervisory authority                          |
+| Privacy notice              | Organization publishes; data categories above feed the notice            |
 
 ## 4. Deployment checklist
 

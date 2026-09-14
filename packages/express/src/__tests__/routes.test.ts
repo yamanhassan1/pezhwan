@@ -3,11 +3,7 @@ import { test } from 'node:test';
 
 import express from 'express';
 import type { Express } from 'express';
-import {
-  jwksHandler,
-  discoveryHandler,
-  rateLimit,
-} from '@pezhwan/express';
+import { jwksHandler, discoveryHandler, rateLimit } from '@pezhwan/express';
 import { createPezhwan } from '@pezhwan/core';
 
 let runtime: ReturnType<typeof createPezhwan>;
@@ -21,10 +17,18 @@ function buildApp(): Express {
     res.json({ success: true, data: { status: 'ok' } });
   });
   app.use(
-    (err: { status?: number; code?: string; message?: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    (
+      err: { status?: number; code?: string; message?: string },
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction,
+    ) => {
       res.status(err.status ?? 500).json({
         success: false,
-        error: { code: (err as { code?: string }).code ?? 'INTERNAL', message: err.message ?? 'Error' },
+        error: {
+          code: (err as { code?: string }).code ?? 'INTERNAL',
+          message: err.message ?? 'Error',
+        },
       });
     },
   );

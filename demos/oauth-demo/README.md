@@ -20,11 +20,11 @@ a public client, authorize with a signed-in user, exchange the single-use code
 
 ## Key files
 
-| File | Role |
-|------|------|
-| `server.ts` | Express app: runtime, durable keys, client bootstrap, authorize/exchange/refresh routes |
+| File         | Role                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------ |
+| `server.ts`  | Express app: runtime, durable keys, client bootstrap, authorize/exchange/refresh routes    |
 | `index.html` | SPA — user session, client fetch, authorize redirect, token display, token validate/rotate |
-| `keys/` | Durable signing keys created on first boot by `initKeyPersistence` |
+| `keys/`      | Durable signing keys created on first boot by `initKeyPersistence`                         |
 
 ### API surface (`server.ts`)
 
@@ -38,17 +38,17 @@ a public client, authorize with a signed-in user, exchange the single-use code
 ## Required configuration
 
 **Self-contained.** The demo embeds `@pezhwan/core` and connects directly to
-MongoDB — it does *not* call the identity-server. `ISSUER` defaults to
+MongoDB — it does _not_ call the identity-server. `ISSUER` defaults to
 `http://localhost:4011` purely to stamp the same `iss` claim the identity-server
 uses, so tokens share the same contract.
 
-| Environment variable | Default | Purpose |
-|---|---|---|
-| `MONGODB_URI` | `mongodb://localhost:27017/pezhwan` | Shared database |
-| `PORT` | `5180` | HTTP listen port |
-| `TENANT_ID` | `dev-tenant` | Tenant the demo runs as |
-| `APPLICATION_ID` | `dev-app` | Application within the tenant |
-| `ISSUER` | `http://localhost:4011` | JWT `iss` claim |
+| Environment variable | Default                             | Purpose                       |
+| -------------------- | ----------------------------------- | ----------------------------- |
+| `MONGODB_URI`        | `mongodb://localhost:27017/pezhwan` | Shared database               |
+| `PORT`               | `5180`                              | HTTP listen port              |
+| `TENANT_ID`          | `dev-tenant`                        | Tenant the demo runs as       |
+| `APPLICATION_ID`     | `dev-app`                           | Application within the tenant |
+| `ISSUER`             | `http://localhost:4011`             | JWT `iss` claim               |
 
 **OAuth redirect URI** — the client is registered with
 `http://localhost:5180/callback`. The same literal value is hard-coded in
@@ -66,7 +66,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
    npm install
    npm run build
    ```
-2. *Full-stack context only — not required.* Start the identity-server on 4011:
+2. _Full-stack context only — not required._ Start the identity-server on 4011:
    ```bash
    npm run dev -w @pezhwan/identity-server
    ```

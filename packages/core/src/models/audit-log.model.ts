@@ -3,4 +3,9 @@
  *
  * Re-exported from the canonical model definition (includes audit sequence).
  */
-export { AuditLogDoc, AuditLogModel, AuditSequenceDoc, AuditSequenceModel } from './auditLog.model.ts';
+export {
+  AuditLogDoc,
+  AuditLogModel,
+  AuditSequenceDoc,
+  AuditSequenceModel,
+} from './auditLog.model.ts';

@@ -16,7 +16,9 @@ export class ReplayService {
 
   /** Replays a stream into the given projection state. */
   replay(streamId: string, state: ProjectionState): Promise<ProjectionState> {
-    return this.store.read(streamId, state.version).then((events) => this.projector.apply(state, events));
+    return this.store
+      .read(streamId, state.version)
+      .then((events) => this.projector.apply(state, events));
   }
 
   /** Re-evaluates projections for a single stream from scratch. */

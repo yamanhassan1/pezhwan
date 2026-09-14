@@ -21,7 +21,11 @@
         --radius: 14px;
         --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
       }
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
       body {
         background: var(--bg);
         color: var(--text);
@@ -32,10 +36,23 @@
         justify-content: center;
         padding: 24px 16px;
       }
-      .wrap { width: 100%; max-width: 540px; }
-      header { text-align: center; margin-bottom: 18px; }
-      header h1 { font-size: 1.7rem; letter-spacing: -0.04em; }
-      header .sub { color: var(--text-soft); font-size: .88rem; margin-top: 4px; }
+      .wrap {
+        width: 100%;
+        max-width: 540px;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 18px;
+      }
+      header h1 {
+        font-size: 1.7rem;
+        letter-spacing: -0.04em;
+      }
+      header .sub {
+        color: var(--text-soft);
+        font-size: 0.88rem;
+        margin-top: 4px;
+      }
       .card {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -44,64 +61,169 @@
         margin-bottom: 14px;
         box-shadow: var(--shadow);
       }
-      .card h2 { font-size: 1rem; margin-bottom: 14px; }
+      .card h2 {
+        font-size: 1rem;
+        margin-bottom: 14px;
+      }
       .card h3 {
-        font-size: .72rem; color: var(--text-muted); text-transform: uppercase;
-        letter-spacing: .08em; font-weight: 700; margin-bottom: 10px;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        margin-bottom: 10px;
       }
-      hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-      .form-row { margin-bottom: 12px; }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 16px 0;
+      }
+      .form-row {
+        margin-bottom: 12px;
+      }
       .form-row label {
-        display: block; font-size: .78rem; color: var(--text-soft);
-        margin-bottom: 6px; font-weight: 600;
+        display: block;
+        font-size: 0.78rem;
+        color: var(--text-soft);
+        margin-bottom: 6px;
+        font-weight: 600;
       }
-      .form-row input, .form-row select {
-        width: 100%; padding: 10px 12px; border-radius: 10px;
-        border: 1px solid var(--border-strong); background: #f8fafc;
-        color: var(--text); font-size: .88rem; font-family: var(--mono); outline: none;
+      .form-row input,
+      .form-row select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border-strong);
+        background: #f8fafc;
+        color: var(--text);
+        font-size: 0.88rem;
+        font-family: var(--mono);
+        outline: none;
       }
-      .form-row input:focus, .form-row select:focus {
-        border-color: var(--accent); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+      .form-row input:focus,
+      .form-row select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
       }
       .btn {
-        padding: 10px 16px; border: none; border-radius: 10px; font-size: .82rem;
-        font-weight: 600; cursor: pointer; font-family: inherit;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
       }
-      .btn:disabled { opacity: .5; cursor: not-allowed; }
-      .btn-primary { background: linear-gradient(180deg, var(--accent), var(--accent-deep)); color: #fff; }
-      .btn-ghost { background: #fff; color: var(--text); border: 1px solid var(--border); }
-      .btn-danger { background: linear-gradient(180deg, #ef4444, #dc2626); color: #fff; }
-      .btn-sm { padding: 6px 12px; font-size: .73rem; }
-      .btn-block { width: 100%; }
-      .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+        color: #fff;
+      }
+      .btn-ghost {
+        background: #fff;
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .btn-danger {
+        background: linear-gradient(180deg, #ef4444, #dc2626);
+        color: #fff;
+      }
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.73rem;
+      }
+      .btn-block {
+        width: 100%;
+      }
+      .btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
       .google-btn {
-        display: flex; align-items: center; justify-content: center; gap: 10px;
-        width: 100%; padding: 11px; border: 1px solid var(--border-strong);
-        border-radius: 10px; background: #fff; color: var(--text);
-        font-weight: 600; font-size: .86rem; cursor: pointer; font-family: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 11px;
+        border: 1px solid var(--border-strong);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 0.86rem;
+        cursor: pointer;
+        font-family: inherit;
       }
-      .google-btn:hover { background: #f8fafc; }
-      .google-btn .g { color: #4285f4; font-weight: 800; font-size: 1rem; }
+      .google-btn:hover {
+        background: #f8fafc;
+      }
+      .google-btn .g {
+        color: #4285f4;
+        font-weight: 800;
+        font-size: 1rem;
+      }
       .token-box {
-        background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
-        padding: 12px; font-family: var(--mono); font-size: .7rem; word-break: break-all;
-        max-height: 220px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap;
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        word-break: break-all;
+        max-height: 220px;
+        overflow-y: auto;
+        line-height: 1.6;
+        white-space: pre-wrap;
         color: var(--text);
       }
       .log {
-        background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
-        padding: 12px; font-family: var(--mono); font-size: .7rem;
-        max-height: 200px; overflow-y: auto; line-height: 1.6;
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        max-height: 200px;
+        overflow-y: auto;
+        line-height: 1.6;
         color: var(--text-soft);
       }
-      .error-msg { color: var(--red); font-size: .78rem; margin-top: 8px; }
-      .success-msg { color: var(--green); font-size: .78rem; margin-top: 8px; }
-      .callout {
-        background: #eef3ff; border: 1px solid #dfe7f3; border-radius: 12px;
-        padding: 12px; font-size: .76rem; color: var(--text-soft); line-height: 1.55;
+      .error-msg {
+        color: var(--red);
+        font-size: 0.78rem;
+        margin-top: 8px;
       }
-      .meta { font-size: .72rem; color: var(--text-muted); font-family: var(--mono); }
-      footer { text-align: center; color: var(--text-muted); font-size: .7rem; margin-top: 10px; }
+      .success-msg {
+        color: var(--green);
+        font-size: 0.78rem;
+        margin-top: 8px;
+      }
+      .callout {
+        background: #eef3ff;
+        border: 1px solid #dfe7f3;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 0.76rem;
+        color: var(--text-soft);
+        line-height: 1.55;
+      }
+      .meta {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-family: var(--mono);
+      }
+      footer {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.7rem;
+        margin-top: 10px;
+      }
     </style>
   </head>
   <body>
@@ -113,7 +235,15 @@
 
       <div class="card" id="card-google">
         <h2>Sign in with Google</h2>
-        <p class="meta" style="margin-bottom:12px;font-family:inherit;color:var(--text-soft);font-size:.78rem">
+        <p
+          class="meta"
+          style="
+            margin-bottom: 12px;
+            font-family: inherit;
+            color: var(--text-soft);
+            font-size: 0.78rem;
+          "
+        >
           Redirects to a simulated Google consent screen, then back to this SPA with fresh tokens.
         </p>
         <button class="google-btn" id="btn-google">
@@ -121,9 +251,9 @@
         </button>
         <hr />
         <p class="meta">
-          In production the IdP exchange happens via OIDC (authorization code + id_token);
-          here we simulate the IdP in-process so no external network is needed.
-          Auto-provisioned accounts get <b>emailVerified=true</b>.
+          In production the IdP exchange happens via OIDC (authorization code + id_token); here we
+          simulate the IdP in-process so no external network is needed. Auto-provisioned accounts
+          get <b>emailVerified=true</b>.
         </p>
       </div>
 
@@ -144,9 +274,16 @@
         <div class="error-msg" id="pass-error"></div>
       </div>
 
-      <div class="card" id="card-profile" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <h2 style="margin:0">Profile</h2>
+      <div class="card" id="card-profile" style="display: none">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+          "
+        >
+          <h2 style="margin: 0">Profile</h2>
           <button class="btn btn-danger btn-sm" id="btn-logout">Logout</button>
         </div>
         <h3>Account</h3>
@@ -154,7 +291,7 @@
         <hr />
         <h3>Linked identities</h3>
         <div class="token-box" id="linked-box"></div>
-        <div class="form-row" style="margin-top:12px">
+        <div class="form-row" style="margin-top: 12px">
           <label>Google email to attach to this account</label>
           <input id="link-email" type="email" placeholder="you@gmail.com" />
         </div>
@@ -167,7 +304,7 @@
       </div>
 
       <div class="card" id="card-tokens">
-        <h2 style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="display: flex; justify-content: space-between; align-items: center">
           Token inspector
           <button class="btn btn-ghost btn-sm" id="btn-refresh-tokens">Reload /api/me</button>
         </h2>
@@ -224,29 +361,42 @@
           body: body ? JSON.stringify(body) : undefined,
         });
         let json = {};
-        try { json = await res.json(); } catch { json = { success: false, error: { message: 'non-JSON response' } }; }
+        try {
+          json = await res.json();
+        } catch {
+          json = { success: false, error: { message: 'non-JSON response' } };
+        }
         if (!res.ok || !json.success) {
-          const msg = (json.error && (json.error.message || json.error.code)) || `HTTP ${res.status}`;
+          const msg =
+            (json.error && (json.error.message || json.error.code)) || `HTTP ${res.status}`;
           throw new Error(msg);
         }
         return json.data;
       }
 
-      function showError(el, msg) { el.textContent = msg; }
+      function showError(el, msg) {
+        el.textContent = msg;
+      }
 
       async function renderProfile() {
         if (!accessToken) return;
         try {
           const me = await api('/api/me');
-          $('profile-box').textContent = JSON.stringify({
-            id: redact(me.userId),
-            email: me.email,
-            tenantId: me.tenantId,
-            applicationId: me.applicationId,
-            sessionId: redact(me.sessionId),
-            authMethod: me.authMethod,
-          }, null, 2);
-          const linked = me.googleSubject ? [{ provider: 'google', subject: me.googleSubject }] : [];
+          $('profile-box').textContent = JSON.stringify(
+            {
+              id: redact(me.userId),
+              email: me.email,
+              tenantId: me.tenantId,
+              applicationId: me.applicationId,
+              sessionId: redact(me.sessionId),
+              authMethod: me.authMethod,
+            },
+            null,
+            2,
+          );
+          const linked = me.googleSubject
+            ? [{ provider: 'google', subject: me.googleSubject }]
+            : [];
           $('linked-box').textContent = linked.length
             ? JSON.stringify(linked, null, 2)
             : 'No Google identity linked yet.';
@@ -254,11 +404,22 @@
           $('card-pass').style.display = 'none';
           $('card-google').style.display = 'none';
           const p = decodeJwt(accessToken);
-          $('tokens-box').textContent = JSON.stringify({
-            status: 'stored in memory only',
-            accessToken: { exp: p && p.exp ? new Date(p.exp * 1000).toLocaleString() : 'unknown', sub: p ? redact(p.sub) : 'unknown', authMethod: me.authMethod },
-            refreshToken: { length: refreshToken ? refreshToken.length : 0, preview: redact(refreshToken, 8, 6) },
-          }, null, 2);
+          $('tokens-box').textContent = JSON.stringify(
+            {
+              status: 'stored in memory only',
+              accessToken: {
+                exp: p && p.exp ? new Date(p.exp * 1000).toLocaleString() : 'unknown',
+                sub: p ? redact(p.sub) : 'unknown',
+                authMethod: me.authMethod,
+              },
+              refreshToken: {
+                length: refreshToken ? refreshToken.length : 0,
+                preview: redact(refreshToken, 8, 6),
+              },
+            },
+            null,
+            2,
+          );
         } catch (err) {
           log('Profile refresh failed: ' + err.message);
           $('tokens-box').textContent = 'Error loading profile: ' + err.message;
@@ -269,9 +430,15 @@
         const email = $('pass-email').value.trim();
         const password = $('pass-password').value;
         showError($('pass-error'), '');
-        if (!email || !password) { showError($('pass-error'), 'Email and password are required'); return; }
+        if (!email || !password) {
+          showError($('pass-error'), 'Email and password are required');
+          return;
+        }
         try {
-          const data = await api(`/api/password/${mode}`, { method: 'POST', body: { email, password } });
+          const data = await api(`/api/password/${mode}`, {
+            method: 'POST',
+            body: { email, password },
+          });
           accessToken = data.tokens.accessToken;
           refreshToken = data.tokens.refreshToken;
           log(`${mode} ok — ${email}`);
@@ -315,7 +482,10 @@
         const email = $('link-email').value.trim();
         showError($('link-error'), '');
         $('link-success').textContent = '';
-        if (!email) { showError($('link-error'), 'Enter a Google email to link'); return; }
+        if (!email) {
+          showError($('link-error'), 'Enter a Google email to link');
+          return;
+        }
         try {
           const data = await api('/api/link', { method: 'POST', body: { email } });
           $('link-success').textContent = `Linked ${data.provider}:${data.subject}`;
@@ -330,7 +500,10 @@
         const email = $('link-email').value.trim();
         showError($('link-error'), '');
         $('link-success').textContent = '';
-        if (!email) { showError($('link-error'), 'Enter the Google email to unlink'); return; }
+        if (!email) {
+          showError($('link-error'), 'Enter the Google email to unlink');
+          return;
+        }
         try {
           await api('/api/unlink', { method: 'POST', body: { email } });
           $('link-success').textContent = 'Unlinked';
@@ -342,7 +515,9 @@
       });
 
       $('btn-logout').addEventListener('click', async () => {
-        try { await api('/api/logout', { method: 'POST', token: accessToken }); } catch {}
+        try {
+          await api('/api/logout', { method: 'POST', token: accessToken });
+        } catch {}
         accessToken = null;
         refreshToken = null;
         log('logged out');

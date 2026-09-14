@@ -76,10 +76,18 @@ export default function SessionsList() {
             load({ status: e.target.value, offset: 0 });
           }}
         >
-          <option className="option" value="">All statuses</option>
-          <option className="option" value="active">Active</option>
-          <option className="option" value="revoked">Revoked</option>
-          <option className="option" value="expired">Expired</option>
+          <option className="option" value="">
+            All statuses
+          </option>
+          <option className="option" value="active">
+            Active
+          </option>
+          <option className="option" value="revoked">
+            Revoked
+          </option>
+          <option className="option" value="expired">
+            Expired
+          </option>
         </select>
       </div>
 
@@ -104,7 +112,9 @@ export default function SessionsList() {
               <tbody>
                 {sessions.length === 0 ? (
                   <tr>
-                    <td className="empty-state" colSpan={8}>No sessions found</td>
+                    <td className="empty-state" colSpan={8}>
+                      No sessions found
+                    </td>
                   </tr>
                 ) : (
                   sessions.map((s) => (
@@ -119,7 +129,9 @@ export default function SessionsList() {
                       </td>
                       <td>{s.device?.ip ?? '---'}</td>
                       <td>
-                        <span className={`badge ${s.status === 'active' ? 'badge-green' : 'badge-red'}`}>
+                        <span
+                          className={`badge ${s.status === 'active' ? 'badge-green' : 'badge-red'}`}
+                        >
                           {s.status}
                         </span>
                       </td>

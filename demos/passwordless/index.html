@@ -1,263 +1,344 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PEZHWAN · Passwordless demo</title>
-  <style>
-    :root {
-      --bg: #f4f6fb;
-      --card: #ffffff;
-      --border: #e2e6f0;
-      --text: #17203a;
-      --muted: #66708a;
-      --accent: #7c3aed;
-      --accent-dark: #5b21b6;
-      --ok: #16a34a;
-      --err: #dc2626;
-      --callout-bg: #f3f0ff;
-      --callout-border: #d8d0f5;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.5;
-    }
-    main {
-      max-width: 540px;
-      margin: 48px auto;
-      padding: 0 16px;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 6px 24px rgba(23, 32, 58, 0.06);
-    }
-    h1 { margin: 0 0 4px; font-size: 24px; }
-    .subtitle { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
-    h2 { font-size: 16px; margin: 0 0 12px; }
-    label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      background: #fbfcff;
-    }
-    .row { display: flex; gap: 10px; }
-    button {
-      margin-top: 14px;
-      padding: 10px 16px;
-      border: 0;
-      border-radius: 8px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    button:hover { background: var(--accent-dark); }
-    button:disabled { opacity: 0.55; cursor: not-allowed; }
-    hr { border: 0; border-top: 1px solid var(--border); margin: 22px 0; }
-    pre {
-      background: #10162b;
-      color: #d7e0f5;
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 12px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      min-height: 40px;
-      margin: 0;
-    }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .pill {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .pill.ok { background: #e7f7ec; color: var(--ok); }
-    .pill.out { background: #fdeeee; color: var(--err); }
-    .callout {
-      background: var(--callout-bg);
-      border: 1px solid var(--callout-border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 13px;
-      margin-top: 14px;
-    }
-    .hidden { display: none; }
-    footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--muted); }
-    .step { display: flex; align-items: center; gap: 10px; margin: 18px 0 6px; }
-    .step-no {
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-    }
-    .step-label { font-weight: 700; font-size: 15px; }
-  </style>
-</head>
-<body>
-  <main>
-    <div class="card">
-      <h1>PEZHWAN · Passwordless</h1>
-      <p class="subtitle">Magic-link sign-in with a simulated inbox — no passwords involved.</p>
-
-      <div class="callout">
-        <strong>How this demo works:</strong> with a real email provider, "send magic link" emails the user a
-        <em>clickable link</em>; clicking it redeems the token and signs them in. Here there is no inbox, so the
-        server prints the one-time token to its console and you paste it below. Unknown email addresses receive a
-        <em>decoy token</em> intentionally — the API answers identically either way so address enumeration is not
-        possible. Decoys never redeem, so an unknown address simply can't sign in.
-      </div>
-
-      <div class="step"><span class="step-no">&fnof;</span><span class="step-label">First time? Create an account</span></div>
-      <div class="row">
-        <input id="reg-email" type="email" placeholder="you@example.com" />
-        <input id="reg-password" type="password" placeholder="8+ chars, upper+lower+digit" />
-      </div>
-      <button id="reg-btn">Register</button>
-      <p class="hint">Magic-link sign-in needs an existing account. Registration is the single password-using step in this demo.</p>
-
-      <div class="step"><span class="step-no">1</span><span class="step-label">Enter your email</span></div>
-      <div class="row">
-        <input id="send-email" type="email" placeholder="you@example.com" />
-        <button id="send-btn">Send magic link</button>
-      </div>
-      <p id="send-note" class="hint hidden">Magic link token issued — check the <strong>server console</strong> window, then paste the TOKEN below.</p>
-
-      <hr />
-
-      <div class="step"><span class="step-no">2</span><span class="step-label">Sign in with the token</span></div>
-      <label for="redeem-email">Email</label>
-      <input id="redeem-email" type="email" placeholder="you@example.com" />
-      <label for="redeem-token">Magic link token (from server console)</label>
-      <input id="redeem-token" placeholder="paste token here" />
-      <button id="redeem-btn">Sign in</button>
-
-      <hr />
-
-      <section id="profile" class="hidden">
-        <h2>
-          Profile
-          <span id="auth-pill" class="pill out">signed out</span>
-        </h2>
-        <div id="profile-body"></div>
-        <button id="me-btn">Fetch /api/me</button>
-        <h2>Token inspector</h2>
-        <pre id="token-inspector">No access token yet.</pre>
-      </section>
-
-      <h2>Server response</h2>
-      <pre id="response">—</pre>
-
-      <footer>PEZHWAN SDK demo · self-contained · vanilla JS</footer>
-    </div>
-  </main>
-
-  <script>
-    (() => {
-      'use strict';
-
-      let accessToken = null;
-
-      const $ = (sel) => document.querySelector(sel);
-
-      function show(data) {
-        $('#response').textContent = JSON.stringify(data, null, 2);
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PEZHWAN · Passwordless demo</title>
+    <style>
+      :root {
+        --bg: #f4f6fb;
+        --card: #ffffff;
+        --border: #e2e6f0;
+        --text: #17203a;
+        --muted: #66708a;
+        --accent: #7c3aed;
+        --accent-dark: #5b21b6;
+        --ok: #16a34a;
+        --err: #dc2626;
+        --callout-bg: #f3f0ff;
+        --callout-border: #d8d0f5;
       }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 540px;
+        margin: 48px auto;
+        padding: 0 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 6px 24px rgba(23, 32, 58, 0.06);
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+      }
+      .subtitle {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0 0 12px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin: 12px 0 4px;
+      }
+      input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        background: #fbfcff;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+      }
+      button {
+        margin-top: 14px;
+        padding: 10px 16px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      button:hover {
+        background: var(--accent-dark);
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 22px 0;
+      }
+      pre {
+        background: #10162b;
+        color: #d7e0f5;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 12px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        min-height: 40px;
+        margin: 0;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .pill.ok {
+        background: #e7f7ec;
+        color: var(--ok);
+      }
+      .pill.out {
+        background: #fdeeee;
+        color: var(--err);
+      }
+      .callout {
+        background: var(--callout-bg);
+        border: 1px solid var(--callout-border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 13px;
+        margin-top: 14px;
+      }
+      .hidden {
+        display: none;
+      }
+      footer {
+        margin-top: 28px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 18px 0 6px;
+      }
+      .step-no {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .step-label {
+        font-weight: 700;
+        font-size: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="card">
+        <h1>PEZHWAN · Passwordless</h1>
+        <p class="subtitle">Magic-link sign-in with a simulated inbox — no passwords involved.</p>
 
-      async function request(path, options = {}) {
-        const headers = { 'Content-Type': 'application/json' };
-        if (accessToken) headers['Authorization'] = 'Bearer ' + accessToken;
-        const res = await fetch(path, {
-          method: options.method || 'GET',
-          headers,
-          body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+        <div class="callout">
+          <strong>How this demo works:</strong> with a real email provider, "send magic link" emails
+          the user a <em>clickable link</em>; clicking it redeems the token and signs them in. Here
+          there is no inbox, so the server prints the one-time token to its console and you paste it
+          below. Unknown email addresses receive a <em>decoy token</em> intentionally — the API
+          answers identically either way so address enumeration is not possible. Decoys never
+          redeem, so an unknown address simply can't sign in.
+        </div>
+
+        <div class="step">
+          <span class="step-no">&fnof;</span
+          ><span class="step-label">First time? Create an account</span>
+        </div>
+        <div class="row">
+          <input id="reg-email" type="email" placeholder="you@example.com" />
+          <input id="reg-password" type="password" placeholder="8+ chars, upper+lower+digit" />
+        </div>
+        <button id="reg-btn">Register</button>
+        <p class="hint">
+          Magic-link sign-in needs an existing account. Registration is the single password-using
+          step in this demo.
+        </p>
+
+        <div class="step">
+          <span class="step-no">1</span><span class="step-label">Enter your email</span>
+        </div>
+        <div class="row">
+          <input id="send-email" type="email" placeholder="you@example.com" />
+          <button id="send-btn">Send magic link</button>
+        </div>
+        <p id="send-note" class="hint hidden">
+          Magic link token issued — check the <strong>server console</strong> window, then paste the
+          TOKEN below.
+        </p>
+
+        <hr />
+
+        <div class="step">
+          <span class="step-no">2</span><span class="step-label">Sign in with the token</span>
+        </div>
+        <label for="redeem-email">Email</label>
+        <input id="redeem-email" type="email" placeholder="you@example.com" />
+        <label for="redeem-token">Magic link token (from server console)</label>
+        <input id="redeem-token" placeholder="paste token here" />
+        <button id="redeem-btn">Sign in</button>
+
+        <hr />
+
+        <section id="profile" class="hidden">
+          <h2>
+            Profile
+            <span id="auth-pill" class="pill out">signed out</span>
+          </h2>
+          <div id="profile-body"></div>
+          <button id="me-btn">Fetch /api/me</button>
+          <h2>Token inspector</h2>
+          <pre id="token-inspector">No access token yet.</pre>
+        </section>
+
+        <h2>Server response</h2>
+        <pre id="response">—</pre>
+
+        <footer>PEZHWAN SDK demo · self-contained · vanilla JS</footer>
+      </div>
+    </main>
+
+    <script>
+      (() => {
+        'use strict';
+
+        let accessToken = null;
+
+        const $ = (sel) => document.querySelector(sel);
+
+        function show(data) {
+          $('#response').textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function request(path, options = {}) {
+          const headers = { 'Content-Type': 'application/json' };
+          if (accessToken) headers['Authorization'] = 'Bearer ' + accessToken;
+          const res = await fetch(path, {
+            method: options.method || 'GET',
+            headers,
+            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+          });
+          const json = await res.json().catch(() => ({}));
+          show(json);
+          return json;
+        }
+
+        function b64decode(seg) {
+          const pad = seg.length % 4 === 0 ? '' : '='.repeat(4 - (seg.length % 4));
+          const b64 = (seg + pad).replace(/-/g, '+').replace(/_/g, '/');
+          const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+          return new TextDecoder().decode(bytes);
+        }
+
+        function inspectToken(token) {
+          if (!token) return 'No access token yet.';
+          const parts = token.split('.');
+          if (parts.length !== 3) return 'Token is present but not a 3-segment JWT:\n' + token;
+          try {
+            const header = JSON.stringify(JSON.parse(b64decode(parts[0])), null, 2);
+            const payload = JSON.stringify(JSON.parse(b64decode(parts[1])), null, 2);
+            return 'header\n' + header + '\n\npayload\n' + payload + '\n\nsignature\n' + parts[2];
+          } catch (e) {
+            return 'Could not decode JWT segments: ' + e.message;
+          }
+        }
+
+        function signedIn(token) {
+          accessToken = token;
+          $('#auth-pill').className = 'pill ' + (accessToken ? 'ok' : 'out');
+          $('#auth-pill').textContent = accessToken ? 'signed in' : 'signed out';
+          $('#token-inspector').textContent = inspectToken(accessToken);
+          if (accessToken) {
+            $('#profile').classList.remove('hidden');
+            fetchMe();
+          }
+        }
+
+        async function fetchMe() {
+          const json = await request('/api/me');
+          if (json.success) $('#profile-body').textContent = JSON.stringify(json.data, null, 2);
+        }
+
+        $('#send-btn').addEventListener('click', async () => {
+          const email = $('#send-email').value;
+          if (!email) return show({ error: 'Enter an email address first.' });
+          const json = await request('/api/magic/send', { method: 'POST', body: { email } });
+          if (json.success) $('#send-note').classList.remove('hidden');
         });
-        const json = await res.json().catch(() => ({}));
-        show(json);
-        return json;
-      }
 
-      function b64decode(seg) {
-        const pad = seg.length % 4 === 0 ? '' : '='.repeat(4 - (seg.length % 4));
-        const b64 = (seg + pad).replace(/-/g, '+').replace(/_/g, '/');
-        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-        return new TextDecoder().decode(bytes);
-      }
+        $('#reg-btn').addEventListener('click', async () => {
+          const email = $('#reg-email').value;
+          const password = $('#reg-password').value;
+          if (!email || !password) return show({ error: 'Email and password are both required.' });
+          const json = await request('/api/register', {
+            method: 'POST',
+            body: { email, password },
+          });
+          if (json.success)
+            show({ registered: json.data.user, hint: 'Now use the magic-link flow below.' });
+        });
 
-      function inspectToken(token) {
-        if (!token) return 'No access token yet.';
-        const parts = token.split('.');
-        if (parts.length !== 3) return 'Token is present but not a 3-segment JWT:\n' + token;
-        try {
-          const header = JSON.stringify(JSON.parse(b64decode(parts[0])), null, 2);
-          const payload = JSON.stringify(JSON.parse(b64decode(parts[1])), null, 2);
-          return 'header\n' + header + '\n\npayload\n' + payload + '\n\nsignature\n' + parts[2];
-        } catch (e) {
-          return 'Could not decode JWT segments: ' + e.message;
-        }
-      }
+        $('#redeem-btn').addEventListener('click', async () => {
+          const email = $('#redeem-email').value;
+          const token = $('#redeem-token').value.trim();
+          if (!email || !token) return show({ error: 'Email and token are both required.' });
+          const json = await request('/api/magic/redeem', {
+            method: 'POST',
+            body: { email, token },
+          });
+          if (!json.success) return;
+          signedIn(json.data.tokens.accessToken);
+        });
 
-      function signedIn(token) {
-        accessToken = token;
-        $('#auth-pill').className = 'pill ' + (accessToken ? 'ok' : 'out');
-        $('#auth-pill').textContent = accessToken ? 'signed in' : 'signed out';
-        $('#token-inspector').textContent = inspectToken(accessToken);
-        if (accessToken) {
-          $('#profile').classList.remove('hidden');
-          fetchMe();
-        }
-      }
-
-      async function fetchMe() {
-        const json = await request('/api/me');
-        if (json.success) $('#profile-body').textContent = JSON.stringify(json.data, null, 2);
-      }
-
-      $('#send-btn').addEventListener('click', async () => {
-        const email = $('#send-email').value;
-        if (!email) return show({ error: 'Enter an email address first.' });
-        const json = await request('/api/magic/send', { method: 'POST', body: { email } });
-        if (json.success) $('#send-note').classList.remove('hidden');
-      });
-
-      $('#reg-btn').addEventListener('click', async () => {
-        const email = $('#reg-email').value;
-        const password = $('#reg-password').value;
-        if (!email || !password) return show({ error: 'Email and password are both required.' });
-        const json = await request('/api/register', { method: 'POST', body: { email, password } });
-        if (json.success) show({ registered: json.data.user, hint: 'Now use the magic-link flow below.' });
-      });
-
-      $('#redeem-btn').addEventListener('click', async () => {
-        const email = $('#redeem-email').value;
-        const token = $('#redeem-token').value.trim();
-        if (!email || !token) return show({ error: 'Email and token are both required.' });
-        const json = await request('/api/magic/redeem', { method: 'POST', body: { email, token } });
-        if (!json.success) return;
-        signedIn(json.data.tokens.accessToken);
-      });
-
-      $('#me-btn').addEventListener('click', fetchMe);
-    })();
-  </script>
-</body>
+        $('#me-btn').addEventListener('click', fetchMe);
+      })();
+    </script>
+  </body>
 </html>

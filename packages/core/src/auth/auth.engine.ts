@@ -16,7 +16,7 @@ import {
   AUDIT_EVENT,
 } from '@pezhwan/shared';
 import type { AuthMethod, IdentityContext, OtpChannel, OtpPurpose } from '@pezhwan/shared';
-import { hashPassword, verifyPassword, isArgon2Hash } from '@pezhwan/crypto';
+import { hashPassword, verifyPassword, isArgon2Hash, type Argon2Options } from '@pezhwan/crypto';
 import type { RedisCache } from '../services/redisCache.ts';
 import type { TokenService } from '../services/token.service.ts';
 import type {
@@ -77,6 +77,8 @@ export interface AuthEngineOptions {
   audience: string;
   accessTokenTtlMs: number;
   passwordPolicy?: PasswordPolicy;
+  /** Argon2id parameters (crypto.passwordHashParams). */
+  passwordHashParams?: Argon2Options;
   otp: {
     codeLength?: number;
     ttlMs: number;
@@ -118,6 +120,7 @@ export interface AuthEngineDeps {
 export class AuthEngine {
   private readonly audit?: AuditService;
   private readonly passwordPolicy: PasswordPolicy;
+  private readonly passwordHashParams?: Argon2Options;
 
   constructor(
     private readonly deps: AuthEngineDeps,
@@ -125,6 +128,7 @@ export class AuthEngine {
   ) {
     this.audit = deps.audit;
     this.passwordPolicy = options.passwordPolicy ?? DEFAULT_PASSWORD_POLICY;
+    this.passwordHashParams = options.passwordHashParams;
   }
 
   private deviceFrom(ctx: {
@@ -201,7 +205,9 @@ export class AuthEngine {
       throw new ValidationError('Password is required for email registration', 'PASSWORD_REQUIRED');
     }
 
-    const passwordHash = input.password ? await hashPassword(input.password) : null;
+    const passwordHash = input.password
+      ? await hashPassword(input.password, this.passwordHashParams)
+      : null;
 
     const doc = await UserModel.create({
       tenantId: input.tenantId,
@@ -581,7 +587,7 @@ export class AuthEngine {
     if (!ok) {
       throw new AuthenticationError('Current password is incorrect', 'INVALID_CURRENT_PASSWORD');
     }
-    const newHash = await hashPassword(input.newPassword);
+    const newHash = await hashPassword(input.newPassword, this.passwordHashParams);
     const nextVersion = (user.tokenVersion ?? 0) + 1;
     await UserModel.updateOne(
       { _id: user._id, tenantId: this.options.tenantId },
@@ -625,7 +631,7 @@ export class AuthEngine {
     if (!user) {
       throw new AuthenticationError('Invalid or expired code', 'INVALID_OTP');
     }
-    const newHash = await hashPassword(input.newPassword);
+    const newHash = await hashPassword(input.newPassword, this.passwordHashParams);
     const nextVersion = (user.tokenVersion ?? 0) + 1;
     await UserModel.updateOne(
       { _id: user._id, tenantId: this.options.tenantId },
@@ -712,7 +718,7 @@ export class AuthEngine {
     if (!user) {
       throw new AuthenticationError('User not found', 'USER_NOT_FOUND');
     }
-    const newHash = await hashPassword(input.newPassword);
+    const newHash = await hashPassword(input.newPassword, this.passwordHashParams);
     const nextVersion = (user.tokenVersion ?? 0) + 1;
     await UserModel.updateOne(
       { _id: user._id, tenantId: this.options.tenantId },

@@ -30,7 +30,7 @@ export class EventStore {
     events: Array<Omit<StoredEvent, 'streamId'>>,
     expectedVersion?: number,
   ): Promise<void> {
-    const base = (expectedVersion ?? (await this.backend.read(streamId)).length) ?? 0;
+    const base = expectedVersion ?? (await this.backend.read(streamId)).length ?? 0;
     const next = events.map((event, index) => ({
       ...event,
       streamId,

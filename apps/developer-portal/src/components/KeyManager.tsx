@@ -60,7 +60,14 @@ export default function KeyManager({ statusFilter }: { statusFilter: StatusFilte
 
   return (
     <div className="card mt-3">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 14,
+        }}
+      >
         <h3>API keys</h3>
         <button className="btn btn-secondary btn-sm" onClick={() => void load()} disabled={loading}>
           {loading ? <span className="loader" /> : 'Refresh'}
@@ -123,7 +130,11 @@ export default function KeyManager({ statusFilter }: { statusFilter: StatusFilte
                   <td className="muted">{formatDate(key.revokedAt)}</td>
                   <td style={{ textAlign: 'right' }}>
                     {key.isActive && (
-                      <button className="btn btn-danger btn-sm" disabled={revokingId === key.id} onClick={() => void revoke(key)}>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        disabled={revokingId === key.id}
+                        onClick={() => void revoke(key)}
+                      >
                         {revokingId === key.id ? '...' : 'Revoke'}
                       </button>
                     )}

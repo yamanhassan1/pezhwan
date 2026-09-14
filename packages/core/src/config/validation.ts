@@ -9,7 +9,8 @@
 import { ValidationError } from '@pezhwan/shared';
 import type { EnvConfig } from './env.ts';
 
-export type ValidationResult = { valid: true; value: EnvConfig } | { valid: false; issues: string[] };
+export type ValidationResult =
+  { valid: true; value: EnvConfig } | { valid: false; issues: string[] };
 
 const MANDATORY: Array<[keyof EnvConfig, 'string' | 'number' | 'boolean' | 'string[]']> = [
   ['issuer', 'string'],
@@ -41,7 +42,10 @@ export function validateConfig(input: Partial<EnvConfig>): ValidationResult {
 export function assertValidConfig(input: Partial<EnvConfig>): EnvConfig {
   const result = validateConfig(input);
   if (!result.valid) {
-    throw new ValidationError(`Invalid configuration: ${result.issues.join('; ')}`, 'INVALID_CONFIG');
+    throw new ValidationError(
+      `Invalid configuration: ${result.issues.join('; ')}`,
+      'INVALID_CONFIG',
+    );
   }
   return result.value;
 }

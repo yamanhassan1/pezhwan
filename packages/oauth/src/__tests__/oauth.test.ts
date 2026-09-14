@@ -1,10 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  OAuthService,
-  type OAuthClientRecord,
-  type OAuthTokenSet,
-} from '@pezhwan/oauth';
+import { OAuthService, type OAuthClientRecord, type OAuthTokenSet } from '@pezhwan/oauth';
 import {
   AuthorizationCodeManager,
   MemoryAuthorizationCodeStore,
@@ -33,7 +29,11 @@ function buildEngine(_overrides: Partial<Record<string, unknown>> = {}) {
     isActive: true,
   });
   const issued: string[] = [];
-  const issueTokens = async (ctx: { userId: string; authMethod: string; scope: string[] }): Promise<OAuthTokenSet> => {
+  const issueTokens = async (ctx: {
+    userId: string;
+    authMethod: string;
+    scope: string[];
+  }): Promise<OAuthTokenSet> => {
     issued.push(ctx.authMethod);
     return { accessToken: 'access.' + ctx.userId, expiresIn: 900 };
   };

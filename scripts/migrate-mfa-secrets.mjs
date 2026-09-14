@@ -1,11 +1,13 @@
 /**
  * PEZHWAN — MFA legacy-secret migration utility.
  *
- * Upgrades MFA TOTP secrets to the current versioned AES-256-GCM envelope
- * (`v2:<iv||tag||ciphertext>`, base64). It handles the migration window by
+ * Upgrades MFA TOTP secrets to the current versioned envelope (`v3:` — a true
+ * DEK envelope: a random data key encrypts the secret with AES-256-GCM and is
+ * itself wrapped by the master key). It handles the migration window by
  * detecting every format:
- *   - already `v2:` prefixed  → already migrated, skipped;
- *   - legacy unprefixed AES-GCM envelope → decrypted + re-wrapped as `v2:`;
+ *   - already `v3:` prefixed  → already migrated, skipped;
+ *   - legacy `v2:` prefixed or legacy unprefixed single-layer AES-GCM envelope
+ *     → decrypted + re-wrapped as `v3:`;
  *   - legacy RAW base64 TOTP secret (unaudited pre-envelope format) → wrapped;
  *   - anything that is neither → reported as unmigratable (never destroyed).
  *
@@ -27,7 +29,9 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import mongoose from 'mongoose';
 
-const ENVELOPE_VERSION = 'v2:';
+const ENVELOPE_VERSION = 'v3:';
+const PREVIOUS_ENVELOPE_VERSION = 'v2:';
+const ENVELOPE_AAD = Buffer.from('pezhwan:mfa-secret:v1');
 
 function requireKey() {
   const raw = process.env.PEZHWAN_MFA_ENCRYPTION_KEY;
@@ -41,16 +45,65 @@ function requireKey() {
   return key;
 }
 
-export function wrapV2(secret, key) {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', key, iv);
-  const ct = Buffer.concat([cipher.update(secret), cipher.final()]);
-  return ENVELOPE_VERSION + Buffer.concat([iv, cipher.getAuthTag(), ct]).toString('base64');
+/**
+ * Current envelope: `v3:<iv||tag||ciphertext||dataKeyIv||dataKeyTag||encDataKey>`
+ * (all base64). The DEK (data key) encrypts the secret; the master key wraps
+ * the DEK — the stored value stays confidential outside the key trust boundary.
+ */
+export function wrapCurrent(secret, key) {
+  const dataKey = randomBytes(32);
+
+  const ctIv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', dataKey, ctIv);
+  cipher.setAAD(ENVELOPE_AAD);
+  const ciphertext = Buffer.concat([cipher.update(secret), cipher.final()]);
+
+  const dekIv = randomBytes(12);
+  const dekCipher = createCipheriv('aes-256-gcm', key, dekIv);
+  const encryptedDataKey = Buffer.concat([dekCipher.update(dataKey), dekCipher.final()]);
+
+  return (
+    ENVELOPE_VERSION +
+    Buffer.concat([
+      ctIv,
+      cipher.getAuthTag(),
+      ciphertext,
+      dekIv,
+      dekCipher.getAuthTag(),
+      encryptedDataKey,
+    ]).toString('base64')
+  );
 }
 
-/** Decrypt an envelope (v2-prefixed or legacy unprefixed). Throws on invalid. */
-export function unwrapV2(value, key) {
-  const raw = value.startsWith(ENVELOPE_VERSION) ? value.slice(ENVELOPE_VERSION.length) : value;
+/** Decrypt any envelope (v3 / v2 / legacy unprefixed). Throws on invalid. */
+export function unwrapCurrent(value, key) {
+  if (value.startsWith(ENVELOPE_VERSION)) {
+    // v3 DEK envelope: ctIv(12) ctTag(16) ciphertext dataKeyIv(12) dataKeyTag(16) encDataKey(32).
+    const payload = Buffer.from(value.slice(ENVELOPE_VERSION.length), 'base64');
+    if (payload.length < 12 + 16 + 12 + 16 + 32) {
+      throw new Error('MFA secret payload too short');
+    }
+    const ctIv = payload.subarray(0, 12);
+    const ctTag = payload.subarray(12, 28);
+    const dataKeyIv = payload.subarray(payload.length - 60, payload.length - 48);
+    const dataKeyTag = payload.subarray(payload.length - 48, payload.length - 32);
+    const encDataKey = payload.subarray(payload.length - 32);
+    const ciphertext = payload.subarray(28, payload.length - 60);
+
+    const dekDecipher = createDecipheriv('aes-256-gcm', key, dataKeyIv);
+    dekDecipher.setAuthTag(dataKeyTag);
+    const dataKey = Buffer.concat([dekDecipher.update(encDataKey), dekDecipher.final()]);
+
+    const decipher = createDecipheriv('aes-256-gcm', dataKey, ctIv);
+    decipher.setAuthTag(ctTag);
+    decipher.setAAD(ENVELOPE_AAD);
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  }
+
+  // Legacy single-layer envelope (v2-prefixed or legacy unprefixed).
+  const raw = value.startsWith(PREVIOUS_ENVELOPE_VERSION)
+    ? value.slice(PREVIOUS_ENVELOPE_VERSION.length)
+    : value;
   const payload = Buffer.from(raw, 'base64');
   if (payload.length < 28) {
     throw new Error('MFA secret payload too short');
@@ -93,14 +146,14 @@ function classify(value, key) {
   }
   if (value.startsWith(ENVELOPE_VERSION)) {
     try {
-      return { kind: 'current', secret: unwrapV2(value, key) };
+      return { kind: 'current', secret: unwrapCurrent(value, key) };
     } catch {
       return { kind: 'corrupt', secret: null };
     }
   }
-  // Legacy unprefixed AES-GCM envelope.
+  // Legacy v2-prefixed / unprefixed single-layer AES-GCM envelope.
   try {
-    return { kind: 'legacy-envelope', secret: unwrapV2(value, key) };
+    return { kind: 'legacy-envelope', secret: unwrapCurrent(value, key) };
   } catch {
     /* not an envelope — try raw base64 TOTP secret */
   }
@@ -163,10 +216,10 @@ async function main() {
     }
 
     // kind is legacy-envelope or legacy-plaintext → requires re-wrapping.
-    const upgraded = wrapV2(secret, key);
+    const upgraded = wrapCurrent(secret, key);
 
     if (flags.dryRun) {
-      console.log(`[dry-run] user ${user._id}: ${kind} → v2 (no change written)`);
+      console.log(`[dry-run] user ${user._id}: ${kind} → v3 (no change written)`);
       continue;
     }
 
@@ -185,7 +238,7 @@ async function main() {
       // Post-migration integrity check: the upgraded envelope must decrypt to
       // the same plaintext secret so existing authenticator codes stay valid.
       try {
-        const roundTrip = unwrapV2(upgraded, key);
+        const roundTrip = unwrapCurrent(upgraded, key);
         if (!roundTrip.equals(secret)) {
           console.error(`[validate] FAIL user ${user._id}: round-trip mismatch`);
           process.exitCode = 1;

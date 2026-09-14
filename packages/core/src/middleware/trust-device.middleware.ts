@@ -32,7 +32,9 @@ export class TrustDeviceMiddleware {
     const assessment = await this.trust.assess(input.userId, device);
     return {
       ...assessment,
-      skipMfa: (assessment.level === 'recognized' || assessment.level === 'verified') && device.category !== 'bot',
+      skipMfa:
+        (assessment.level === 'recognized' || assessment.level === 'verified') &&
+        device.category !== 'bot',
     };
   }
 

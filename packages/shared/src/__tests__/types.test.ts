@@ -36,9 +36,13 @@ describe('shared primitives', () => {
 
   it('builds domain events', () => {
     assert.equal(DOMAIN_EVENT.USER_CREATED, 'user.created');
-    const event = createDomainEvent(DOMAIN_EVENT.USER_CREATED, { email: 'a@b.co' }, {
-      userId: 'u1',
-    });
+    const event = createDomainEvent(
+      DOMAIN_EVENT.USER_CREATED,
+      { email: 'a@b.co' },
+      {
+        userId: 'u1',
+      },
+    );
     assert.equal(event.name, 'user.created');
     assert.equal(event.userId, 'u1');
     assert.ok(event.id.length > 0);

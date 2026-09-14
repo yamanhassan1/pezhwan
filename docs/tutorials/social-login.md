@@ -17,14 +17,14 @@ IdP flow you can run locally (`demos/social-login/`).
 `packages/oauth/src/providers/` implements the `OAuthProviderAdapter` interface
 (authorization-URL builder + authorization-code exchange + normalized profile):
 
-| Provider | Adapter | Notes |
-| --- | --- | --- |
-| Google | `GoogleProvider` | OIDC via Google's discovery; id_token carries the profile. |
-| GitHub | `GitHubProvider` | OAuth2, no id_token; profile from `GET /user` (+ `user:email` scope). |
-| Microsoft (Entra) | `MicrosoftProvider` | OIDC; `tenant` option (`common` or a tenanted endpoint). |
-| Apple | `AppleProvider` | OIDC; requires client_secret anyway. |
-| Facebook | `FacebookProvider` | OAuth2 via `BaseOAuthProvider`; Graph API userinfo. |
-| Custom | `CustomProvider` | Point at any RFC 6749 endpoints; `profileResolver` or id_token claim mapping. |
+| Provider          | Adapter             | Notes                                                                         |
+| ----------------- | ------------------- | ----------------------------------------------------------------------------- |
+| Google            | `GoogleProvider`    | OIDC via Google's discovery; id_token carries the profile.                    |
+| GitHub            | `GitHubProvider`    | OAuth2, no id_token; profile from `GET /user` (+ `user:email` scope).         |
+| Microsoft (Entra) | `MicrosoftProvider` | OIDC; `tenant` option (`common` or a tenanted endpoint).                      |
+| Apple             | `AppleProvider`     | OIDC; requires client_secret anyway.                                          |
+| Facebook          | `FacebookProvider`  | OAuth2 via `BaseOAuthProvider`; Graph API userinfo.                           |
+| Custom            | `CustomProvider`    | Point at any RFC 6749 endpoints; `profileResolver` or id_token claim mapping. |
 
 Each returns a normalized `ProviderProfile`:
 `{ subject, email?, emailVerified?, name?, picture?, raw }`.
@@ -67,9 +67,13 @@ local identity:
 const federation = new OAuthFederationService({
   registry,
   findUserByIdentity: async (provider, subject) =>
-    await feds.findByProvider(TENANT_ID, provider, subject),   // UserDoc | null
-  createUserFromProfile: async (profile) => { /* UserModel.create(...) */ },
-  linkIdentity: async (userId, provider, subject, profile) => { /* link  */ },
+    await feds.findByProvider(TENANT_ID, provider, subject), // UserDoc | null
+  createUserFromProfile: async (profile) => {
+    /* UserModel.create(...) */
+  },
+  linkIdentity: async (userId, provider, subject, profile) => {
+    /* link  */
+  },
 });
 ```
 
@@ -88,8 +92,8 @@ const resolved = await feds.resolve({
   tenantId: TENANT_ID,
   provider: 'google',
   subject: profile.subject, // provider's immutable sub/id
-  profile,                 // { provider, subject, email, name, picture }
-  autoProvision: true,     // false → throw IDENTITY_UNLINKED
+  profile, // { provider, subject, email, name, picture }
+  autoProvision: true, // false → throw IDENTITY_UNLINKED
 });
 if (!resolved.user) throw new Error('IDENTITY_UNLINKED');
 ```
@@ -105,8 +109,8 @@ with `IDENTITY_UNLINKED` so the app can show an "ask your admin" screen.
 An already-authenticated user can attach a provider subject to their account:
 
 ```ts
-await feds.link(userId, 'google', subject);        // $addToSet identities
-await feds.unlink(userId, 'google', subject);      // $pull identities
+await feds.link(userId, 'google', subject); // $addToSet identities
+await feds.unlink(userId, 'google', subject); // $pull identities
 ```
 
 The demo exposes these as authenticated endpoints
@@ -143,13 +147,13 @@ const googleId = user.identities.find((i) => i.provider === 'google'); // { prov
 
 ## Troubleshooting
 
-| Problem | Cause / fix |
-| --- | --- |
-| `IDENTITY_UNLINKED` on resolve | No local user for the subject and `autoProvision` is falsy or the profile lacks an email. |
-| Profile missing email | Provider scope lacks `email`/`user:email`; refresh consent (GitHub needs `user:email`). |
-| `OAuth token exchange failed (400)` | Redirect URI doesn't match the one registered in the provider console. |
-| Duplicate users on sign-in | Emails are matched per tenant+provider+subject; don't auto-provision on an unverified email. |
-| `CROSS_TENANT` oddities | `resolve` is scoped by `tenantId` — always pass the tenant context explicitly. |
+| Problem                             | Cause / fix                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------- |
+| `IDENTITY_UNLINKED` on resolve      | No local user for the subject and `autoProvision` is falsy or the profile lacks an email.    |
+| Profile missing email               | Provider scope lacks `email`/`user:email`; refresh consent (GitHub needs `user:email`).      |
+| `OAuth token exchange failed (400)` | Redirect URI doesn't match the one registered in the provider console.                       |
+| Duplicate users on sign-in          | Emails are matched per tenant+provider+subject; don't auto-provision on an unverified email. |
+| `CROSS_TENANT` oddities             | `resolve` is scoped by `tenantId` — always pass the tenant context explicitly.               |
 
 ## Further reading
 

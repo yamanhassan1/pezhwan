@@ -127,20 +127,31 @@ interface SecretProvider {
 
 Provided implementations:
 
-| Provider                 | Use case                                   |
-| ------------------------ | ------------------------------------------ |
-| `EnvSecretProvider`      | Development / simple production (env vars) |
-| `FileSecretProvider`     | Docker/Kubernetes mounted secret files     |
-| `ChainSecretProvider`    | Try providers in order, e.g. file then env |
-| `createSecretProvider()` | Convenience factory                        |
+| Provider                    | Use case                                   |
+| --------------------------- | ------------------------------------------ |
+| `EnvSecretProvider`         | Development / simple production (env vars) |
+| `FileSecretProvider`        | Docker/Kubernetes mounted secret files     |
+| `ChainSecretProvider`       | Try providers in order, e.g. file then env |
+| `VaultSecretProvider`       | HashiCorp Vault KV v1/v2 over HTTP         |
+| `AwsSecretsManagerProvider` | AWS Secrets Manager via SigV4-signed HTTP  |
+| `createSecretProvider()`    | Convenience factory                        |
+
+All providers are dependency-free and share the same interface, so they are
+swappable without touching application code.
 
 **Production options (choose one, no code change needed):**
 
-- **AWS Secrets Manager** / **AWS KMS** — implement `SecretProvider` calling
-  `GetSecretValue`/`Decrypt` via the AWS SDK.
-- **Google Secret Manager** — `SecretProvider` over `SecretManagerServiceClient`.
-- **Azure Key Vault** — `SecretProvider` over `@azure/keyvault-secrets`.
-- **HashiCorp Vault** — `SecretProvider` over `vault` Node client.
+- **AWS Secrets Manager** — use `AwsSecretsManagerProvider`. Credentials come
+  from `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_SESSION_TOKEN` (or the
+  options object), requests are signed with AWS Signature Version 4, and a
+  missing secret maps to `SecretNotFoundError` while API/network failures are
+  surfaced as errors (never masked as "not found").
+- **HashiCorp Vault** — use `VaultSecretProvider` for KV v1/v2. It authenticates
+  with a static token or Vault AppRole (`role_id` + `secret_id`), and reads
+  `GET /v1/{mount}/data/{name}` (v2) or `GET /v1/{mount}/{name}` (v1).
+- **Google Secret Manager** — implement `SecretProvider` over
+  `SecretManagerServiceClient`.
+- **Azure Key Vault** — implement `SecretProvider` over `@azure/keyvault-secrets`.
 - **Kubernetes Secrets** — mount secret files and use `FileSecretProvider`.
 - **Docker Secrets** — mount `/run/secrets/*` and use `FileSecretProvider`.
 

@@ -26,4 +26,5 @@ const TenantQuotaSchema = new Schema<TenantQuotaDoc>(
 );
 
 export const TenantQuotaModel: Model<TenantQuotaDoc> =
-  (models.TenantQuota as Model<TenantQuotaDoc>) ?? model<TenantQuotaDoc>('TenantQuota', TenantQuotaSchema);
+  (models.TenantQuota as Model<TenantQuotaDoc>) ??
+  model<TenantQuotaDoc>('TenantQuota', TenantQuotaSchema);

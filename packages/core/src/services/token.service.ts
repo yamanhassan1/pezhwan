@@ -1,20 +1,22 @@
 /**
  * PEZHWAN — token service.
  *
- * Access tokens: short-lived RS256 JWTs signed with the KeyStore's current key
- * (kid embedded for rotation). A token's payload is minimal and explicit:
- * sub/tenantId/applicationId/sessionId + roles/permissions. No PII.
+ * Access tokens: short-lived JWT access tokens signed with the KeyStore's
+ * current key (kid embedded for rotation, algorithm from config). A token's
+ * payload is minimal and explicit: sub/tenantId/applicationId/sessionId +
+ * roles/permissions. No PII.
  *
- * Refresh tokens: high-entropy opaque random strings. Only the SHA-256 hash is
- * ever stored (session doc, Redis cache). Raw refresh tokens are presented by
+ * Refresh tokens: high-entropy opaque random strings. Only the configured
+ * hash of the token (default SHA-256, see crypto.tokenHashAlgorithm) is ever
+ * stored (session doc, Redis cache). Raw refresh tokens are presented by
  * the client on `/auth/refresh` and immediately rotated (one-time use).
  */
 
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
-import jwt from 'jsonwebtoken';
 import { TokenError } from '@pezhwan/shared';
-import type { AuthMethod, IdentityContext, JwtAlgorithm, TokenClaims } from '@pezhwan/shared';
-import { signJwt, verifyJwt, type KeyStore } from '@pezhwan/crypto';
+import type { AuthMethod, IdentityContext, TokenClaims } from '@pezhwan/shared';
+import { signToken, verifyToken, type KeyStore, type JwtSigningAlgorithm } from '@pezhwan/crypto';
+import type { TokenHashAlgorithm } from '../config/env.ts';
 import type { RedisCache } from './redisCache.ts';
 
 export interface TokenServiceOptions {
@@ -22,7 +24,9 @@ export interface TokenServiceOptions {
   audience: string;
   accessTokenTtlMs: number;
   refreshTokenTtlMs: number;
-  algorithm: JwtAlgorithm;
+  algorithm: JwtSigningAlgorithm;
+  /** Hash used for opaque refresh-token identifiers (default sha256). */
+  tokenHashAlgorithm?: TokenHashAlgorithm;
   store: KeyStore;
   cache: RedisCache;
 }
@@ -39,7 +43,8 @@ export class TokenService {
   private readonly audience: string;
   private readonly accessTokenTtlMs: number;
   private readonly refreshTokenTtlMs: number;
-  private readonly algorithm: JwtAlgorithm;
+  private readonly algorithm: JwtSigningAlgorithm;
+  private readonly tokenHashAlgorithm: TokenHashAlgorithm;
   private readonly store: KeyStore;
   private readonly cache: RedisCache;
 
@@ -49,6 +54,7 @@ export class TokenService {
     this.accessTokenTtlMs = options.accessTokenTtlMs;
     this.refreshTokenTtlMs = options.refreshTokenTtlMs;
     this.algorithm = options.algorithm;
+    this.tokenHashAlgorithm = options.tokenHashAlgorithm ?? 'sha256';
     this.store = options.store;
     this.cache = options.cache;
   }
@@ -86,13 +92,7 @@ export class TokenService {
       clientId: context.clientId,
       tokenVersion: context.tokenVersion,
     };
-    return signJwt(
-      claims as unknown as Record<string, unknown>,
-      key.privateKey,
-      key.kid,
-      this.algorithm,
-      { algorithm: this.algorithm as jwt.Algorithm },
-    );
+    return signToken(claims as unknown as Record<string, unknown>, key);
   }
 
   /**
@@ -126,9 +126,7 @@ export class TokenService {
       // Email claim is resolved by the caller (needs a User lookup); left
       // undefined here so the caller may spread additional claims.
     }
-    return signJwt(claims, key.privateKey, key.kid, this.algorithm, {
-      algorithm: this.algorithm as jwt.Algorithm,
-    });
+    return signToken(claims, key);
   }
 
   /** Verify an access token against the signing key denoted by its kid. */
@@ -156,7 +154,7 @@ export class TokenService {
 
     let claims: TokenClaims;
     try {
-      claims = verifyJwt(token, key.publicKey, this.algorithm, {
+      claims = verifyToken(token, key, {
         issuer: this.issuer,
         audience: this.audience,
         maxAge: Math.floor(this.accessTokenTtlMs / 1000),
@@ -216,7 +214,7 @@ export class TokenService {
   }
 
   hashRefreshToken(raw: string): string {
-    return createHash('sha256').update(raw).digest('base64');
+    return createHash(this.tokenHashAlgorithm).update(raw).digest('base64');
   }
 
   /** Constant-time hash comparison for the presented refresh token. */

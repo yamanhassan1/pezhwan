@@ -47,7 +47,11 @@ export class GcsAdapter {
     return { Authorization: `Bearer ${this.accessToken}` };
   }
 
-  async put(name: string, body: Uint8Array | string, contentType = 'application/octet-stream'): Promise<void> {
+  async put(
+    name: string,
+    body: Uint8Array | string,
+    contentType = 'application/octet-stream',
+  ): Promise<void> {
     const payload = typeof body === 'string' ? new TextEncoder().encode(body) : body;
     const response = await this.fetchImpl(this.url(name), {
       method: 'POST',

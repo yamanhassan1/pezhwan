@@ -79,12 +79,17 @@ function indexMatches(spec: IndexSpec, ix: Record<string, unknown>): boolean {
   if (JSON.stringify(ix.key) !== JSON.stringify(spec.key)) return false;
   if ((spec.unique ?? false) !== Boolean(ix.unique)) return false;
   if ((spec.sparse ?? false) !== Boolean(ix.sparse)) return false;
-  if (spec.expireAfterSeconds !== undefined &&
-      Number(ix.expireAfterSeconds) !== spec.expireAfterSeconds) {
+  if (
+    spec.expireAfterSeconds !== undefined &&
+    Number(ix.expireAfterSeconds) !== spec.expireAfterSeconds
+  ) {
     return false;
   }
-  if (spec.partialFilterExpression !== undefined &&
-      JSON.stringify(ix.partialFilterExpression ?? null) !== JSON.stringify(spec.partialFilterExpression)) {
+  if (
+    spec.partialFilterExpression !== undefined &&
+    JSON.stringify(ix.partialFilterExpression ?? null) !==
+      JSON.stringify(spec.partialFilterExpression)
+  ) {
     return false;
   }
   return true;
@@ -162,9 +167,10 @@ async function main(): Promise<void> {
       ];
       const missing: string[] = [];
       for (const [name, specs] of labs) {
-        const catalog = (await mongoose.connection
-          .collection(name)
-          .indexes()) as unknown as Record<string, unknown>[];
+        const catalog = (await mongoose.connection.collection(name).indexes()) as unknown as Record<
+          string,
+          unknown
+        >[];
         for (const spec of specs) {
           if (!catalog.some((ix) => indexMatches(spec, ix))) {
             missing.push(`${name}:${JSON.stringify(spec.key)}`);

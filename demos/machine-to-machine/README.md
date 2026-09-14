@@ -24,11 +24,11 @@ for the same protected services: **API keys** (`X-Api-Key` header, via
 
 ## Key files
 
-| File | Role |
-|------|------|
-| `server.ts` | Express app: runtime, durable keys, key issue/revoke, client register, token exchange, protected services |
-| `index.html` | SPA — create/revoke API key, register client, fetch token, call the service endpoints |
-| `keys/` | Durable signing keys created on first boot by `initKeyPersistence` |
+| File         | Role                                                                                                      |
+| ------------ | --------------------------------------------------------------------------------------------------------- |
+| `server.ts`  | Express app: runtime, durable keys, key issue/revoke, client register, token exchange, protected services |
+| `index.html` | SPA — create/revoke API key, register client, fetch token, call the service endpoints                     |
+| `keys/`      | Durable signing keys created on first boot by `initKeyPersistence`                                        |
 
 ### API surface (`server.ts`)
 
@@ -40,17 +40,17 @@ for the same protected services: **API keys** (`X-Api-Key` header, via
 ## Required configuration
 
 **Self-contained.** The demo embeds `@pezhwan/core` and connects directly to
-MongoDB — it does *not* call the identity-server. `ISSUER` defaults to
+MongoDB — it does _not_ call the identity-server. `ISSUER` defaults to
 `http://localhost:4011` purely to stamp the same `iss` claim the identity-server
 uses, so tokens share the same contract.
 
-| Environment variable | Default | Purpose |
-|---|---|---|
-| `MONGODB_URI` | `mongodb://localhost:27017/pezhwan` | Shared database |
-| `PORT` | `5182` | HTTP listen port |
-| `TENANT_ID` | `dev-tenant` | Tenant the demo runs as |
-| `APPLICATION_ID` | `dev-app` | Application within the tenant |
-| `ISSUER` | `http://localhost:4011` | JWT `iss` claim |
+| Environment variable | Default                             | Purpose                       |
+| -------------------- | ----------------------------------- | ----------------------------- |
+| `MONGODB_URI`        | `mongodb://localhost:27017/pezhwan` | Shared database               |
+| `PORT`               | `5182`                              | HTTP listen port              |
+| `TENANT_ID`          | `dev-tenant`                        | Tenant the demo runs as       |
+| `APPLICATION_ID`     | `dev-app`                           | Application within the tenant |
+| `ISSUER`             | `http://localhost:4011`             | JWT `iss` claim               |
 
 OAuth `client_credentials` requires a **confidential** client (a secret is
 issued); public clients are not usable for this grant.
@@ -65,7 +65,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
    npm install
    npm run build
    ```
-2. *Full-stack context only — not required.* Start the identity-server on 4011:
+2. _Full-stack context only — not required._ Start the identity-server on 4011:
    ```bash
    npm run dev -w @pezhwan/identity-server
    ```
@@ -79,7 +79,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
 ## Use it
 
 1. **Create API Key** — copy the `rawKey` (shown once), then **Ping with API
-   Key**. Ping with *no* credentials to see the 401.
+   Key**. Ping with _no_ credentials to see the 401.
 2. **Register Client** — a fresh confidential client is issued; client ID and
    secret auto-fill. **Get Token** to mint a `client_credentials` access token.
 3. Call **Ping with Token** (Bearer) and **Status with Token** (key or token).

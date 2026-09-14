@@ -1,420 +1,513 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PEZHWAN · MFA Demo</title>
-  <style>
-    :root {
-      --bg: #f4f6fb;
-      --card: #ffffff;
-      --border: #e2e6f0;
-      --text: #17203a;
-      --muted: #66708a;
-      --accent: #2f6bff;
-      --accent-dark: #1e50c8;
-      --ok: #16a34a;
-      --err: #dc2626;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.5;
-    }
-    main {
-      max-width: 540px;
-      margin: 48px auto;
-      padding: 0 16px;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 6px 24px rgba(23, 32, 58, 0.06);
-    }
-    h1 { margin: 0 0 4px; font-size: 24px; }
-    .subtitle { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
-    h2 { font-size: 16px; margin: 0 0 12px; }
-    label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      background: #fbfcff;
-    }
-    .row { display: flex; gap: 10px; }
-    .row input { flex: 1; }
-    button {
-      margin-top: 14px;
-      padding: 10px 16px;
-      border: 0;
-      border-radius: 8px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    button:hover { background: var(--accent-dark); }
-    button.secondary { background: #eef1f8; color: var(--text); }
-    button.secondary:hover { background: #e2e7f3; }
-    button.danger { background: #fdeeee; color: var(--err); }
-    button.danger:hover { background: #fadada; }
-    button:disabled { opacity: 0.55; cursor: not-allowed; }
-    hr { border: 0; border-top: 1px solid var(--border); margin: 22px 0; }
-    pre {
-      background: #10162b;
-      color: #d7e0f5;
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 12px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      min-height: 40px;
-      margin: 0;
-    }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .pill {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .pill.ok { background: #e7f7ec; color: var(--ok); }
-    .pill.out { background: #fdeeee; color: var(--err); }
-    .hidden { display: none; }
-    footer { margin-top: 28px; text-align: center; font-size: 12px; color: var(--muted); }
-    .callout {
-      background: #f0f4ff;
-      border-left: 3px solid var(--accent);
-      border-radius: 0 8px 8px 0;
-      padding: 12px 14px;
-      font-size: 13px;
-      color: var(--text);
-      margin-top: 14px;
-    }
-    .callout strong { color: var(--accent-dark); }
-    .err { color: var(--err); font-size: 13px; margin-top: 8px; }
-    .ok-msg { color: var(--ok); font-size: 13px; margin-top: 8px; }
-  </style>
-</head>
-<body>
-  <main>
-    <div class="card">
-      <h1>PEZHWAN &middot; MFA Demo</h1>
-      <p class="subtitle">TOTP (Google Authenticator) multi-factor authentication &mdash; register, enroll, then see the MFA gate in action.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PEZHWAN · MFA Demo</title>
+    <style>
+      :root {
+        --bg: #f4f6fb;
+        --card: #ffffff;
+        --border: #e2e6f0;
+        --text: #17203a;
+        --muted: #66708a;
+        --accent: #2f6bff;
+        --accent-dark: #1e50c8;
+        --ok: #16a34a;
+        --err: #dc2626;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 540px;
+        margin: 48px auto;
+        padding: 0 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 6px 24px rgba(23, 32, 58, 0.06);
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+      }
+      .subtitle {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0 0 12px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin: 12px 0 4px;
+      }
+      input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        background: #fbfcff;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+      }
+      .row input {
+        flex: 1;
+      }
+      button {
+        margin-top: 14px;
+        padding: 10px 16px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      button:hover {
+        background: var(--accent-dark);
+      }
+      button.secondary {
+        background: #eef1f8;
+        color: var(--text);
+      }
+      button.secondary:hover {
+        background: #e2e7f3;
+      }
+      button.danger {
+        background: #fdeeee;
+        color: var(--err);
+      }
+      button.danger:hover {
+        background: #fadada;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 22px 0;
+      }
+      pre {
+        background: #10162b;
+        color: #d7e0f5;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 12px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        min-height: 40px;
+        margin: 0;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .pill.ok {
+        background: #e7f7ec;
+        color: var(--ok);
+      }
+      .pill.out {
+        background: #fdeeee;
+        color: var(--err);
+      }
+      .hidden {
+        display: none;
+      }
+      footer {
+        margin-top: 28px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .callout {
+        background: #f0f4ff;
+        border-left: 3px solid var(--accent);
+        border-radius: 0 8px 8px 0;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--text);
+        margin-top: 14px;
+      }
+      .callout strong {
+        color: var(--accent-dark);
+      }
+      .err {
+        color: var(--err);
+        font-size: 13px;
+        margin-top: 8px;
+      }
+      .ok-msg {
+        color: var(--ok);
+        font-size: 13px;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="card">
+        <h1>PEZHWAN &middot; MFA Demo</h1>
+        <p class="subtitle">
+          TOTP (Google Authenticator) multi-factor authentication &mdash; register, enroll, then see
+          the MFA gate in action.
+        </p>
 
-      <!-- ─── REGISTER / LOGIN ─── -->
-      <section id="auth-section">
-        <h2>Register / Login</h2>
-        <div class="row">
-          <input id="auth-email" type="email" placeholder="you@example.com" />
-          <input id="auth-password" type="password" placeholder="Password (8+ chars)" />
-        </div>
-        <div class="row">
-          <button id="reg-btn">Register</button>
-          <button id="login-btn">Login</button>
-        </div>
-        <div class="err hidden" id="auth-error"></div>
-      </section>
+        <!-- ─── REGISTER / LOGIN ─── -->
+        <section id="auth-section">
+          <h2>Register / Login</h2>
+          <div class="row">
+            <input id="auth-email" type="email" placeholder="you@example.com" />
+            <input id="auth-password" type="password" placeholder="Password (8+ chars)" />
+          </div>
+          <div class="row">
+            <button id="reg-btn">Register</button>
+            <button id="login-btn">Login</button>
+          </div>
+          <div class="err hidden" id="auth-error"></div>
+        </section>
 
-      <!-- ─── TOTP STEP-UP (shown when login returns mfaRequired) ─── -->
-      <section id="mfa-step" class="hidden">
+        <!-- ─── TOTP STEP-UP (shown when login returns mfaRequired) ─── -->
+        <section id="mfa-step" class="hidden">
+          <hr />
+          <h2>Enter TOTP Code</h2>
+          <p class="hint">
+            Password accepted &mdash; enter the 6-digit code from your authenticator app to finish
+            logging in.
+          </p>
+          <input id="mfa-code" placeholder="6-digit code" maxlength="6" />
+          <button id="mfa-complete-btn">Complete login</button>
+          <div class="err hidden" id="mfa-error"></div>
+        </section>
+
         <hr />
-        <h2>Enter TOTP Code</h2>
-        <p class="hint">Password accepted &mdash; enter the 6-digit code from your authenticator app to finish logging in.</p>
-        <input id="mfa-code" placeholder="6-digit code" maxlength="6" />
-        <button id="mfa-complete-btn">Complete login</button>
-        <div class="err hidden" id="mfa-error"></div>
-      </section>
 
-      <hr />
+        <!-- ─── SIGNED IN: PROFILE + MFA MANAGEMENT ─── -->
+        <section id="profile-section" class="hidden">
+          <h2>Profile <span id="mfa-pill" class="pill out">MFA off</span></h2>
+          <pre id="profile-body" style="min-height: 60px">Loading&hellip;</pre>
+          <div class="row">
+            <button id="me-btn" class="secondary">Fetch /api/me</button>
+            <button id="logout-btn" class="danger">Logout</button>
+          </div>
 
-      <!-- ─── SIGNED IN: PROFILE + MFA MANAGEMENT ─── -->
-      <section id="profile-section" class="hidden">
-        <h2>Profile <span id="mfa-pill" class="pill out">MFA off</span></h2>
-        <pre id="profile-body" style="min-height:60px">Loading&hellip;</pre>
-        <div class="row">
-          <button id="me-btn" class="secondary">Fetch /api/me</button>
-          <button id="logout-btn" class="danger">Logout</button>
+          <hr />
+
+          <!-- ─── ENROLL MFA ─── -->
+          <h2>Enable MFA</h2>
+          <button id="mfa-setup-btn" class="secondary">Begin setup</button>
+          <div id="mfa-setup" class="hidden">
+            <p class="hint">
+              Scan the URI with your authenticator app or enter the secret manually.
+            </p>
+            <label>Base32 secret</label>
+            <pre id="mfa-secret"></pre>
+            <label>Provisioning URI</label>
+            <pre id="mfa-uri" style="word-break: break-all"></pre>
+            <label>Backup codes (one-time use &mdash; store safely)</label>
+            <pre id="mfa-backups"></pre>
+            <label>TOTP code</label>
+            <input id="mfa-enable-code" placeholder="6-digit code" maxlength="6" />
+            <button id="mfa-enable-btn">Enable MFA</button>
+            <div class="err hidden" id="mfa-enable-error"></div>
+            <div class="ok-msg hidden" id="mfa-enable-ok"></div>
+          </div>
+
+          <hr />
+
+          <!-- ─── DISABLE MFA ─── -->
+          <h2>Disable MFA</h2>
+          <label>Current TOTP code</label>
+          <input id="mfa-disable-code" placeholder="6-digit code" maxlength="6" />
+          <button id="mfa-disable-btn" class="danger">Disable MFA</button>
+          <div class="err hidden" id="mfa-disable-error"></div>
+        </section>
+
+        <div class="callout">
+          <strong>Note:</strong> MFA at-rest secret is encrypted with the key from
+          <code>MFA_ENCRYPTION_KEY</code> and TOTP backup codes are stored hashed.
         </div>
 
         <hr />
 
-        <!-- ─── ENROLL MFA ─── -->
-        <h2>Enable MFA</h2>
-        <button id="mfa-setup-btn" class="secondary">Begin setup</button>
-        <div id="mfa-setup" class="hidden">
-          <p class="hint">Scan the URI with your authenticator app or enter the secret manually.</p>
-          <label>Base32 secret</label>
-          <pre id="mfa-secret"></pre>
-          <label>Provisioning URI</label>
-          <pre id="mfa-uri" style="word-break:break-all"></pre>
-          <label>Backup codes (one-time use &mdash; store safely)</label>
-          <pre id="mfa-backups"></pre>
-          <label>TOTP code</label>
-          <input id="mfa-enable-code" placeholder="6-digit code" maxlength="6" />
-          <button id="mfa-enable-btn">Enable MFA</button>
-          <div class="err hidden" id="mfa-enable-error"></div>
-          <div class="ok-msg hidden" id="mfa-enable-ok"></div>
-        </div>
+        <section>
+          <h2>Token Inspector</h2>
+          <pre id="token-inspector">No access token yet.</pre>
+        </section>
 
-        <hr />
+        <section>
+          <h2>Server response</h2>
+          <pre id="response-log">&mdash;</pre>
+        </section>
 
-        <!-- ─── DISABLE MFA ─── -->
-        <h2>Disable MFA</h2>
-        <label>Current TOTP code</label>
-        <input id="mfa-disable-code" placeholder="6-digit code" maxlength="6" />
-        <button id="mfa-disable-btn" class="danger">Disable MFA</button>
-        <div class="err hidden" id="mfa-disable-error"></div>
-      </section>
-
-      <div class="callout">
-        <strong>Note:</strong> MFA at-rest secret is encrypted with the key from
-        <code>MFA_ENCRYPTION_KEY</code> and TOTP backup codes are stored hashed.
+        <footer>PEZHWAN SDK demo &middot; self-contained &middot; vanilla JS</footer>
       </div>
+    </main>
 
-      <hr />
+    <script>
+      (() => {
+        'use strict';
 
-      <section>
-        <h2>Token Inspector</h2>
-        <pre id="token-inspector">No access token yet.</pre>
-      </section>
+        let accessToken = null;
+        let refreshToken = null;
+        let pendingUserId = null;
 
-      <section>
-        <h2>Server response</h2>
-        <pre id="response-log">&mdash;</pre>
-      </section>
+        const $ = (sel) => document.querySelector(sel);
 
-      <footer>PEZHWAN SDK demo &middot; self-contained &middot; vanilla JS</footer>
-    </div>
-  </main>
+        // ─── Helpers ──────────────────────────────────────────────────────────
 
-  <script>
-    (() => {
-      'use strict';
+        function showResponse(data) {
+          $('#response-log').textContent = JSON.stringify(data, null, 2);
+        }
 
-      let accessToken = null;
-      let refreshToken = null;
-      let pendingUserId = null;
+        function showError(id, msg) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.textContent = msg || '';
+          el.classList.toggle('hidden', !msg);
+        }
 
-      const $ = (sel) => document.querySelector(sel);
+        async function api(path, opts) {
+          const headers = { 'Content-Type': 'application/json' };
+          if (accessToken) headers['Authorization'] = 'Bearer ' + accessToken;
+          const res = await fetch(path, {
+            method: (opts && opts.method) || 'GET',
+            headers,
+            body: opts && opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+          });
+          const json = await res.json().catch(() => ({}));
+          showResponse(json);
+          if (!json.success) {
+            throw Object.assign(new Error((json.error && json.error.message) || 'Request failed'), {
+              code: json.error && json.error.code,
+              status: res.status,
+            });
+          }
+          return json.data;
+        }
 
-      // ─── Helpers ──────────────────────────────────────────────────────────
+        function b64decode(seg) {
+          const pad = seg.length % 4 === 0 ? '' : '='.repeat(4 - (seg.length % 4));
+          const b64 = (seg + pad).replace(/-/g, '+').replace(/_/g, '/');
+          const bin = atob(b64);
+          const bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          return JSON.parse(new TextDecoder().decode(bytes));
+        }
 
-      function showResponse(data) {
-        $('#response-log').textContent = JSON.stringify(data, null, 2);
-      }
+        function inspectToken(token) {
+          if (!token) return 'No access token yet.';
+          const parts = token.split('.');
+          if (parts.length !== 3) return 'Token is not a 3-segment JWT:\n' + token;
+          try {
+            const header = JSON.stringify(b64decode(parts[0]), null, 2);
+            const payload = JSON.stringify(b64decode(parts[1]), null, 2);
+            return (
+              '--- header ---\n' +
+              header +
+              '\n\n--- payload ---\n' +
+              payload +
+              '\n\n--- signature ---\n' +
+              parts[2]
+            );
+          } catch (e) {
+            return 'Could not decode JWT: ' + e.message;
+          }
+        }
 
-      function showError(id, msg) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = msg || '';
-        el.classList.toggle('hidden', !msg);
-      }
+        // ─── State ───────────────────────────────────────────────────────────
 
-      async function api(path, opts) {
-        const headers = { 'Content-Type': 'application/json' };
-        if (accessToken) headers['Authorization'] = 'Bearer ' + accessToken;
-        const res = await fetch(path, {
-          method: (opts && opts.method) || 'GET',
-          headers,
-          body: opts && opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+        function setTokens(access, refresh) {
+          accessToken = access || null;
+          refreshToken = refresh || null;
+          $('#token-inspector').textContent = inspectToken(accessToken);
+          const profileEl = document.getElementById('profile-section');
+          if (accessToken) {
+            profileEl.classList.remove('hidden');
+            fetchMe();
+          } else {
+            profileEl.classList.add('hidden');
+          }
+        }
+
+        async function fetchMe() {
+          try {
+            const me = await api('/api/me');
+            const info = {
+              userId: me.identity && me.identity.userId,
+              email: me.email,
+              authMethod: me.identity && me.identity.authMethod,
+              mfaEnabled: me.mfaEnabled,
+            };
+            $('#profile-body').textContent = JSON.stringify(info, null, 2);
+            var pill = $('#mfa-pill');
+            pill.className = 'pill ' + (me.mfaEnabled ? 'ok' : 'out');
+            pill.textContent = me.mfaEnabled ? 'MFA enabled' : 'MFA off';
+            if (!me.mfaEnabled) {
+              $('#mfa-setup').classList.add('hidden');
+              $('#mfa-setup-btn').disabled = false;
+            }
+          } catch (e) {
+            $('#profile-body').textContent = 'Error: ' + e.message;
+          }
+        }
+
+        // ─── Register / Login ────────────────────────────────────────────────
+
+        $('#reg-btn').addEventListener('click', async () => {
+          showError('auth-error');
+          try {
+            const data = await api('/api/register', {
+              method: 'POST',
+              body: { email: $('#auth-email').value, password: $('#auth-password').value },
+            });
+            setTokens(data.tokens.accessToken, data.tokens.refreshToken);
+          } catch (e) {
+            showError('auth-error', e.message);
+          }
         });
-        const json = await res.json().catch(() => ({}));
-        showResponse(json);
-        if (!json.success) {
-          throw Object.assign(new Error(json.error && json.error.message || 'Request failed'), {
-            code: json.error && json.error.code,
-            status: res.status,
-          });
-        }
-        return json.data;
-      }
 
-      function b64decode(seg) {
-        const pad = seg.length % 4 === 0 ? '' : '='.repeat(4 - (seg.length % 4));
-        const b64 = (seg + pad).replace(/-/g, '+').replace(/_/g, '/');
-        const bin = atob(b64);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        return JSON.parse(new TextDecoder().decode(bytes));
-      }
-
-      function inspectToken(token) {
-        if (!token) return 'No access token yet.';
-        const parts = token.split('.');
-        if (parts.length !== 3) return 'Token is not a 3-segment JWT:\n' + token;
-        try {
-          const header = JSON.stringify(b64decode(parts[0]), null, 2);
-          const payload = JSON.stringify(b64decode(parts[1]), null, 2);
-          return '--- header ---\n' + header + '\n\n--- payload ---\n' + payload + '\n\n--- signature ---\n' + parts[2];
-        } catch (e) {
-          return 'Could not decode JWT: ' + e.message;
-        }
-      }
-
-      // ─── State ───────────────────────────────────────────────────────────
-
-      function setTokens(access, refresh) {
-        accessToken = access || null;
-        refreshToken = refresh || null;
-        $('#token-inspector').textContent = inspectToken(accessToken);
-        const profileEl = document.getElementById('profile-section');
-        if (accessToken) {
-          profileEl.classList.remove('hidden');
-          fetchMe();
-        } else {
-          profileEl.classList.add('hidden');
-        }
-      }
-
-      async function fetchMe() {
-        try {
-          const me = await api('/api/me');
-          const info = { userId: me.identity && me.identity.userId, email: me.email, authMethod: me.identity && me.identity.authMethod, mfaEnabled: me.mfaEnabled };
-          $('#profile-body').textContent = JSON.stringify(info, null, 2);
-          var pill = $('#mfa-pill');
-          pill.className = 'pill ' + (me.mfaEnabled ? 'ok' : 'out');
-          pill.textContent = me.mfaEnabled ? 'MFA enabled' : 'MFA off';
-          if (!me.mfaEnabled) {
-            $('#mfa-setup').classList.add('hidden');
-            $('#mfa-setup-btn').disabled = false;
+        $('#login-btn').addEventListener('click', async () => {
+          showError('auth-error');
+          try {
+            const data = await api('/api/login', {
+              method: 'POST',
+              body: { email: $('#auth-email').value, password: $('#auth-password').value },
+            });
+            if (data.mfaRequired) {
+              pendingUserId = data.userId;
+              $('#mfa-step').classList.remove('hidden');
+              return;
+            }
+            setTokens(data.tokens.accessToken, data.tokens.refreshToken);
+          } catch (e) {
+            showError('auth-error', e.message);
           }
-        } catch (e) {
-          $('#profile-body').textContent = 'Error: ' + e.message;
-        }
-      }
+        });
 
-      // ─── Register / Login ────────────────────────────────────────────────
+        // ─── MFA complete-login ──────────────────────────────────────────────
 
-      $('#reg-btn').addEventListener('click', async () => {
-        showError('auth-error');
-        try {
-          const data = await api('/api/register', {
-            method: 'POST',
-            body: { email: $('#auth-email').value, password: $('#auth-password').value },
-          });
-          setTokens(data.tokens.accessToken, data.tokens.refreshToken);
-        } catch (e) {
-          showError('auth-error', e.message);
-        }
-      });
-
-      $('#login-btn').addEventListener('click', async () => {
-        showError('auth-error');
-        try {
-          const data = await api('/api/login', {
-            method: 'POST',
-            body: { email: $('#auth-email').value, password: $('#auth-password').value },
-          });
-          if (data.mfaRequired) {
-            pendingUserId = data.userId;
-            $('#mfa-step').classList.remove('hidden');
-            return;
+        $('#mfa-complete-btn').addEventListener('click', async () => {
+          showError('mfa-error');
+          try {
+            const data = await api('/api/mfa/complete-login', {
+              method: 'POST',
+              body: { userId: pendingUserId, code: $('#mfa-code').value },
+            });
+            pendingUserId = null;
+            $('#mfa-step').classList.add('hidden');
+            $('#mfa-code').value = '';
+            setTokens(data.tokens.accessToken, data.tokens.refreshToken);
+          } catch (e) {
+            showError('mfa-error', e.message);
           }
-          setTokens(data.tokens.accessToken, data.tokens.refreshToken);
-        } catch (e) {
-          showError('auth-error', e.message);
-        }
-      });
+        });
 
-      // ─── MFA complete-login ──────────────────────────────────────────────
+        // ─── Logout ──────────────────────────────────────────────────────────
 
-      $('#mfa-complete-btn').addEventListener('click', async () => {
-        showError('mfa-error');
-        try {
-          const data = await api('/api/mfa/complete-login', {
-            method: 'POST',
-            body: { userId: pendingUserId, code: $('#mfa-code').value },
-          });
+        $('#logout-btn').addEventListener('click', () => {
+          accessToken = null;
+          refreshToken = null;
           pendingUserId = null;
+          $('#profile-section').classList.add('hidden');
           $('#mfa-step').classList.add('hidden');
-          $('#mfa-code').value = '';
-          setTokens(data.tokens.accessToken, data.tokens.refreshToken);
-        } catch (e) {
-          showError('mfa-error', e.message);
-        }
-      });
+          $('#token-inspector').textContent = 'No access token yet.';
+          $('#profile-body').textContent = 'Loading\u2026';
+        });
 
-      // ─── Logout ──────────────────────────────────────────────────────────
+        // ─── Fetch /api/me ───────────────────────────────────────────────────
 
-      $('#logout-btn').addEventListener('click', () => {
-        accessToken = null;
-        refreshToken = null;
-        pendingUserId = null;
-        $('#profile-section').classList.add('hidden');
-        $('#mfa-step').classList.add('hidden');
-        $('#token-inspector').textContent = 'No access token yet.';
-        $('#profile-body').textContent = 'Loading\u2026';
-      });
+        $('#me-btn').addEventListener('click', fetchMe);
 
-      // ─── Fetch /api/me ───────────────────────────────────────────────────
+        // ─── MFA Setup ───────────────────────────────────────────────────────
 
-      $('#me-btn').addEventListener('click', fetchMe);
+        $('#mfa-setup-btn').addEventListener('click', async () => {
+          showError('mfa-enable-error');
+          $('#mfa-enable-ok').classList.add('hidden');
+          try {
+            const data = await api('/api/mfa/setup', { method: 'POST' });
+            $('#mfa-secret').textContent = data.secret;
+            $('#mfa-uri').textContent = data.otpauthUri;
+            $('#mfa-backups').textContent = (data.backupCodes || []).join('\n');
+            $('#mfa-setup').classList.remove('hidden');
+          } catch (e) {
+            showError('mfa-enable-error', e.message);
+          }
+        });
 
-      // ─── MFA Setup ───────────────────────────────────────────────────────
+        // ─── MFA Enable ──────────────────────────────────────────────────────
 
-      $('#mfa-setup-btn').addEventListener('click', async () => {
-        showError('mfa-enable-error');
-        $('#mfa-enable-ok').classList.add('hidden');
-        try {
-          const data = await api('/api/mfa/setup', { method: 'POST' });
-          $('#mfa-secret').textContent = data.secret;
-          $('#mfa-uri').textContent = data.otpauthUri;
-          $('#mfa-backups').textContent = (data.backupCodes || []).join('\n');
-          $('#mfa-setup').classList.remove('hidden');
-        } catch (e) {
-          showError('mfa-enable-error', e.message);
-        }
-      });
+        $('#mfa-enable-btn').addEventListener('click', async () => {
+          showError('mfa-enable-error');
+          $('#mfa-enable-ok').classList.add('hidden');
+          try {
+            await api('/api/mfa/enable', {
+              method: 'POST',
+              body: { code: $('#mfa-enable-code').value },
+            });
+            $('#mfa-enable-ok').textContent = 'MFA enabled successfully.';
+            $('#mfa-enable-ok').classList.remove('hidden');
+            fetchMe();
+          } catch (e) {
+            showError('mfa-enable-error', e.message);
+          }
+        });
 
-      // ─── MFA Enable ──────────────────────────────────────────────────────
+        // ─── MFA Disable ─────────────────────────────────────────────────────
 
-      $('#mfa-enable-btn').addEventListener('click', async () => {
-        showError('mfa-enable-error');
-        $('#mfa-enable-ok').classList.add('hidden');
-        try {
-          await api('/api/mfa/enable', {
-            method: 'POST',
-            body: { code: $('#mfa-enable-code').value },
-          });
-          $('#mfa-enable-ok').textContent = 'MFA enabled successfully.';
-          $('#mfa-enable-ok').classList.remove('hidden');
-          fetchMe();
-        } catch (e) {
-          showError('mfa-enable-error', e.message);
-        }
-      });
-
-      // ─── MFA Disable ─────────────────────────────────────────────────────
-
-      $('#mfa-disable-btn').addEventListener('click', async () => {
-        showError('mfa-disable-error');
-        try {
-          await api('/api/mfa/disable', {
-            method: 'POST',
-            body: { code: $('#mfa-disable-code').value },
-          });
-          $('#mfa-setup').classList.add('hidden');
-          $('#mfa-disable-code').value = '';
-          $('#mfa-enable-code').value = '';
-          $('#mfa-setup-btn').disabled = false;
-          fetchMe();
-        } catch (e) {
-          showError('mfa-disable-error', e.message);
-        }
-      });
-    })();
-  </script>
-</body>
+        $('#mfa-disable-btn').addEventListener('click', async () => {
+          showError('mfa-disable-error');
+          try {
+            await api('/api/mfa/disable', {
+              method: 'POST',
+              body: { code: $('#mfa-disable-code').value },
+            });
+            $('#mfa-setup').classList.add('hidden');
+            $('#mfa-disable-code').value = '';
+            $('#mfa-enable-code').value = '';
+            $('#mfa-setup-btn').disabled = false;
+            fetchMe();
+          } catch (e) {
+            showError('mfa-disable-error', e.message);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>

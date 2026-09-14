@@ -18,11 +18,11 @@ login that has been challenged on the second factor.
 
 ## Key files
 
-| File | Role |
-|------|------|
-| `server.ts` | Express app: runtime, durable keys, MFA enrollment + login-completion routes |
-| `index.html` | SPA — register/login, TOTP step-up prompt, setup/verify/disable panel |
-| `keys/` | Durable signing keys created on first boot by `initKeyPersistence` |
+| File         | Role                                                                         |
+| ------------ | ---------------------------------------------------------------------------- |
+| `server.ts`  | Express app: runtime, durable keys, MFA enrollment + login-completion routes |
+| `index.html` | SPA — register/login, TOTP step-up prompt, setup/verify/disable panel        |
+| `keys/`      | Durable signing keys created on first boot by `initKeyPersistence`           |
 
 ### API surface (`server.ts`)
 
@@ -36,18 +36,18 @@ login that has been challenged on the second factor.
 ## Required configuration
 
 **Self-contained.** The demo embeds `@pezhwan/core` and connects directly to
-MongoDB — it does *not* call the identity-server. `ISSUER` defaults to
+MongoDB — it does _not_ call the identity-server. `ISSUER` defaults to
 `http://localhost:4011` purely to stamp the same `iss` claim the identity-server
 uses, so tokens share the same contract.
 
-| Environment variable | Default | Purpose |
-|---|---|---|
-| `MONGODB_URI` | `mongodb://localhost:27017/pezhwan` | Shared database |
-| `PORT` | `5177` | HTTP listen port |
-| `TENANT_ID` | `dev-tenant` | Tenant the demo runs as |
-| `APPLICATION_ID` | `dev-app` | Application within the tenant |
-| `ISSUER` | `http://localhost:4011` | JWT `iss` claim |
-| `MFA_ENCRYPTION_KEY` | 32-byte base64 default | AES-256-GCM key — **must** decode to exactly 32 bytes or `INVALID_MFA_ENCRYPTION_KEY` is thrown |
+| Environment variable | Default                             | Purpose                                                                                         |
+| -------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `MONGODB_URI`        | `mongodb://localhost:27017/pezhwan` | Shared database                                                                                 |
+| `PORT`               | `5177`                              | HTTP listen port                                                                                |
+| `TENANT_ID`          | `dev-tenant`                        | Tenant the demo runs as                                                                         |
+| `APPLICATION_ID`     | `dev-app`                           | Application within the tenant                                                                   |
+| `ISSUER`             | `http://localhost:4011`             | JWT `iss` claim                                                                                 |
+| `MFA_ENCRYPTION_KEY` | 32-byte base64 default              | AES-256-GCM key — **must** decode to exactly 32 bytes or `INVALID_MFA_ENCRYPTION_KEY` is thrown |
 
 ## Run it
 
@@ -59,7 +59,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
    npm install
    npm run build
    ```
-2. *Full-stack context only — not required.* Start the identity-server on 4011:
+2. _Full-stack context only — not required._ Start the identity-server on 4011:
    ```bash
    npm run dev -w @pezhwan/identity-server
    ```

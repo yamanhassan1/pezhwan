@@ -10,7 +10,9 @@ export default {
   command: 'sessions',
   describe: 'List the authenticated user’s active sessions',
   async run(ctx: CliContext): Promise<number> {
-    const data = (await ctx.api('/v1/sessions')) as { data?: { sessions?: Array<Record<string, unknown>> } };
+    const data = (await ctx.api('/v1/sessions')) as {
+      data?: { sessions?: Array<Record<string, unknown>> };
+    };
     const sessions = data.data?.sessions ?? [];
     ctx.out(
       ctx.table(

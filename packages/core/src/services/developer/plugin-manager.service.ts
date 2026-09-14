@@ -57,7 +57,11 @@ export class DeveloperPluginManagerService {
     return record;
   }
 
-  async setState(name: string, state: PluginLifecycle, lastError?: string): Promise<DeveloperPluginRecord | null> {
+  async setState(
+    name: string,
+    state: PluginLifecycle,
+    lastError?: string,
+  ): Promise<DeveloperPluginRecord | null> {
     const record = this.plugins.get(name);
     if (!record) return null;
     record.state = state;

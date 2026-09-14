@@ -130,21 +130,30 @@ All runs below are from this engagement (Windows, PowerShell shell):
 
 ---
 
-## 5. Recommended follow-ups (not yet implemented)
+## 5. Recommended follow-ups
 
-1. **Per-request authorization re-check (optional, should be opt-in):** a
-   `requireFreshPermissions` middleware that re-resolves roles against Mongo
-   when a handler needs it, trading a DB read for zero revocation latency.
-2. **Mongo replica set + transactions:** makes rotation `create`+`finalise`
-   fully transactional (current design is safe and verified; a transaction would
-   eliminate the tiny crash window between child-create and parent-finalise).
-3. **Redis Sentinel/Cluster support** in `RedisManager` for HA deployments.
-4. **Field-level envelope encryption of `mfaSecret`** (and the persisted signing
-   PEMs) for deployments that put the DB / key files outside the trust boundary —
-   this is the deliberately-documented G3 carve-out, not yet implemented.
-5. **Single-writer audit shard for strictly-ordered hash chaining under HA.**
-   The audit retention knob and distributed `sequence` counter ARE now
-   implemented (`AuditService.setRetentionDays`, `audit-sequences`; unique
-   sequence prevents ordering forks). What remains is full strict _hash-link_
-   ordering under concurrent multi-writer HA, which still requires a
-   single-writer shard (documented G7 carve-out; best-effort today).
+1. **Per-request authorization re-check (optional, opt-in):** ✅
+   `requireFreshPermissions(runtime)` middleware re-resolves roles against
+   Mongo when a handler needs it, trading a DB read for zero revocation
+   latency. See `packages/core/src/middleware/fresh-permissions.middleware.ts`
+   and `packages/express/src/index.ts` for the Express RequestHandler facade.
+2. **Mongo replica set + transactions for refresh rotation:** ✅ already
+   implemented — `SessionService.rotateRefreshToken` uses
+   `withTransaction` from `infrastructure/mongo-transactions.ts`.
+3. **Redis Sentinel/Cluster support in `RedisManager`:** ✅
+   `RedisManagerOptions` now accepts `mode: 'single' | 'sentinel' |
+   'cluster'` with topology-specific validation. See
+   `packages/core/src/services/redisCache.ts`.
+4. **Field-level DEK envelope encryption of `mfaSecret`:** ✅
+   The MFA service encrypts secrets under a per-tenant master key using
+   AES-256-GCM envelope encryption with a randomly-generated DEK (v3 format).
+   Previous `v2:` and legacy unprefixed envelopes are transparently
+   decryptable during the migration window. Run `npm run migrate:mfa` to
+   upgrade existing stored secrets. See `docs/operations/mfa-migration.md`.
+5. **Strictly-ordered hash chaining under HA (transactional audit):** ✅
+   `AuditService.writeEntry` now claims `seq` and the chain tip atomically
+   inside a `withTransaction` block, so on a replica set concurrent writers
+   serialize on the single counter document and observe the committed
+   `lastHash` — no two entries can share a predecessor. On standalone MongoDB
+   (no transaction support) the existing best-effort path is preserved
+   automatically.

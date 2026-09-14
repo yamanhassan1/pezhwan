@@ -56,8 +56,8 @@ design document or PR.
 Pezhwan is in active development and is distributed as `0.1.x`. Only the latest
 release is supported with fixes.
 
-| Version | Support level                           |
-| ------- | --------------------------------------- |
+| Version | Support level                            |
+| ------- | ---------------------------------------- |
 | Latest  | Bug fixes, security fixes, documentation |
 | Older   | Upgrade required                         |
 

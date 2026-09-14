@@ -37,6 +37,9 @@ jobs:
       - name: Workspace tests (core unit + package suites)
         run: npm test
 
+      - name: Coverage gate (lines ≥55, branches ≥60, functions ≥35)
+        run: npm run test:coverage:gate
+
       - name: License audit
         run: npm run license:check
 

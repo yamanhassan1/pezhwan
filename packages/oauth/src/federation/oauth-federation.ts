@@ -5,19 +5,13 @@
  * the normalized profile, then resolve-or-link a Pezhwan user identity.
  */
 
-import type {
-  BuildAuthUrlParams,
-  ExchangeParams,
-} from '../adapter.ts';
+import type { BuildAuthUrlParams, ExchangeParams } from '../adapter.ts';
 import type { SsoProfile, SsoProviderName } from '@pezhwan/shared';
 import { ProviderRegistry } from '../registry.ts';
 
 export interface OAuthFederationDeps {
   registry: ProviderRegistry;
-  findUserByIdentity: (
-    provider: string,
-    subject: string,
-  ) => Promise<{ userId: string } | null>;
+  findUserByIdentity: (provider: string, subject: string) => Promise<{ userId: string } | null>;
   createUserFromProfile: (profile: SsoProfile) => Promise<{ userId: string }>;
   linkIdentity: (
     userId: string,

@@ -36,7 +36,9 @@ export default function WebhooksList() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Webhooks</h1>
-          <p className="page-desc">Deliver audit and security events to your endpoint, signed with HMAC-SHA256.</p>
+          <p className="page-desc">
+            Deliver audit and security events to your endpoint, signed with HMAC-SHA256.
+          </p>
         </div>
         <div className="page-actions">
           <Link className="btn" to="/webhooks/create">
@@ -48,9 +50,20 @@ export default function WebhooksList() {
       {error && <div className="alert alert-danger">{error}</div>}
 
       <div className="card mt-3">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 14,
+          }}
+        >
           <h3>Endpoints</h3>
-          <button className="btn btn-secondary btn-sm" onClick={() => void load()} disabled={loading}>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => void load()}
+            disabled={loading}
+          >
             {loading ? <span className="loader" /> : 'Refresh'}
           </button>
         </div>
@@ -78,7 +91,10 @@ export default function WebhooksList() {
                 {webhooks.map((w) => (
                   <tr key={w.id}>
                     <td style={{ maxWidth: 280 }}>
-                      <span className="code text-ellipsis" style={{ display: 'inline-block', maxWidth: '100%' }}>
+                      <span
+                        className="code text-ellipsis"
+                        style={{ display: 'inline-block', maxWidth: '100%' }}
+                      >
                         {w.url}
                       </span>
                     </td>
@@ -92,9 +108,7 @@ export default function WebhooksList() {
                               </span>
                             ))
                           ) : (
-                            <span className="badge badge-info">
-                              {w.events.length} events
-                            </span>
+                            <span className="badge badge-info">{w.events.length} events</span>
                           )}
                         </div>
                       ) : (

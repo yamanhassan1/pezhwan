@@ -37,7 +37,12 @@ export function userSchemaDocument(): Record<string, unknown> {
       { name: 'externalId', type: 'string', mutability: 'readWrite' },
       { name: 'userName', type: 'string', required: true, uniqueness: 'server' },
       { name: 'displayName', type: 'string', mutability: 'readWrite' },
-      { name: 'name', type: 'complex', mutability: 'readWrite', subAttributes: ['givenName', 'familyName', 'fullName'] },
+      {
+        name: 'name',
+        type: 'complex',
+        mutability: 'readWrite',
+        subAttributes: ['givenName', 'familyName', 'fullName'],
+      },
       { name: 'emails', type: 'complex', multiValued: true, mutability: 'readWrite' },
       { name: 'phoneNumbers', type: 'complex', multiValued: true, mutability: 'readWrite' },
       { name: 'active', type: 'boolean', mutability: 'readWrite' },

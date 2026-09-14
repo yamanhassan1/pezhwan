@@ -28,7 +28,7 @@ datasources:
     editable: true
     jsonData:
       derivedFields:
-        - datasourceUid: ""
+        - datasourceUid: ''
           matcherRegex: '"requestId":"([^"]+)"'
           name: Request ID
-          url: ""
+          url: ''

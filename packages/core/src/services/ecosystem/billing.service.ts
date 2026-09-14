@@ -32,7 +32,11 @@ export class BillingService {
     this.provider = options.provider;
   }
 
-  async checkout(options: { tenantId: string; applicationId?: string; plan: string }): Promise<CheckoutResult> {
+  async checkout(options: {
+    tenantId: string;
+    applicationId?: string;
+    plan: string;
+  }): Promise<CheckoutResult> {
     const subscription = await this.subscription.create({
       tenantId: options.tenantId,
       applicationId: options.applicationId,
@@ -40,10 +44,7 @@ export class BillingService {
       status: 'trialing',
     });
     if (this.provider) {
-      const { url } = await this.provider.createCheckout(
-        options.plan,
-        options.tenantId,
-      );
+      const { url } = await this.provider.createCheckout(options.plan, options.tenantId);
       await this.subscription.updateStatus(String(subscription._id), 'trialing');
       return { url, subscriptionId: String(subscription._id) };
     }

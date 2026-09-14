@@ -74,7 +74,9 @@ export default function Settings() {
             <div className="empty-state">Loading...</div>
           ) : (
             <>
-              <label className="label" htmlFor="settings">Settings JSON</label>
+              <label className="label" htmlFor="settings">
+                Settings JSON
+              </label>
               <textarea
                 id="settings"
                 className="textarea"
@@ -108,13 +110,11 @@ export default function Settings() {
               ))}
             </span>
             <span style={{ color: 'var(--text-secondary)' }}>Issuer</span>
-            <span>
-              {window.location.origin}/v1
-            </span>
+            <span>{window.location.origin}/v1</span>
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 16 }}>
-            Settings are stored in the tenant configuration and apply to the entire
-            tenant. Issuer is derived from the API base for this environment.
+            Settings are stored in the tenant configuration and apply to the entire tenant. Issuer
+            is derived from the API base for this environment.
           </p>
         </div>
       </div>

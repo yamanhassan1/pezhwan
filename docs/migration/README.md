@@ -48,15 +48,15 @@ Each guide follows the same structure — (1) overview, (2) before you start,
 (3) exporting from the provider, (4) importing into Pezhwan, (5) concept
 mapping, (6) phased rollout, (7) cutover and decommission:
 
-| Guide | Typical source |
-| --- | --- |
-| [`auth0-migration.md`](./auth0-migration.md) | Auth0 tenants, users, RBAC roles, MFA. |
-| [`firebase-migration.md`](./firebase-migration.md) | Firebase Authentication (`auth.users`), custom claims. |
-| [`keycloak-migration.md`](./keycloak-migration.md) | Keycloak realms, clients, composite roles, user federation. |
-| [`okta-migration.md`](./okta-migration.md) | Okta orgs, groups, profile attributes, MFA factors. |
-| [`cognito-migration.md`](./cognito-migration.md) | AWS Cognito user pools, app clients, groups, custom attributes. |
-| [`supabase-migration.md`](./supabase-migration.md) | Supabase Auth (`auth.users`, identities, user/raw metadata). |
-| [`custom-migration.md`](./custom-migration.md) | Any legacy or in-house identity store. |
+| Guide                                              | Typical source                                                  |
+| -------------------------------------------------- | --------------------------------------------------------------- |
+| [`auth0-migration.md`](./auth0-migration.md)       | Auth0 tenants, users, RBAC roles, MFA.                          |
+| [`firebase-migration.md`](./firebase-migration.md) | Firebase Authentication (`auth.users`), custom claims.          |
+| [`keycloak-migration.md`](./keycloak-migration.md) | Keycloak realms, clients, composite roles, user federation.     |
+| [`okta-migration.md`](./okta-migration.md)         | Okta orgs, groups, profile attributes, MFA factors.             |
+| [`cognito-migration.md`](./cognito-migration.md)   | AWS Cognito user pools, app clients, groups, custom attributes. |
+| [`supabase-migration.md`](./supabase-migration.md) | Supabase Auth (`auth.users`, identities, user/raw metadata).    |
+| [`custom-migration.md`](./custom-migration.md)     | Any legacy or in-house identity store.                          |
 
 ## Common thread
 

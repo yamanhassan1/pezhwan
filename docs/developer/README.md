@@ -15,17 +15,17 @@ with the package READMEs under `packages/*/` and the tutorials under
 
 ## Within this directory
 
-| Document | Purpose |
-| --- | --- |
-| [`GETTING-STARTED.md`](./GETTING-STARTED.md) | Install, configure, and run Pezhwan locally. |
-| [`local-development.md`](./local-development.md) | Dev loop, build order, infrastructure, and common pitfalls. |
-| [`testing.md`](./testing.md) | Test runner, suites, exact commands, coverage, and CI. |
-| [`debugging.md`](./debugging.md) | Logging, request IDs, debugger configs, and common error codes. |
-| [`plugin-development.md`](./plugin-development.md) | The plugin system: hooks, loader, manager, and manifests. |
-| [`sdk-development.md`](./sdk-development.md) | How to add or extend an SDK package in the monorepo. |
-| [`api-client.md`](./api-client.md) | Calling the Pezhwan HTTP API: envelope, auth, endpoints, curl. |
-| [`best-practices.md`](./best-practices.md) | Security, multi-tenancy, session hygiene, and observability guidance. |
-| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Contribution workflow and quality gates. |
+| Document                                           | Purpose                                                               |
+| -------------------------------------------------- | --------------------------------------------------------------------- |
+| [`GETTING-STARTED.md`](./GETTING-STARTED.md)       | Install, configure, and run Pezhwan locally.                          |
+| [`local-development.md`](./local-development.md)   | Dev loop, build order, infrastructure, and common pitfalls.           |
+| [`testing.md`](./testing.md)                       | Test runner, suites, exact commands, coverage, and CI.                |
+| [`debugging.md`](./debugging.md)                   | Logging, request IDs, debugger configs, and common error codes.       |
+| [`plugin-development.md`](./plugin-development.md) | The plugin system: hooks, loader, manager, and manifests.             |
+| [`sdk-development.md`](./sdk-development.md)       | How to add or extend an SDK package in the monorepo.                  |
+| [`api-client.md`](./api-client.md)                 | Calling the Pezhwan HTTP API: envelope, auth, endpoints, curl.        |
+| [`best-practices.md`](./best-practices.md)         | Security, multi-tenancy, session hygiene, and observability guidance. |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md)             | Contribution workflow and quality gates.                              |
 
 ## Related documentation
 

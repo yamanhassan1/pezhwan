@@ -21,7 +21,11 @@
         --radius: 14px;
         --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
       }
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
       body {
         background: var(--bg);
         color: var(--text);
@@ -32,10 +36,23 @@
         justify-content: center;
         padding: 24px 16px;
       }
-      .wrap { width: 100%; max-width: 540px; }
-      header { text-align: center; margin-bottom: 18px; }
-      header h1 { font-size: 1.7rem; letter-spacing: -0.04em; }
-      header .sub { color: var(--text-soft); font-size: .88rem; margin-top: 4px; }
+      .wrap {
+        width: 100%;
+        max-width: 540px;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 18px;
+      }
+      header h1 {
+        font-size: 1.7rem;
+        letter-spacing: -0.04em;
+      }
+      header .sub {
+        color: var(--text-soft);
+        font-size: 0.88rem;
+        margin-top: 4px;
+      }
       .card {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -44,59 +61,159 @@
         margin-bottom: 14px;
         box-shadow: var(--shadow);
       }
-      .card h2 { font-size: 1rem; margin-bottom: 14px; }
-      .card h3 {
-        font-size: .72rem; color: var(--text-muted); text-transform: uppercase;
-        letter-spacing: .08em; font-weight: 700; margin-bottom: 10px;
+      .card h2 {
+        font-size: 1rem;
+        margin-bottom: 14px;
       }
-      hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-      .form-row { margin-bottom: 12px; }
+      .card h3 {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 16px 0;
+      }
+      .form-row {
+        margin-bottom: 12px;
+      }
       .form-row label {
-        display: block; font-size: .78rem; color: var(--text-soft);
-        margin-bottom: 6px; font-weight: 600;
+        display: block;
+        font-size: 0.78rem;
+        color: var(--text-soft);
+        margin-bottom: 6px;
+        font-weight: 600;
       }
       .form-row input {
-        width: 100%; padding: 10px 12px; border-radius: 10px;
-        border: 1px solid var(--border-strong); background: #f8fafc;
-        color: var(--text); font-size: .88rem; font-family: var(--mono); outline: none;
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border-strong);
+        background: #f8fafc;
+        color: var(--text);
+        font-size: 0.88rem;
+        font-family: var(--mono);
+        outline: none;
       }
       .form-row input:focus {
-        border-color: var(--accent); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
       }
       .btn {
-        padding: 10px 16px; border: none; border-radius: 10px; font-size: .82rem;
-        font-weight: 600; cursor: pointer; font-family: inherit;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
       }
-      .btn:disabled { opacity: .5; cursor: not-allowed; }
-      .btn-primary { background: linear-gradient(180deg, var(--accent), var(--accent-deep)); color: #fff; }
-      .btn-ghost { background: #fff; color: var(--text); border: 1px solid var(--border); }
-      .btn-danger { background: linear-gradient(180deg, #ef4444, #dc2626); color: #fff; }
-      .btn-sm { padding: 6px 12px; font-size: .73rem; }
-      .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+        color: #fff;
+      }
+      .btn-ghost {
+        background: #fff;
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .btn-danger {
+        background: linear-gradient(180deg, #ef4444, #dc2626);
+        color: #fff;
+      }
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.73rem;
+      }
+      .btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
       .token-box {
-        background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
-        padding: 12px; font-family: var(--mono); font-size: .7rem; word-break: break-all;
-        max-height: 220px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap;
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        word-break: break-all;
+        max-height: 220px;
+        overflow-y: auto;
+        line-height: 1.6;
+        white-space: pre-wrap;
         color: var(--text);
       }
       .log {
-        background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
-        padding: 12px; font-family: var(--mono); font-size: .7rem;
-        max-height: 200px; overflow-y: auto; line-height: 1.6;
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        max-height: 200px;
+        overflow-y: auto;
+        line-height: 1.6;
         color: var(--text-soft);
       }
-      .error-msg { color: var(--red); font-size: .78rem; margin-top: 8px; }
-      .success-msg { color: var(--green); font-size: .78rem; margin-top: 8px; }
+      .error-msg {
+        color: var(--red);
+        font-size: 0.78rem;
+        margin-top: 8px;
+      }
+      .success-msg {
+        color: var(--green);
+        font-size: 0.78rem;
+        margin-top: 8px;
+      }
       .callout {
-        background: #eef3ff; border: 1px solid #dfe7f3; border-radius: 12px;
-        padding: 12px; font-size: .76rem; color: var(--text-soft); line-height: 1.55;
+        background: #eef3ff;
+        border: 1px solid #dfe7f3;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 0.76rem;
+        color: var(--text-soft);
+        line-height: 1.55;
         margin-top: 10px;
       }
-      .meta { font-size: .72rem; color: var(--text-muted); font-family: var(--mono); }
-      table { width: 100%; border-collapse: collapse; font-size: .73rem; margin-top: 8px; }
-      th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
-      th { color: var(--text-muted); font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; }
-      footer { text-align: center; color: var(--text-muted); font-size: .7rem; margin-top: 10px; }
+      .meta {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-family: var(--mono);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.73rem;
+        margin-top: 8px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        color: var(--text-muted);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      footer {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.7rem;
+        margin-top: 10px;
+      }
     </style>
   </head>
   <body>
@@ -121,20 +238,36 @@
           <button class="btn btn-ghost" id="btn-login">Login</button>
         </div>
         <div class="error-msg" id="u-error"></div>
-        <div class="meta" id="u-profile" style="margin-top:12px"></div>
+        <div class="meta" id="u-profile" style="margin-top: 12px"></div>
       </div>
 
       <div class="card" id="card-client">
         <h2>OAuth client</h2>
-        <p class="meta" style="margin-bottom:12px;font-family:inherit;color:var(--text-soft);font-size:.78rem">
+        <p
+          class="meta"
+          style="
+            margin-bottom: 12px;
+            font-family: inherit;
+            color: var(--text-soft);
+            font-size: 0.78rem;
+          "
+        >
           Fetch the public demo client registered at bootstrap.
         </p>
         <button class="btn btn-primary btn-sm" id="btn-bootstrap">Fetch demo client</button>
-        <div class="token-box" id="client-box" style="display:none;margin-top:12px"></div>
-        <div id="client-table-wrap" style="display:none">
-          <h3 style="margin-top:16px">Registered clients</h3>
+        <div class="token-box" id="client-box" style="display: none; margin-top: 12px"></div>
+        <div id="client-table-wrap" style="display: none">
+          <h3 style="margin-top: 16px">Registered clients</h3>
           <table id="client-table">
-            <thead><tr><th>name</th><th>clientId</th><th>redirect</th><th>confidential</th><th>active</th></tr></thead>
+            <thead>
+              <tr>
+                <th>name</th>
+                <th>clientId</th>
+                <th>redirect</th>
+                <th>confidential</th>
+                <th>active</th>
+              </tr>
+            </thead>
             <tbody></tbody>
           </table>
         </div>
@@ -142,24 +275,36 @@
 
       <div class="card" id="card-auth">
         <h2>Authorize Demo Web Client</h2>
-        <p class="meta" style="margin-bottom:12px;font-family:inherit;color:var(--text-soft);font-size:.78rem">
-          Triggers the real redirect chain: server issues a PKCE authorization code, then the browser redirects back to /callback.
+        <p
+          class="meta"
+          style="
+            margin-bottom: 12px;
+            font-family: inherit;
+            color: var(--text-soft);
+            font-size: 0.78rem;
+          "
+        >
+          Triggers the real redirect chain: server issues a PKCE authorization code, then the
+          browser redirects back to /callback.
         </p>
         <button class="btn btn-primary" id="btn-authorize">Authorize now</button>
         <div class="error-msg" id="auth-error"></div>
       </div>
 
-      <div class="card" id="card-oauth" style="display:none">
+      <div class="card" id="card-oauth" style="display: none">
         <h2>OAuth tokens granted</h2>
         <div class="token-box" id="oauth-box"></div>
         <div class="btn-group">
-          <button class="btn btn-primary btn-sm" id="btn-validate">Validate token (GET /api/me)</button>
+          <button class="btn btn-primary btn-sm" id="btn-validate">
+            Validate token (GET /api/me)
+          </button>
           <button class="btn btn-ghost btn-sm" id="btn-rotate">Rotate refresh token</button>
         </div>
-        <div class="token-box" id="validate-box" style="display:none;margin-top:12px"></div>
+        <div class="token-box" id="validate-box" style="display: none; margin-top: 12px"></div>
         <div class="callout">
-          PKCE S256 challenge &amp; verifier computed server-side — the SPA never sees the code_verifier.
-          Public client (no secret). Single-use authorization codes. Refresh-token rotation is supported.
+          PKCE S256 challenge &amp; verifier computed server-side — the SPA never sees the
+          code_verifier. Public client (no secret). Single-use authorization codes. Refresh-token
+          rotation is supported.
         </div>
       </div>
 
@@ -193,30 +338,53 @@
           const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
           const padding = '='.repeat((4 - (base64.length % 4)) % 4);
           return JSON.parse(atob(base64 + padding));
-        } catch { return null; }
+        } catch {
+          return null;
+        }
       }
 
-      function redact(v, s, e) { s = s || 6; e = e || 4; if (!v) return '—'; v = String(v); return v.length <= s + e ? '••••••' : v.slice(0, s) + '…' + v.slice(-e); }
+      function redact(v, s, e) {
+        s = s || 6;
+        e = e || 4;
+        if (!v) return '—';
+        v = String(v);
+        return v.length <= s + e ? '••••••' : v.slice(0, s) + '…' + v.slice(-e);
+      }
 
       async function api(path, { method, body, token } = {}) {
         method = method || 'GET';
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = 'Bearer ' + token;
         else if (userAccessToken) headers['Authorization'] = 'Bearer ' + userAccessToken;
-        const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+        const res = await fetch(path, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+        });
         let json = {};
-        try { json = await res.json(); } catch { json = { success: false, error: { message: 'non-JSON response' } }; }
-        if (!res.ok || !json.success) throw new Error((json.error && json.error.message) || 'HTTP ' + res.status);
+        try {
+          json = await res.json();
+        } catch {
+          json = { success: false, error: { message: 'non-JSON response' } };
+        }
+        if (!res.ok || !json.success)
+          throw new Error((json.error && json.error.message) || 'HTTP ' + res.status);
         return json.data;
       }
 
-      function showError(el, msg) { el.textContent = msg; }
+      function showError(el, msg) {
+        el.textContent = msg;
+      }
 
       async function refreshProfile() {
         if (!userAccessToken) return;
         try {
           const me = await api('/api/me');
-          $('u-profile').textContent = JSON.stringify({ id: redact(me.userId), email: me.email, authMethod: me.authMethod }, null, 2);
+          $('u-profile').textContent = JSON.stringify(
+            { id: redact(me.userId), email: me.email, authMethod: me.authMethod },
+            null,
+            2,
+          );
         } catch (err) {
           $('u-profile').textContent = 'Profile error: ' + err.message;
         }
@@ -226,7 +394,10 @@
         const email = $('u-email').value.trim();
         const password = $('u-password').value;
         showError($('u-error'), '');
-        if (!email || !password) { showError($('u-error'), 'Email and password required'); return; }
+        if (!email || !password) {
+          showError($('u-error'), 'Email and password required');
+          return;
+        }
         try {
           const data = await api('/api/' + mode, { method: 'POST', body: { email, password } });
           userAccessToken = data.tokens.accessToken;
@@ -254,7 +425,18 @@
             tbody.innerHTML = '';
             clients.forEach(function (c) {
               const tr = document.createElement('tr');
-              tr.innerHTML = '<td>' + c.name + '</td><td class="meta">' + redact(c.clientId, 8, 4) + '</td><td class="meta">' + redact(c.redirectUris && c.redirectUris[0], 10, 6) + '</td><td>' + (c.isConfidential ? 'yes' : 'no') + '</td><td>' + (c.isActive ? 'yes' : 'no') + '</td>';
+              tr.innerHTML =
+                '<td>' +
+                c.name +
+                '</td><td class="meta">' +
+                redact(c.clientId, 8, 4) +
+                '</td><td class="meta">' +
+                redact(c.redirectUris && c.redirectUris[0], 10, 6) +
+                '</td><td>' +
+                (c.isConfidential ? 'yes' : 'no') +
+                '</td><td>' +
+                (c.isActive ? 'yes' : 'no') +
+                '</td>';
               tbody.appendChild(tr);
             });
           }
@@ -267,9 +449,15 @@
       // Authorize button
       $('btn-authorize').addEventListener('click', async () => {
         showError($('auth-error'), '');
-        if (!userAccessToken) { showError($('auth-error'), 'Log in first'); return; }
+        if (!userAccessToken) {
+          showError($('auth-error'), 'Log in first');
+          return;
+        }
         try {
-          const data = await api('/api/oauth/authorize', { method: 'POST', body: { clientId: clientId } });
+          const data = await api('/api/oauth/authorize', {
+            method: 'POST',
+            body: { clientId: clientId },
+          });
           if (data && data.authorizationUrl) {
             log('redirecting to authorizationUrl — issuing real HTTP redirect');
             window.location.assign(data.authorizationUrl);
@@ -294,12 +482,22 @@
               oauthRefreshToken = data.refreshToken;
               $('card-oauth').style.display = '';
               const p = decodeJwt(data.accessToken);
-              $('oauth-box').textContent = JSON.stringify({
-                accessToken: { exp: p && p.exp ? new Date(p.exp * 1000).toLocaleString() : 'unknown', sub: p ? redact(p.sub) : 'unknown' },
-                refreshToken: { length: oauthRefreshToken ? oauthRefreshToken.length : 0, preview: redact(oauthRefreshToken, 8, 6) },
-                expiresIn: data.expiresIn + 's',
-                scope: data.scope,
-              }, null, 2);
+              $('oauth-box').textContent = JSON.stringify(
+                {
+                  accessToken: {
+                    exp: p && p.exp ? new Date(p.exp * 1000).toLocaleString() : 'unknown',
+                    sub: p ? redact(p.sub) : 'unknown',
+                  },
+                  refreshToken: {
+                    length: oauthRefreshToken ? oauthRefreshToken.length : 0,
+                    preview: redact(oauthRefreshToken, 8, 6),
+                  },
+                  expiresIn: data.expiresIn + 's',
+                  scope: data.scope,
+                },
+                null,
+                2,
+              );
               log('token exchange ok');
             })
             .catch(function (err) {
@@ -316,7 +514,11 @@
         try {
           const me = await api('/api/me', { token: oauthAccessToken });
           $('validate-box').style.display = '';
-          $('validate-box').textContent = JSON.stringify({ userId: redact(me.userId), email: me.email, authMethod: me.authMethod }, null, 2);
+          $('validate-box').textContent = JSON.stringify(
+            { userId: redact(me.userId), email: me.email, authMethod: me.authMethod },
+            null,
+            2,
+          );
           log('validate ok — authMethod=' + me.authMethod);
         } catch (err) {
           log('validate failed: ' + err.message);
@@ -328,17 +530,30 @@
         try {
           const clientsData = await api('/api/bootstrap');
           const clientId = clientsData.clientId;
-          const data = await api('/api/oauth/refresh', { method: 'POST', body: { refreshToken: oauthRefreshToken, clientId: clientId } });
+          const data = await api('/api/oauth/refresh', {
+            method: 'POST',
+            body: { refreshToken: oauthRefreshToken, clientId: clientId },
+          });
           oauthAccessToken = data.accessToken;
           oauthRefreshToken = data.refreshToken;
           $('validate-box').style.display = 'none';
           const p = decodeJwt(data.accessToken);
-          $('oauth-box').textContent = JSON.stringify({
-            accessToken: { exp: p && p.exp ? new Date(p.exp * 1000).toLocaleString() : 'unknown', sub: p ? redact(p.sub) : 'unknown' },
-            refreshToken: { length: oauthRefreshToken ? oauthRefreshToken.length : 0, preview: redact(oauthRefreshToken, 8, 6) },
-            expiresIn: data.expiresIn + 's',
-            scope: data.scope,
-          }, null, 2);
+          $('oauth-box').textContent = JSON.stringify(
+            {
+              accessToken: {
+                exp: p && p.exp ? new Date(p.exp * 1000).toLocaleString() : 'unknown',
+                sub: p ? redact(p.sub) : 'unknown',
+              },
+              refreshToken: {
+                length: oauthRefreshToken ? oauthRefreshToken.length : 0,
+                preview: redact(oauthRefreshToken, 8, 6),
+              },
+              expiresIn: data.expiresIn + 's',
+              scope: data.scope,
+            },
+            null,
+            2,
+          );
           log('refresh rotated ok');
         } catch (err) {
           log('refresh failed: ' + err.message);

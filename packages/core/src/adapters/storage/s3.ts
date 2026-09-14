@@ -30,7 +30,11 @@ export class S3Adapter {
     this.client = new S3ClientCore(options);
   }
 
-  async put(key: string, body: Buffer | Uint8Array | string, contentType = 'application/octet-stream'): Promise<void> {
+  async put(
+    key: string,
+    body: Buffer | Uint8Array | string,
+    contentType = 'application/octet-stream',
+  ): Promise<void> {
     await this.client.request('PUT', key, { body, contentType });
   }
 
@@ -60,9 +64,13 @@ export class S3Adapter {
   }
 
   async list(prefix: string, maxKeys = 1000): Promise<string[]> {
-    const response = await this.client.request('GET', `?list-type=2&prefix=${encodeURIComponent(prefix)}&max-keys=${maxKeys}`, {
-      listStyle: true,
-    });
+    const response = await this.client.request(
+      'GET',
+      `?list-type=2&prefix=${encodeURIComponent(prefix)}&max-keys=${maxKeys}`,
+      {
+        listStyle: true,
+      },
+    );
     const text = await response.text();
     const keys = [...text.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) => m[1] ?? '');
     return keys;
@@ -95,7 +103,9 @@ class S3ClientCore {
     const now = new Date();
     const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
     const dateStamp = amzDate.slice(0, 8);
-    const path = input.listStyle ? '/' : `/${encodeURIComponent(this.bucket)}/${keyOrQuery.split('/').map(encodeURIComponent).join('/')}`;
+    const path = input.listStyle
+      ? '/'
+      : `/${encodeURIComponent(this.bucket)}/${keyOrQuery.split('/').map(encodeURIComponent).join('/')}`;
     const query = input.listStyle ? keyOrQuery.slice(1) : '';
 
     const headers: Record<string, string> = {
@@ -126,20 +136,16 @@ class S3ClientCore {
     ].join('\n');
 
     const scope = `${dateStamp}/${this.region}/s3/aws4_request`;
-    const stringToSign = [
-      'AWS4-HMAC-SHA256',
-      amzDate,
-      scope,
-      sha256Hex(canonicalRequest),
-    ].join('\n');
+    const stringToSign = ['AWS4-HMAC-SHA256', amzDate, scope, sha256Hex(canonicalRequest)].join(
+      '\n',
+    );
 
     const signingKey = hmac(
       hmac(hmac(hmac(`AWS4${this.secretAccessKey}`, dateStamp), this.region), 's3'),
       'aws4_request',
     );
     const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
-    headers.Authorization =
-      `AWS4-HMAC-SHA256 Credential=${this.accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+    headers.Authorization = `AWS4-HMAC-SHA256 Credential=${this.accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
     const url = new URL(this.endpoint);
     url.pathname = path;

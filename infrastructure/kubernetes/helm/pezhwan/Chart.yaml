@@ -3,7 +3,7 @@ name: pezhwan
 description: Helm chart for the Pezhwan Identity Server + MongoDB + Redis
 type: application
 version: 0.1.0
-appVersion: "0.1.0"
+appVersion: '0.1.0'
 keywords:
   - identity
   - authentication

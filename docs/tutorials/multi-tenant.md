@@ -58,7 +58,13 @@ demonstrate isolation. Presenting a tenant-A token to a tenant-B route yields
 `401`:
 
 ```json
-{ "success": false, "error": { "code": "CROSS_TENANT_REJECTED", "message": "Token rejected by opposite tenant runtime" } }
+{
+  "success": false,
+  "error": {
+    "code": "CROSS_TENANT_REJECTED",
+    "message": "Token rejected by opposite tenant runtime"
+  }
+}
 ```
 
 The same enforcement exists in normal operation: refresh a tenant-A token while
@@ -92,9 +98,9 @@ resource limits with atomically incremented counters in
 const quota = new QuotaService({
   limits: { users: 1000, sessions: 100, api_keys: 10, oath_clients: 5 },
 });
-await quota.check(tenantId, 'users');        // throws RateLimitError when exhausted
-await quota.increment(tenantId, 'users');    // returns the new usage count
-const usage = await quota.usage(tenantId);   // per-resource counters
+await quota.check(tenantId, 'users'); // throws RateLimitError when exhausted
+await quota.increment(tenantId, 'users'); // returns the new usage count
+const usage = await quota.usage(tenantId); // per-resource counters
 ```
 
 `UsageService` (`services/ecosystem/usage.service.ts`) wraps the same counters
@@ -129,13 +135,13 @@ by the runtime — never rely on the client for isolation.
 
 ## Troubleshooting
 
-| Problem | Cause / fix |
-| --- | --- |
-| `401` presenting tenant-A token to B | By design — each runtime validates against its own key store + claims. |
-| `SESSION_CONTEXT_INVALID` on refresh | Session's tenant/application no longer matches the request context — relogin. |
-| Users "invisible" across tenants | User lookups are `tenantId`-scoped (`UserModel.findOne({ _id, tenantId })`). |
-| `11000 duplicate key` on register | Stale non-partial indexes; drop `tenantId_1_email_1` / `tenantId_1_phone_1` (see `demos/README.md`). |
-| Quota 429 on create | `TenantQuotaModel.usage[resource]` reached the configured `limits`. |
+| Problem                              | Cause / fix                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `401` presenting tenant-A token to B | By design — each runtime validates against its own key store + claims.                               |
+| `SESSION_CONTEXT_INVALID` on refresh | Session's tenant/application no longer matches the request context — relogin.                        |
+| Users "invisible" across tenants     | User lookups are `tenantId`-scoped (`UserModel.findOne({ _id, tenantId })`).                         |
+| `11000 duplicate key` on register    | Stale non-partial indexes; drop `tenantId_1_email_1` / `tenantId_1_phone_1` (see `demos/README.md`). |
+| Quota 429 on create                  | `TenantQuotaModel.usage[resource]` reached the configured `limits`.                                  |
 
 ## Further reading
 

@@ -23,8 +23,7 @@ export class ChargebeeAdapter implements BillingProviderClient {
 
   constructor(options: ChargebeeOptions) {
     this.apiKey = options.apiKey;
-    this.baseUrl =
-      options.baseUrl ?? `https://${options.site}.chargebee.com/api/v2`;
+    this.baseUrl = options.baseUrl ?? `https://${options.site}.chargebee.com/api/v2`;
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
   }
 

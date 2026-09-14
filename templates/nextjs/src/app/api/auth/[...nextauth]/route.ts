@@ -21,9 +21,7 @@ export async function POST(request: NextRequest) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(request.headers.get('cookie')
-        ? { Cookie: request.headers.get('cookie') as string }
-        : {}),
+      ...(request.headers.get('cookie') ? { Cookie: request.headers.get('cookie') as string } : {}),
     },
     body: JSON.stringify(body),
     cache: 'no-store',

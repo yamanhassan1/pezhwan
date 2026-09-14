@@ -27,25 +27,25 @@ Package: `pezhwan-admin-console` (private, `type: module`).
 
 Defined in `src/routes/AppRoutes.tsx`:
 
-| Route                  | Screen                                        |
-| ---------------------- | --------------------------------------------- |
-| `/login`               | Sign-in (email/password via `/v1/auth/login`) |
-| `/`                    | Dashboard: stats, 7-day audit chart, risk     |
-| `/users`               | List users                                    |
-| `/users/create`        | Create user                                   |
-| `/users/:id`           | User details                                  |
-| `/users/:id/edit`      | Edit user                                     |
-| `/tenants`             | List tenants                                  |
-| `/tenants/create`      | Create tenant                                 |
-| `/roles`               | Roles and permissions                         |
-| `/clients`             | OAuth clients                                 |
-| `/clients/create`      | Register an OAuth client                      |
-| `/sessions`            | Active/interactive sessions                   |
-| `/audit`               | Tamper-evident audit log                      |
-| `/security/breaches`   | Password-breach findings                      |
-| `/security/risk`       | Risk-scored security events                   |
-| `/subscriptions`       | Tenant plans and subscription changes         |
-| `/settings`            | Admin settings (JSON, `PATCH /v1/admin/settings`) |
+| Route                | Screen                                            |
+| -------------------- | ------------------------------------------------- |
+| `/login`             | Sign-in (email/password via `/v1/auth/login`)     |
+| `/`                  | Dashboard: stats, 7-day audit chart, risk         |
+| `/users`             | List users                                        |
+| `/users/create`      | Create user                                       |
+| `/users/:id`         | User details                                      |
+| `/users/:id/edit`    | Edit user                                         |
+| `/tenants`           | List tenants                                      |
+| `/tenants/create`    | Create tenant                                     |
+| `/roles`             | Roles and permissions                             |
+| `/clients`           | OAuth clients                                     |
+| `/clients/create`    | Register an OAuth client                          |
+| `/sessions`          | Active/interactive sessions                       |
+| `/audit`             | Tamper-evident audit log                          |
+| `/security/breaches` | Password-breach findings                          |
+| `/security/risk`     | Risk-scored security events                       |
+| `/subscriptions`     | Tenant plans and subscription changes             |
+| `/settings`          | Admin settings (JSON, `PATCH /v1/admin/settings`) |
 
 Shared page chrome lives in `src/components/Layout/` (sidebar, header, footer),
 forms in `src/components/Forms/`, and charts (`UsageChart`, `AuditChart`) in
@@ -98,7 +98,7 @@ npm run preview -w pezhwan-admin-console    # serve the build
 
 ## Documentation
 
-- `docs/OPENAPI.yaml` — HTTP surface of the reference server
+- `docs/api/OPENAPI.yaml` — HTTP surface of the reference server
 - `docs/ARCHITECTURE.md` — architecture and package relationships
 - `apps/identity-server/README.md` — server run/configure instructions
 - `docs/api/` — API reference, error codes, rate limits, webhooks

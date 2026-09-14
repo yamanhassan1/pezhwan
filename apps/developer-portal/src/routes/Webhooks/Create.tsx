@@ -59,7 +59,10 @@ export default function WebhooksCreate() {
           </div>
           <span className="label">Signing secret</span>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
-            <code className="code" style={{ flex: 1, padding: '10px 12px', fontSize: 13, wordBreak: 'break-all' }}>
+            <code
+              className="code"
+              style={{ flex: 1, padding: '10px 12px', fontSize: 13, wordBreak: 'break-all' }}
+            >
               {created.secret}
             </code>
             <button className="btn" onClick={() => void copySecret()}>
@@ -132,21 +135,37 @@ export default function WebhooksCreate() {
 
         <div className="mb-2">
           <span className="label">Event subscriptions</span>
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10, fontSize: 14 }}>
-            <input type="checkbox" checked={useDefaultAudit} onChange={(e) => setUseDefaultAudit(e.target.checked)} />
+          <label
+            style={{
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+              marginBottom: 10,
+              fontSize: 14,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={useDefaultAudit}
+              onChange={(e) => setUseDefaultAudit(e.target.checked)}
+            />
             All audit events (recommended)
           </label>
         </div>
 
         {useDefaultAudit ? (
           <p className="hint mb-4">
-            The webhook will receive every event in the audit trail (login, session, API key, OAuth, MFA, security events). Recipients send{' '}
-            <span className="code">AUTHZ_DENIED</span> style names in the <span className="code">eventType</span> field.
+            The webhook will receive every event in the audit trail (login, session, API key, OAuth,
+            MFA, security events). Recipients send <span className="code">AUTHZ_DENIED</span> style
+            names in the <span className="code">eventType</span> field.
           </p>
         ) : (
           <>
             <p className="hint mb-3">Select individual event types:</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }} className="mb-4">
+            <div
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}
+              className="mb-4"
+            >
               {AUDIT_EVENTS.map((ev) => {
                 const checked = selected.includes(ev);
                 return (
@@ -168,15 +187,30 @@ export default function WebhooksCreate() {
                 );
               })}
             </div>
-            {selected.length === 0 && <p className="hint mb-4">No events selected — the webhook will receive nothing until you subscribe.</p>}
+            {selected.length === 0 && (
+              <p className="hint mb-4">
+                No events selected — the webhook will receive nothing until you subscribe.
+              </p>
+            )}
           </>
         )}
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button type="submit" className="btn btn-lg" disabled={submitting}>
-            {submitting ? <span className="loader" style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }} /> : 'Create webhook'}
+            {submitting ? (
+              <span
+                className="loader"
+                style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }}
+              />
+            ) : (
+              'Create webhook'
+            )}
           </button>
-          <button type="button" className="btn btn-secondary btn-lg" onClick={() => navigate('/webhooks')}>
+          <button
+            type="button"
+            className="btn btn-secondary btn-lg"
+            onClick={() => navigate('/webhooks')}
+          >
             Cancel
           </button>
         </div>

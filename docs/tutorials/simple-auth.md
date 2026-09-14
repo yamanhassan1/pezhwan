@@ -180,7 +180,8 @@ const pezhwan = Pezhwan({
 
 await pezhwan.auth.register({ email: 'ada@example.com', password: '<pw>' });
 const { tokens } = await pezhwan.auth.loginPassword({
-  email: 'ada@example.com', password: '<pw>',
+  email: 'ada@example.com',
+  password: '<pw>',
 }); // tokens.accessToken, tokens.refreshToken
 ```
 
@@ -215,21 +216,21 @@ the provider has restored the session.
 
 ## Troubleshooting
 
-| Problem | Cause / fix |
-| --- | --- |
-| `400 PEZHWAN_...` on startup | Invalid env — copy `.env.example` to `.env`. |
-| `403 ORIGIN_REJECTED` | Origin not in `PEZHWAN_ALLOWED_ORIGINS`. |
-| `403 CSRF_REJECTED` | Missing/mismatched `X-CSRF-Token` header. Refresh it from `/v1/auth/csrf`. |
-| `401 UNAUTHENTICATED` on valid token | Account disabled or `tokenVersion` bumped (password change, admin edit). Re-login. |
-| `REFRESH_TOKEN_UNKNOWN` | Presented refresh token was already rotated or never existed — replay the latest pair. |
-| `REFRESH_TOKEN_REUSE` | Old token presented again — signals theft; the whole session family is revoked. Re-login. |
-| `400 INVALID_CREDENTIALS` | Wrong password, or account is locked after 5 failed attempts (`PEZHWAN_LOCKOUT_DURATION`). |
-| `429 Too Many Requests` | Hit `PEZHWAN_RATE_LIMIT_LOGIN`/`PEZHWAN_RATE_LIMIT_API`. |
-| Refresh via SDK fails with `SESSION_CONTEXT_INVALID` | Tenant/application context changed — session no longer valid, force re-login. |
+| Problem                                              | Cause / fix                                                                                |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `400 PEZHWAN_...` on startup                         | Invalid env — copy `.env.example` to `.env`.                                               |
+| `403 ORIGIN_REJECTED`                                | Origin not in `PEZHWAN_ALLOWED_ORIGINS`.                                                   |
+| `403 CSRF_REJECTED`                                  | Missing/mismatched `X-CSRF-Token` header. Refresh it from `/v1/auth/csrf`.                 |
+| `401 UNAUTHENTICATED` on valid token                 | Account disabled or `tokenVersion` bumped (password change, admin edit). Re-login.         |
+| `REFRESH_TOKEN_UNKNOWN`                              | Presented refresh token was already rotated or never existed — replay the latest pair.     |
+| `REFRESH_TOKEN_REUSE`                                | Old token presented again — signals theft; the whole session family is revoked. Re-login.  |
+| `400 INVALID_CREDENTIALS`                            | Wrong password, or account is locked after 5 failed attempts (`PEZHWAN_LOCKOUT_DURATION`). |
+| `429 Too Many Requests`                              | Hit `PEZHWAN_RATE_LIMIT_LOGIN`/`PEZHWAN_RATE_LIMIT_API`.                                   |
+| Refresh via SDK fails with `SESSION_CONTEXT_INVALID` | Tenant/application context changed — session no longer valid, force re-login.              |
 
 ## Further reading
 
-- Full endpoint reference: `docs/OPENAPI.yaml` (Auth, Sessions tags)
+- Full endpoint reference: `docs/api/OPENAPI.yaml` (Auth, Sessions tags)
 - Middleware and envelopes: `packages/express/src/routes.ts`,
   `packages/express/src/security.ts`
 - Token + session lifecycle: `packages/shared/src/constants.ts`,

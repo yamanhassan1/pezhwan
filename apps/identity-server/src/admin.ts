@@ -114,7 +114,8 @@ interface TenantDoc {
 function tenantJson(d: TenantDoc): JsonObject {
   const config = d.config ?? {};
   const plan = (config.plan as string) ?? 'free';
-  const status = (config.subscription as Record<string, unknown> | undefined)?.status as string | undefined;
+  const status = (config.subscription as Record<string, unknown> | undefined)?.status as
+    string | undefined;
   return {
     id: stringId(d._id),
     name: d.name,
@@ -372,7 +373,8 @@ function strArray(value: unknown): string[] {
 function parsePage(req: Request): { limit: number; offset: number } {
   const rawLimit = Number(req.query.limit);
   const rawOffset = Number(req.query.offset);
-  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 500) : 50;
+  const limit =
+    Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 500) : 50;
   const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? Math.floor(rawOffset) : 0;
   return { limit, offset };
 }
@@ -427,7 +429,9 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
   const router = Router();
   const webhooks = new WebhookService();
 
-  const callerOf = (req: PezhwanRequest): { tenantId: string; applicationId: string; userId: string } => {
+  const callerOf = (
+    req: PezhwanRequest,
+  ): { tenantId: string; applicationId: string; userId: string } => {
     const identity = req.pezhwan;
     if (!identity) {
       throw Object.assign(new Error('Authentication required'), { status: 401 });
@@ -584,13 +588,19 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
     const set: JsonObject = {};
     if (typeof body.name === 'string' && body.name.trim()) set.name = body.name;
     if (typeof body.isActive === 'boolean') set.isActive = body.isActive;
-    if (body.plan !== undefined) set['config.plan'] = typeof body.plan === 'string' ? body.plan : String(body.plan);
+    if (body.plan !== undefined)
+      set['config.plan'] = typeof body.plan === 'string' ? body.plan : String(body.plan);
     if (typeof body.config === 'object' && body.config) {
       const config = body.config as JsonObject;
-      if (config.plan !== undefined) set['config.plan'] = typeof config.plan === 'string' ? config.plan : String(config.plan);
+      if (config.plan !== undefined)
+        set['config.plan'] = typeof config.plan === 'string' ? config.plan : String(config.plan);
       if (config.subscription !== undefined) set['config.subscription'] = config.subscription;
       if (config.settings !== undefined) set['config.settings'] = config.settings;
-      if (config.plan === undefined && config.subscription === undefined && config.settings === undefined) {
+      if (
+        config.plan === undefined &&
+        config.subscription === undefined &&
+        config.settings === undefined
+      ) {
         set.config = config;
       }
     }
@@ -667,7 +677,12 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
         })) as unknown as UserDoc;
         for (const roleName of roles) {
           await runtime.authorization
-            .assignRole({ userId: stringId(doc._id), tenantId: caller.tenantId, applicationId: caller.applicationId, roleName })
+            .assignRole({
+              userId: stringId(doc._id),
+              tenantId: caller.tenantId,
+              applicationId: caller.applicationId,
+              roleName,
+            })
             .catch(() => undefined);
         }
         await runtime.audit.log({
@@ -742,10 +757,12 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
       const doc = (await UserModel.findOne({
         _id: userId,
         tenantId: caller.tenantId,
-      })) as unknown as UserDoc & {
-        tokenVersion?: number;
-        save: () => Promise<void>;
-      } | null;
+      })) as unknown as
+        | (UserDoc & {
+            tokenVersion?: number;
+            save: () => Promise<void>;
+          })
+        | null;
       if (!doc) {
         fail(res, 404, 'NOT_FOUND', 'User not found');
         return;
@@ -780,7 +797,7 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
           applicationId: caller.applicationId,
         })) as Array<{ name?: string } | string>;
         const currentNames = new Set(
-          currentRoles.map((r) => (typeof r === 'string' ? r : r.name ?? '')),
+          currentRoles.map((r) => (typeof r === 'string' ? r : (r.name ?? ''))),
         );
         for (const name of roles) {
           if (!currentNames.has(name)) {
@@ -813,7 +830,9 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
         .select('-passwordHash')
         .lean()
         .exec()) as unknown as UserDoc;
-      const roleMap = await roleMapForUsers(runtime, caller.tenantId, caller.applicationId, [userId]);
+      const roleMap = await roleMapForUsers(runtime, caller.tenantId, caller.applicationId, [
+        userId,
+      ]);
       ok(res, { user: userJson(refreshed, roleMap.get(userId) ?? []) });
     }),
   );
@@ -904,7 +923,10 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
         fail(res, 404, 'NOT_FOUND', 'Role not found');
         return;
       }
-      await logAdmin(runtime, req, caller, AUDIT_EVENT.ROLE_CHANGED, { role: doc.name, admin: true });
+      await logAdmin(runtime, req, caller, AUDIT_EVENT.ROLE_CHANGED, {
+        role: doc.name,
+        admin: true,
+      });
       ok(res, { role: roleJson(doc) });
     }),
   );
@@ -917,7 +939,9 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
         _id: str(req.params.id),
         tenantId: caller.tenantId,
         applicationId: caller.applicationId,
-      }).lean().exec()) as unknown as RoleDoc | null;
+      })
+        .lean()
+        .exec()) as unknown as RoleDoc | null;
       if (!doc) {
         fail(res, 404, 'NOT_FOUND', 'Role not found');
         return;
@@ -952,7 +976,11 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
       applicationId: str(body.applicationId, caller.applicationId),
       roleName,
     });
-    await logAdmin(runtime, req, caller, AUDIT_EVENT.ROLE_CHANGED, { userId, roleName, assigned: true });
+    await logAdmin(runtime, req, caller, AUDIT_EVENT.ROLE_CHANGED, {
+      userId,
+      roleName,
+      assigned: true,
+    });
     ok(res, { assigned: true });
   });
   router.post('/roles/assign', assignRole);
@@ -972,7 +1000,11 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
       applicationId: str(body.applicationId, caller.applicationId),
       roleName,
     });
-    await logAdmin(runtime, req, caller, AUDIT_EVENT.ROLE_CHANGED, { userId, roleName, removed: true });
+    await logAdmin(runtime, req, caller, AUDIT_EVENT.ROLE_CHANGED, {
+      userId,
+      roleName,
+      removed: true,
+    });
     ok(res, { removed: true });
   });
   router.post('/roles/remove', removeRole);
@@ -1014,7 +1046,11 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
           action: permission.slice(sep + 1),
         });
       } else if (permission) {
-        const perms = await runtime.authorization.getUserPermissions({ userId, tenantId, applicationId });
+        const perms = await runtime.authorization.getUserPermissions({
+          userId,
+          tenantId,
+          applicationId,
+        });
         allowed = perms.includes(permission);
       }
       ok(res, { allowed });
@@ -1304,9 +1340,11 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
     '/settings',
     handle(async (req, res) => {
       const caller = callerOf(req as PezhwanRequest);
-      const doc = (await TenantModel.findOne({ slug: caller.tenantId }).lean().exec()) as unknown as TenantDoc | null;
+      const doc = (await TenantModel.findOne({ slug: caller.tenantId })
+        .lean()
+        .exec()) as unknown as TenantDoc | null;
       const settings =
-        (doc?.config as JsonObject | undefined)?.settings as JsonObject | undefined ?? {};
+        ((doc?.config as JsonObject | undefined)?.settings as JsonObject | undefined) ?? {};
       ok(res, { settings });
     }),
   );
@@ -1343,19 +1381,19 @@ export function createAdminRouter(runtime: PezhwanRuntime): Router {
   router.get(
     '/subscriptions',
     handle(async (_req, res) => {
-      const rows = (await TenantModel.find()
-        .lean()
-        .exec()) as unknown as TenantDoc[];
+      const rows = (await TenantModel.find().lean().exec()) as unknown as TenantDoc[];
       ok(res, {
         subscriptions: rows.map((d) => {
           const config = d.config ?? {};
-          const status = (config.subscription as JsonObject | undefined)?.status as string | undefined;
+          const status = (config.subscription as JsonObject | undefined)?.status as
+            string | undefined;
           return {
             tenantId: stringId(d._id),
             tenant: d.name,
             plan: (config.plan as string) ?? 'free',
             status: status ?? (d.isActive ? 'active' : 'suspended'),
-            cancelAtPeriodEnd: (config.subscription as JsonObject | undefined)?.cancelAtPeriodEnd ?? false,
+            cancelAtPeriodEnd:
+              (config.subscription as JsonObject | undefined)?.cancelAtPeriodEnd ?? false,
           };
         }),
       });
@@ -1442,9 +1480,7 @@ export async function ensureBootstrap(
     });
     console.log(
       `[pezhwan] bootstrap application '${applicationId}' created` +
-        (process.env.NODE_ENV === 'production'
-          ? ''
-          : ` (clientSecret: ${clientSecret})`),
+        (process.env.NODE_ENV === 'production' ? '' : ` (clientSecret: ${clientSecret})`),
     );
   }
 

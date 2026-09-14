@@ -25,30 +25,35 @@ Use `@pezhwan/node` as the canonical template:
   "name": "@pezhwan/node",
   "version": "0.1.0",
   "description": "Pezhwan Node.js SDK — ...",
-  "private": true,                     // private until the package is published
-  "type": "module",                    // ESM everywhere
+  "private": true, // private until the package is published
+  "type": "module", // ESM everywhere
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
+      "import": "./dist/index.js",
+    },
   },
   "files": ["dist"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test"
+    "test": "node --test",
   },
-  "engines": { "node": ">=20" },
-  "dependencies": { "@pezhwan/shared": "*" }
+  "engines": { "node": ">=23.6" },
+  "dependencies": { "@pezhwan/shared": "*" },
 }
 ```
 
 Rules:
 
 - `"type": "module"` and the `exports` map with `types` + `import` conditions.
+- `engines.node` is set by the SDK's consumers' runtime needs. The repo runs
+  TypeScript sources directly (`node --watch src/server.ts`, `node --test`), so
+  target at least **Node 23.6** (native type-stripping) unless a package is also
+  built for consumers on Node 20 — in that case publish only compiled
+  `dist/` and set `engines` per the published artifact.
 - **Internal workspaces are pinned with `"*"`** — `"@pezhwan/core": "*"` —
   so the workspace resolver always uses the local source-built `dist/`. Never
   use semver ranges for in-repo dependencies.
@@ -66,7 +71,7 @@ Every TypeScript package extends the shared base and emits to `./dist`:
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "outDir": "./dist", "rootDir": "./src" },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "test"]
+  "exclude": ["node_modules", "dist", "test"],
 }
 ```
 
@@ -114,7 +119,7 @@ complete (`name`, `version`, `license`, `description`).
 - All packages currently set `"private": true`; publishing is a deliberate,
   per-package decision coordinated through `scripts/release.mjs`. When you take
   a package public: remove `private`, keep the `exports` map and `files:
-  ["dist"]`, build before packing, and verify `npm pack --dry-run` ships only
+["dist"]`, build before packing, and verify `npm pack --dry-run` ships only
   `dist/` + README + LICENSE.
 - For non-TypeScript clients (Python/Go/Java/.NET), the publishing channel is
   the platform registry (PyPI, Go modules, Maven, NuGet); keep them

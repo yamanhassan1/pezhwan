@@ -85,7 +85,9 @@ async function main(): Promise<void> {
     const col = mongoose.connection.collection<{ _id: string; seq: number }>('auditsequences');
     const existingCounter = await col.findOne({ _id: COUNTER_ID });
     if (existingCounter) {
-      console.log(`  counter doc { _id: "${COUNTER_ID}", seq: ${existingCounter.seq ?? '?'} } already present`);
+      console.log(
+        `  counter doc { _id: "${COUNTER_ID}", seq: ${existingCounter.seq ?? '?'} } already present`,
+      );
     } else if (DRY_RUN) {
       console.log(`  would seed counter doc { _id: "${COUNTER_ID}", seq: ${INITIAL_SEQ} }`);
     } else {
@@ -105,7 +107,9 @@ async function main(): Promise<void> {
     console.log(`Mode:    ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
 
     if (VALIDATE && APPLY) {
-      const colAfter = mongoose.connection.collection<{ _id: string; seq: number }>('auditsequences');
+      const colAfter = mongoose.connection.collection<{ _id: string; seq: number }>(
+        'auditsequences',
+      );
       const counter = await colAfter.findOne({ _id: COUNTER_ID });
       if (counter) {
         console.log(`Validation OK: counter doc reads _id="${counter._id}", seq=${counter.seq}.`);

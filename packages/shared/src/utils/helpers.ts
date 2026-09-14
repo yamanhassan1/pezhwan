@@ -52,9 +52,7 @@ export function maskSecret(secret: string): string {
   return secret.slice(0, 4) + '\u2022'.repeat(tail);
 }
 
-export function isPlainObject(
-  value: unknown,
-): value is Record<string, unknown> {
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 

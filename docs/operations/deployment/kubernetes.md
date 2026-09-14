@@ -6,39 +6,39 @@ manifests mirror the chart in `infrastructure/kubernetes/manifests/`.
 
 ## Chart layout
 
-| Path | Resource |
-| ---- | -------- |
-| `Chart.yaml` | Name `pezhwan`, `apiVersion: v2`, version/appVersion `0.1.0` |
-| `values.yaml` | Defaults (override per environment) |
-| `values-{dev,staging,prod}.yaml` | Environment overrides |
-| `templates/_helpers.tpl` | Name/label/fullname helpers |
-| `templates/configmap.yaml` | Non-secret env from `values.env` |
-| `templates/secrets.yaml` | `values.secrets` base64-encoded into a Secret |
-| `templates/deployment.yaml` | Identity server Deployment (rolling update `maxUnavailable: 0`, `maxSurge: 1`); readiness/liveness probe `/.well-known/jwks.json` on port 4011; `envFrom` config + secrets |
-| `templates/service.yaml` | Service, `type: ClusterIP`, port 4011 |
-| `templates/ingress.yaml` | Ingress (`ingressClassName: nginx`) with optional TLS block |
-| `templates/statefulset-mongo.yaml` | MongoDB StatefulSet, `--replSet pezhwan-rs`, `volumeClaimTemplates` for `/data/db`, `mongosh` probes |
-| `templates/service-mongo.yaml` | Headless (`clusterIP: None`) service for the replSet |
-| `templates/deployment-redis.yaml` | Redis Deployment bound to the redis PVC |
-| `templates/service-redis.yaml` | Redis ClusterIP service (port 6379) |
-| `templates/pvc.yaml` | Mongo + Redis PVCs (RWO, configurable storage class/size) |
-| `templates/hpa.yaml` | HorizontalPodAutoscaler (CPU/memory utilization targets) |
-| `templates/pdb.yaml` | PodDisruptionBudget, `minAvailable: 1` |
-| `templates/network-policy.yaml` | Ingress from `ingress-nginx` namespace on 4011; egress to Mongo (27017) + Redis (6379) + DNS |
-| `templates/tests/test-connection.yaml` | `helm test` pod that curls `/.well-known/jwks.json` |
+| Path                                   | Resource                                                                                                                                                                   |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Chart.yaml`                           | Name `pezhwan`, `apiVersion: v2`, version/appVersion `0.1.0`                                                                                                               |
+| `values.yaml`                          | Defaults (override per environment)                                                                                                                                        |
+| `values-{dev,staging,prod}.yaml`       | Environment overrides                                                                                                                                                      |
+| `templates/_helpers.tpl`               | Name/label/fullname helpers                                                                                                                                                |
+| `templates/configmap.yaml`             | Non-secret env from `values.env`                                                                                                                                           |
+| `templates/secrets.yaml`               | `values.secrets` base64-encoded into a Secret                                                                                                                              |
+| `templates/deployment.yaml`            | Identity server Deployment (rolling update `maxUnavailable: 0`, `maxSurge: 1`); readiness/liveness probe `/.well-known/jwks.json` on port 4011; `envFrom` config + secrets |
+| `templates/service.yaml`               | Service, `type: ClusterIP`, port 4011                                                                                                                                      |
+| `templates/ingress.yaml`               | Ingress (`ingressClassName: nginx`) with optional TLS block                                                                                                                |
+| `templates/statefulset-mongo.yaml`     | MongoDB StatefulSet, `--replSet pezhwan-rs`, `volumeClaimTemplates` for `/data/db`, `mongosh` probes                                                                       |
+| `templates/service-mongo.yaml`         | Headless (`clusterIP: None`) service for the replSet                                                                                                                       |
+| `templates/deployment-redis.yaml`      | Redis Deployment bound to the redis PVC                                                                                                                                    |
+| `templates/service-redis.yaml`         | Redis ClusterIP service (port 6379)                                                                                                                                        |
+| `templates/pvc.yaml`                   | Mongo + Redis PVCs (RWO, configurable storage class/size)                                                                                                                  |
+| `templates/hpa.yaml`                   | HorizontalPodAutoscaler (CPU/memory utilization targets)                                                                                                                   |
+| `templates/pdb.yaml`                   | PodDisruptionBudget, `minAvailable: 1`                                                                                                                                     |
+| `templates/network-policy.yaml`        | Ingress from `ingress-nginx` namespace on 4011; egress to Mongo (27017) + Redis (6379) + DNS                                                                               |
+| `templates/tests/test-connection.yaml` | `helm test` pod that curls `/.well-known/jwks.json`                                                                                                                        |
 
 ## Values matrix
 
-| Value | dev | staging | prod |
-| ----- | --- | ------- | ---- |
-| `replicaCount` | 1 | 2 | 3 |
-| CPU request / limit | 100m / 250m | 200m / 500m | 250m / 1 |
-| Mem request / limit | 256Mi / 384Mi | 384Mi / 512Mi | 512Mi / 1Gi |
-| `autoscaling.enabled` | false | true (2→5) | true (3→10) |
-| `mongodb.replicas` | 1 | 3 | 3 |
-| `mongodb.storageSize` | 5Gi | 20Gi | 50Gi |
-| `redis.storageSize` | 1Gi | 5Gi | 10Gi |
-| `ingress.enabled` | false | false | true (TLS secret `pezhwan-tls-prod`, host `auth.pezhwan.com`) |
+| Value                 | dev           | staging       | prod                                                          |
+| --------------------- | ------------- | ------------- | ------------------------------------------------------------- |
+| `replicaCount`        | 1             | 2             | 3                                                             |
+| CPU request / limit   | 100m / 250m   | 200m / 500m   | 250m / 1                                                      |
+| Mem request / limit   | 256Mi / 384Mi | 384Mi / 512Mi | 512Mi / 1Gi                                                   |
+| `autoscaling.enabled` | false         | true (2→5)    | true (3→10)                                                   |
+| `mongodb.replicas`    | 1             | 3             | 3                                                             |
+| `mongodb.storageSize` | 5Gi           | 20Gi          | 50Gi                                                          |
+| `redis.storageSize`   | 1Gi           | 5Gi           | 10Gi                                                          |
+| `ingress.enabled`     | false         | false         | true (TLS secret `pezhwan-tls-prod`, host `auth.pezhwan.com`) |
 
 Image: `pezhwan/identity-server:<tag>` (default `latest`, `pullPolicy:
 IfNotPresent`); set `image.tag` per release.

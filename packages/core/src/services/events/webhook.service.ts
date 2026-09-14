@@ -69,7 +69,11 @@ export class WebhookService {
     }
   }
 
-  async deliver(webhook: WebhookDoc, event: string, payload: Record<string, unknown>): Promise<void> {
+  async deliver(
+    webhook: WebhookDoc,
+    event: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
     let attempts = 0;
     let nextAttemptAt = new Date();
     const body = JSON.stringify({ event, payload, timestamp: new Date().toISOString() });

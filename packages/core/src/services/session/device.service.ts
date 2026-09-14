@@ -40,9 +40,15 @@ function detect(userAgent: string): Pick<DeviceInfo, 'os' | 'browser' | 'categor
 
   let category: DeviceInfo['category'] = 'unknown';
   if (/bot|crawler|spider|slurp|curl|wget|python-requests/i.test(ua)) category = 'bot';
-  else if (ua.includes('mobi') || ua.includes('iphone') || ua.includes('android')) category = 'mobile';
+  else if (ua.includes('mobi') || ua.includes('iphone') || ua.includes('android'))
+    category = 'mobile';
   else if (ua.includes('ipad') || ua.includes('tablet')) category = 'tablet';
-  else if (ua.includes('windows') || ua.includes('macintosh') || ua.includes('x11') || ua.includes('linux')) {
+  else if (
+    ua.includes('windows') ||
+    ua.includes('macintosh') ||
+    ua.includes('x11') ||
+    ua.includes('linux')
+  ) {
     category = 'desktop';
   }
 

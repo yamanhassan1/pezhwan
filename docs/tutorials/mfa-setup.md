@@ -174,20 +174,20 @@ enrol ceremony — fetch setup, render the URI + backup codes, confirm with a co
 
 ## Troubleshooting
 
-| Problem | Cause / fix |
-| --- | --- |
-| `INVALID_MFA_ENCRYPTION_KEY` | Key is not exactly 32 bytes when base64-decoded. Regenerate with `randomBytes(32)`. |
-| Startup fails in production | `PEZHWAN_MFA_ENCRYPTION_KEY` missing — required by `assertProductionSafety`. |
-| `INVALID_TOTP` on enable | Code from a previous 30s window; use the current one, keep the window open. |
-| `MFA_ALREADY_ENABLED` | Enable was called after enrolment completed once already. |
-| `MFA_NOT_ENABLED` on disable/verify | Factor was never enabled (`disable`/`verify` require an active factor). |
-| TOTP resets after server restart | Key changed between restarts (or demos with different hard-coded keys) — secrets can't decrypt, so enrolment is required again. Persist the key. |
-| Login returns `mfaRequired` but `POST /v1/mfa/login` needs auth | Reference-server route is auth-gated — call `runtime.auth.verifyMfaLogin()` in an embedded app (`demos/mfa-demo`). |
-| Backup code rejected | Codes are single-use; each can complete one challenge before rotating out. |
+| Problem                                                         | Cause / fix                                                                                                                                      |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `INVALID_MFA_ENCRYPTION_KEY`                                    | Key is not exactly 32 bytes when base64-decoded. Regenerate with `randomBytes(32)`.                                                              |
+| Startup fails in production                                     | `PEZHWAN_MFA_ENCRYPTION_KEY` missing — required by `assertProductionSafety`.                                                                     |
+| `INVALID_TOTP` on enable                                        | Code from a previous 30s window; use the current one, keep the window open.                                                                      |
+| `MFA_ALREADY_ENABLED`                                           | Enable was called after enrolment completed once already.                                                                                        |
+| `MFA_NOT_ENABLED` on disable/verify                             | Factor was never enabled (`disable`/`verify` require an active factor).                                                                          |
+| TOTP resets after server restart                                | Key changed between restarts (or demos with different hard-coded keys) — secrets can't decrypt, so enrolment is required again. Persist the key. |
+| Login returns `mfaRequired` but `POST /v1/mfa/login` needs auth | Reference-server route is auth-gated — call `runtime.auth.verifyMfaLogin()` in an embedded app (`demos/mfa-demo`).                               |
+| Backup code rejected                                            | Codes are single-use; each can complete one challenge before rotating out.                                                                       |
 
 ## Further reading
 
-- Endpoints: `docs/OPENAPI.yaml` (MFA tag)
+- Endpoints: `docs/api/OPENAPI.yaml` (MFA tag)
 - Router + runtime wiring: `packages/express/src/routes.extra.ts`,
   `apps/identity-server/src/server.ts`
 - Secret cryptography and codes: `packages/core/src/services/mfa.service.ts`,

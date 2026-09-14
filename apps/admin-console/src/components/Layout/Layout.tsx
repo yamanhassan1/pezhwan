@@ -52,13 +52,7 @@ function Toaster() {
 
 export { Toaster };
 
-export default function Layout({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+export default function Layout({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="sidebar-layout">
       <Sidebar />

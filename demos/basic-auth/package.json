@@ -2,7 +2,9 @@
   "name": "@pezhwan/demo-basic-auth",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "start": "node server.ts",
     "dev": "node --watch server.ts"

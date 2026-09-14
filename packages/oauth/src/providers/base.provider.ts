@@ -31,15 +31,9 @@ export abstract class BaseOAuthProvider implements OAuthProviderAdapter {
   buildAuthorizationUrl(params: BuildAuthUrlParams): string {
     const url = new URL(this.options.authorizeUrl);
     url.searchParams.set('client_id', params.clientId ?? this.options.clientId);
-    url.searchParams.set(
-      'redirect_uri',
-      params.redirectUri ?? this.options.redirectUri,
-    );
+    url.searchParams.set('redirect_uri', params.redirectUri ?? this.options.redirectUri);
     url.searchParams.set('response_type', 'code');
-    url.searchParams.set(
-      'scope',
-      params.scope ?? this.options.scope ?? 'openid email profile',
-    );
+    url.searchParams.set('scope', params.scope ?? this.options.scope ?? 'openid email profile');
     url.searchParams.set('state', params.state);
     if (params.nonce) {
       url.searchParams.set('nonce', params.nonce);
@@ -95,7 +89,10 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
     return {};
   }
   try {
-    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Record<string, unknown>;
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Record<
+      string,
+      unknown
+    >;
   } catch {
     return {};
   }

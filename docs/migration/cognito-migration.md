@@ -83,20 +83,20 @@ curl -s -X POST http://localhost:4011/v1/admin/roles/assign \
 
 ## 5. Mapping
 
-| Cognito concept | Pezhwan concept |
-| --- | --- |
-| User pool | `Tenant` (`slug`). |
-| App client | `Application` / OAuth client (`redirectUris`, public/confidential). |
-| `Username` (UUID) | `User._id` (or `metadata.cognitoUsername`). |
-| `email` / `phone_number` | `User.email` / `User.phone`. |
-| `email_verified` / `Enabled` | `User.emailVerified` / `User.isActive`. |
-| `UserStatus` FORCE_CHANGE_PASSWORD | Import without a password; require reset. |
-| `custom:*` attributes | `User.metadata` (+ role derivation for `custom:role`-style keys). |
-| Groups | `Role` + `UserRoleAssignment` (`roles[]`); `cognito:groups` claim → Pezhwan role claims. |
-| HttpOnly/refresh cookie sessions | Pezhwan access + rotating refresh family. |
-| TOTP/SMS MFA factors | Re-enroll (`User.mfaEnabled`); seeds not transferable. |
-| Password hashes | Not transferable — reset/forgot or temporary password. |
-| Social/IdP federation | `LinkedIdentity` (`provider`, `subject`). |
+| Cognito concept                    | Pezhwan concept                                                                          |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| User pool                          | `Tenant` (`slug`).                                                                       |
+| App client                         | `Application` / OAuth client (`redirectUris`, public/confidential).                      |
+| `Username` (UUID)                  | `User._id` (or `metadata.cognitoUsername`).                                              |
+| `email` / `phone_number`           | `User.email` / `User.phone`.                                                             |
+| `email_verified` / `Enabled`       | `User.emailVerified` / `User.isActive`.                                                  |
+| `UserStatus` FORCE_CHANGE_PASSWORD | Import without a password; require reset.                                                |
+| `custom:*` attributes              | `User.metadata` (+ role derivation for `custom:role`-style keys).                        |
+| Groups                             | `Role` + `UserRoleAssignment` (`roles[]`); `cognito:groups` claim → Pezhwan role claims. |
+| HttpOnly/refresh cookie sessions   | Pezhwan access + rotating refresh family.                                                |
+| TOTP/SMS MFA factors               | Re-enroll (`User.mfaEnabled`); seeds not transferable.                                   |
+| Password hashes                    | Not transferable — reset/forgot or temporary password.                                   |
+| Social/IdP federation              | `LinkedIdentity` (`provider`, `subject`).                                                |
 
 ## 6. Rolling out
 

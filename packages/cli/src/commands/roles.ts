@@ -10,7 +10,9 @@ export default {
   command: 'roles',
   describe: 'List roles and their permissions',
   async run(ctx: CliContext): Promise<number> {
-    const data = (await ctx.api('/v1/admin/roles')) as { data?: { roles?: Array<Record<string, unknown>> } };
+    const data = (await ctx.api('/v1/admin/roles')) as {
+      data?: { roles?: Array<Record<string, unknown>> };
+    };
     const roles = data.data?.roles ?? [];
     ctx.out(
       ctx.table(

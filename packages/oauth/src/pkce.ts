@@ -14,10 +14,7 @@ export function generateCodeVerifier(bytes = 32): string {
 }
 
 /** Derives the \"code_challenge\" for a verifier under the given method. */
-export function generateCodeChallenge(
-  verifier: string,
-  method: 'S256' | 'plain' = 'S256',
-): string {
+export function generateCodeChallenge(verifier: string, method: 'S256' | 'plain' = 'S256'): string {
   if (method === 'plain') {
     return verifier;
   }

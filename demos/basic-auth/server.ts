@@ -7,17 +7,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 import express from 'express';
 import mongoose from 'mongoose';
-import {
-  createPezhwan,
-  initKeyPersistence,
-  UserModel,
-  type PezhwanRuntime,
-} from '@pezhwan/core';
-import {
-  createAuthenticate,
-  requireAuth,
-  type PezhwanRequest,
-} from '@pezhwan/express';
+import { createPezhwan, initKeyPersistence, UserModel, type PezhwanRuntime } from '@pezhwan/core';
+import { createAuthenticate, requireAuth, type PezhwanRequest } from '@pezhwan/express';
 
 const PORT = Number(process.env.PORT ?? 5175);
 const TENANT_ID = process.env.TENANT_ID ?? 'dev-tenant';
@@ -25,7 +16,8 @@ const APPLICATION_ID = process.env.APPLICATION_ID ?? 'dev-app';
 const ISSUER = process.env.ISSUER ?? 'http://localhost:4011';
 const AUDIENCE = 'pezhwan.clients';
 const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/pezhwan';
-const MFA_ENC_KEY = process.env.MFA_ENCRYPTION_KEY ?? 'cGV6aHdhbi1kZW1vLW1mYS1rZXktMDEyMzQ1Njc4OWE=';
+const MFA_ENC_KEY =
+  process.env.MFA_ENCRYPTION_KEY ?? 'cGV6aHdhbi1kZW1vLW1mYS1rZXktMDEyMzQ1Njc4OWE=';
 
 await mongoose.connect(MONGODB_URI);
 console.log('[basic-auth] connected to MongoDB');
@@ -50,22 +42,21 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, '.')));
 
-const h = (fn: (req: PezhwanRequest, res: express.Response) => Promise<unknown>) => (
-  req: PezhwanRequest,
-  res: express.Response,
-): void => {
-  fn(req, res).then(
-    (data) => res.json({ success: true, data }),
-    (err: { code?: string; message?: string; status?: number }) => {
-      const status = err.status ?? (err.code ? 400 : 500);
-      console.error(`[basic-auth] ${req.method} ${req.path} failed:`, err);
-      res.status(status).json({
-        success: false,
-        error: { code: err.code ?? 'ERROR', message: err.message ?? 'Unexpected error' },
-      });
-    },
-  );
-};
+const h =
+  (fn: (req: PezhwanRequest, res: express.Response) => Promise<unknown>) =>
+  (req: PezhwanRequest, res: express.Response): void => {
+    fn(req, res).then(
+      (data) => res.json({ success: true, data }),
+      (err: { code?: string; message?: string; status?: number }) => {
+        const status = err.status ?? (err.code ? 400 : 500);
+        console.error(`[basic-auth] ${req.method} ${req.path} failed:`, err);
+        res.status(status).json({
+          success: false,
+          error: { code: err.code ?? 'ERROR', message: err.message ?? 'Unexpected error' },
+        });
+      },
+    );
+  };
 
 const emailFrom = async (userId: string, tenantId: string): Promise<string | undefined> => {
   const user = await UserModel.findOne({ _id: userId, tenantId }).select('email').lean();
@@ -74,7 +65,9 @@ const emailFrom = async (userId: string, tenantId: string): Promise<string | und
 
 const sessionsOf = async (
   userId: string,
-): Promise<Array<{ sessionId: string; createdAt: Date; lastActiveAt: Date; deviceLabel: string }>> => {
+): Promise<
+  Array<{ sessionId: string; createdAt: Date; lastActiveAt: Date; deviceLabel: string }>
+> => {
   const docs = await runtime.sessions.listActive(userId);
   return docs.map((s) => ({
     sessionId: String(s._id),
@@ -242,6 +235,8 @@ app.post(
 
 app.listen(PORT, () => {
   console.log(`[basic-auth] demo listening on http://localhost:${PORT}`);
-  console.log(`[basic-auth] issuer ${ISSUER} · tenant ${TENANT_ID} · application ${APPLICATION_ID}`);
+  console.log(
+    `[basic-auth] issuer ${ISSUER} · tenant ${TENANT_ID} · application ${APPLICATION_ID}`,
+  );
   console.log(`[basic-auth] register/login on /api/register and /api/login`);
 });

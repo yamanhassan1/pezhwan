@@ -6,8 +6,13 @@
  * the auth engine. Framework adapters (@pezhwan/express, etc.) wrap this.
  */
 
-import { KeyStore, type KeyStore as CryptoKeyStore } from '@pezhwan/crypto';
+import {
+  KeyStore,
+  type KeyStore as CryptoKeyStore,
+  type JwtSigningAlgorithm,
+} from '@pezhwan/crypto';
 import type { JwtAlgorithm } from '@pezhwan/shared';
+import { DEFAULT_CRYPTO_CONFIG, type CryptoConfig } from './config/index.ts';
 import { createRedisCache, type RedisCache, type RedisLike } from './services/redisCache.ts';
 import { TokenService } from './services/token.service.ts';
 import { SessionService } from './services/session.service.ts';
@@ -63,7 +68,16 @@ export interface PezhwanConfig {
   issuer: string;
   audience: string;
   accessTokenTtlMs?: number;
-  jwtAlgorithm?: JwtAlgorithm;
+  /** Backwards-compatible algorithm selector (prefer `crypto.jwtSigningAlgorithm`). */
+  jwtAlgorithm?: JwtSigningAlgorithm;
+
+  /**
+   * Crypto agility block (config-driven algorithm selection). Every algorithm
+   * here is a config value — swapping the signing algorithm (e.g. RS256 →
+   * ES256 or ML-DSA-65) requires no code changes. Anything outside the
+   * supported set is rejected at startup via resolveSigningAlgorithm.
+   */
+  crypto?: Partial<CryptoConfig>;
 
   // Redis (optional — in-memory fallback)
   redis?: RedisLike | null;
@@ -138,6 +152,35 @@ const DEFAULT_QUOTA_LIMITS: Record<QuotaResource, number> = {
   storage_bytes: 5 * 1024 * 1024 * 1024,
 };
 
+/** Asymmetric algorithms this build can actually sign/verify (classical + PQ + hybrid). */
+const SUPPORTED_SIGNING_ALGORITHMS: readonly JwtSigningAlgorithm[] = [
+  'RS256',
+  'ES256',
+  'EdDSA',
+  'ML-DSA-65',
+  'ML-DSA-87',
+  'hybrid-RS256-MLDSA65',
+  'hybrid-ES256-MLDSA65',
+];
+
+/**
+ * Fail-fast on a declared-but-unavailable algorithm. The config schema accepts
+ * the full post-quantum/hybrid set (forward compatibility); anything we cannot
+ * actually sign with fails loud here rather than silently breaking tokens.
+ */
+function resolveSigningAlgorithm(
+  configured: CryptoConfig['jwtSigningAlgorithm'] | JwtAlgorithm,
+): JwtSigningAlgorithm {
+  if ((SUPPORTED_SIGNING_ALGORITHMS as readonly string[]).includes(configured)) {
+    return configured as JwtSigningAlgorithm;
+  }
+  throw new Error(
+    `Pezhwan: JWT signing algorithm "${String(configured)}" (crypto.jwtSigningAlgorithm) is not ` +
+      'available in this build. Supported: RS256, ES256, EdDSA, ML-DSA-65, ML-DSA-87, ' +
+      'hybrid-RS256-MLDSA65, hybrid-ES256-MLDSA65.',
+  );
+}
+
 /**
  * Build (and validate) the Pezhwan runtime.
  *
@@ -154,8 +197,15 @@ export function createPezhwan(config: PezhwanConfig): PezhwanRuntime {
     throw new Error('Pezhwan requires otpDelivery callbacks');
   }
 
-  // Keystore (RS256). In-memory + optional persistence adapter via service.
-  const cryptoStore = new KeyStore(config.jwtAlgorithm ?? 'RS256');
+  // Crypto agility (A.2): the configured algorithm drives key generation,
+  // signing, verification, and JWKS. No hardcoded algorithm in this file.
+  const cryptoCfg: CryptoConfig = { ...DEFAULT_CRYPTO_CONFIG, ...(config.crypto ?? {}) };
+  const jwtSigningAlgorithm: CryptoConfig['jwtSigningAlgorithm'] | JwtAlgorithm =
+    config.crypto?.jwtSigningAlgorithm ?? config.jwtAlgorithm ?? cryptoCfg.jwtSigningAlgorithm;
+  const algorithm = resolveSigningAlgorithm(jwtSigningAlgorithm);
+
+  // Keystore (algorithm from config). In-memory + optional persistence adapter.
+  const cryptoStore = new KeyStore(algorithm);
   const keyStoreService = new KeyStoreService(cryptoStore, new MemoryKeyStoreAdapter());
   // Seed at least one signing key so startup is immediately usable (JWKS + sign).
   keyStoreService.ensureKey();
@@ -169,7 +219,8 @@ export function createPezhwan(config: PezhwanConfig): PezhwanRuntime {
     audience: config.audience,
     accessTokenTtlMs: config.accessTokenTtlMs ?? 15 * 60_000,
     refreshTokenTtlMs: 30 * 24 * 60 * 60_000,
-    algorithm: config.jwtAlgorithm ?? 'RS256',
+    algorithm,
+    tokenHashAlgorithm: cryptoCfg.tokenHashAlgorithm,
     store: cryptoStore,
     cache,
   });
@@ -182,7 +233,7 @@ export function createPezhwan(config: PezhwanConfig): PezhwanRuntime {
   });
 
   const accountState = new AccountStateService(cache);
-  const audit = new AuditService();
+  const audit = new AuditService({ hashAlgorithm: cryptoCfg.auditHashAlgorithm });
   const authorization = new AuthorizationService(audit, accountState);
 
   const mfa = new MfaService(config.tenantId, config.applicationId, audit, config.mfaEncryptionKey);
@@ -190,6 +241,7 @@ export function createPezhwan(config: PezhwanConfig): PezhwanRuntime {
     config.tenantId,
     config.applicationId,
     audit,
+    cryptoCfg.tokenHashAlgorithm,
   );
 
   const otpOptions = {
@@ -212,6 +264,7 @@ export function createPezhwan(config: PezhwanConfig): PezhwanRuntime {
     audience: config.audience,
     accessTokenTtlMs: config.accessTokenTtlMs ?? 15 * 60_000,
     passwordPolicy: config.passwordPolicy,
+    passwordHashParams: cryptoCfg.passwordHashParams,
     otp: {
       codeLength: config.otp?.codeLength,
       ttlMs: config.otp?.ttlMs ?? 5 * 60_000,
@@ -334,7 +387,12 @@ export async function initKeyPersistence(
   runtime: PezhwanRuntime,
   options: KeyPersistenceOptions,
 ): Promise<KeyPersistenceHandle> {
-  const algorithm = runtime.config.jwtAlgorithm ?? 'RS256';
+  const cryptoCfg: CryptoConfig = { ...DEFAULT_CRYPTO_CONFIG, ...(runtime.config.crypto ?? {}) };
+  const algorithm = resolveSigningAlgorithm(
+    runtime.config.crypto?.jwtSigningAlgorithm ??
+      runtime.config.jwtAlgorithm ??
+      cryptoCfg.jwtSigningAlgorithm,
+  );
   const adapter = new FileKeyStoreAdapter(options.directory, algorithm);
 
   // The runtime's KeyStore instance is shared by reference across TokenService

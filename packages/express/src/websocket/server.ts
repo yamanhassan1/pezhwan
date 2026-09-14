@@ -58,14 +58,15 @@ export class PezhwanWebSocketServer extends EventEmitter {
   }
 
   handleUpgrade(req: IncomingMessage, socket: Duplex, identity: IdentityContext): void {
-    const key = typeof req.headers['sec-websocket-key'] === 'string'
-      ? req.headers['sec-websocket-key']
-      : '';
+    const key =
+      typeof req.headers['sec-websocket-key'] === 'string' ? req.headers['sec-websocket-key'] : '';
     if (!key) {
       socket.destroy();
       return;
     }
-    const accept = createHash('sha1').update(key + WS_GUID).digest('base64');
+    const accept = createHash('sha1')
+      .update(key + WS_GUID)
+      .digest('base64');
     socket.write(
       'HTTP/1.1 101 Switching Protocols\r\n' +
         'Upgrade: websocket\r\n' +
@@ -176,7 +177,17 @@ export class PezhwanWebSocketServer extends EventEmitter {
     } else if (payload.length < 65536) {
       header.push(126, (payload.length >> 8) & 0xff, payload.length & 0xff);
     } else {
-      header.push(127, 0, 0, 0, 0, (payload.length >>> 24) & 0xff, (payload.length >>> 16) & 0xff, (payload.length >>> 8) & 0xff, payload.length & 0xff);
+      header.push(
+        127,
+        0,
+        0,
+        0,
+        0,
+        (payload.length >>> 24) & 0xff,
+        (payload.length >>> 16) & 0xff,
+        (payload.length >>> 8) & 0xff,
+        payload.length & 0xff,
+      );
     }
     socket.write(Buffer.from(header));
     socket.write(payload);

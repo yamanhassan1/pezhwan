@@ -17,8 +17,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Pezhwan identity server is down"
-          description: "The identity server scrape target has been unreachable for over 1 minute."
+          summary: 'Pezhwan identity server is down'
+          description: 'The identity server scrape target has been unreachable for over 1 minute.'
 
       - alert: PezhwanNotReady
         expr: up{job="identity-server"} == 1 and probe_success{job="identity-server"} == 0
@@ -26,8 +26,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Pezhwan identity server not ready"
-          description: "The /health/ready endpoint has been returning 503 for over 2 minutes."
+          summary: 'Pezhwan identity server not ready'
+          description: 'The /health/ready endpoint has been returning 503 for over 2 minutes.'
 
       - alert: MongoDBDown
         expr: up{job="mongodb"} == 0
@@ -35,8 +35,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "MongoDB exporter is unreachable"
-          description: "The MongoDB exporter has been down for over 1 minute."
+          summary: 'MongoDB exporter is unreachable'
+          description: 'The MongoDB exporter has been down for over 1 minute.'
 
       - alert: RedisDown
         expr: up{job="redis"} == 0
@@ -44,8 +44,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Redis exporter is unreachable"
-          description: "Redis is unavailable. Pezhwan degrades to in-memory/MongoDB fallback by design."
+          summary: 'Redis exporter is unreachable'
+          description: 'Redis is unavailable. Pezhwan degrades to in-memory/MongoDB fallback by design.'
 
   # --- Authentication signals ---
   - name: pezhwan_authentication
@@ -56,8 +56,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Login failure rate is elevated"
-          description: "More than 10 failed logins per second over 5 minutes — possible brute-force or credential stuffing."
+          summary: 'Login failure rate is elevated'
+          description: 'More than 10 failed logins per second over 5 minutes — possible brute-force or credential stuffing.'
 
       - alert: LoginSuccessDrop
         expr: rate(auth_login_success_total[5m]) < 0.1 and rate(auth_login_failed_total[5m]) > 5
@@ -65,8 +65,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Login success rate near zero with active failures"
-          description: "Logins are failing at elevated rates while successes are near zero."
+          summary: 'Login success rate near zero with active failures'
+          description: 'Logins are failing at elevated rates while successes are near zero.'
 
       - alert: RegistrationAnomaly
         expr: rate(auth_register_total[5m]) > 50
@@ -74,8 +74,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Registration rate spike"
-          description: "More than 50 registrations per second over 5 minutes — possible bot activity."
+          summary: 'Registration rate spike'
+          description: 'More than 50 registrations per second over 5 minutes — possible bot activity.'
 
   # --- Token management ---
   - name: pezhwan_token_security
@@ -86,8 +86,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Refresh token reuse detected"
-          description: "Any refresh-token reuse is suspicious — indicates token theft or replay. Zero-tolerance threshold."
+          summary: 'Refresh token reuse detected'
+          description: 'Any refresh-token reuse is suspicious — indicates token theft or replay. Zero-tolerance threshold.'
 
       - alert: TokenRevokeBurst
         expr: rate(token_revoked_total[5m]) > 5
@@ -95,8 +95,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High token revocation rate"
-          description: "More than 5 token revocations per second — investigate for mass logout or compromise."
+          summary: 'High token revocation rate'
+          description: 'More than 5 token revocations per second — investigate for mass logout or compromise.'
 
   # --- MFA / OTP ---
   - name: pezhwan_mfa_otp
@@ -107,8 +107,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "MFA failure ratio is high"
-          description: "MFA failures exceed successes by 50%+ over 10 minutes — broken factor or bypass attempts."
+          summary: 'MFA failure ratio is high'
+          description: 'MFA failures exceed successes by 50%+ over 10 minutes — broken factor or bypass attempts.'
 
       - alert: OtpSendFailure
         expr: rate(auth_otp_failed_total[5m]) > 1
@@ -116,8 +116,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "OTP delivery failures detected"
-          description: "OTP send failures exceeding 1/s over 5 minutes — check provider circuit breakers."
+          summary: 'OTP delivery failures detected'
+          description: 'OTP send failures exceeding 1/s over 5 minutes — check provider circuit breakers.'
 
       - alert: OtpSendVolumeAnomaly
         expr: rate(auth_otp_sent_total[5m]) > 100
@@ -125,8 +125,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Unusually high OTP send volume"
-          description: "More than 100 OTPs sent per second — possible automated attack."
+          summary: 'Unusually high OTP send volume'
+          description: 'More than 100 OTPs sent per second — possible automated attack.'
 
   # --- Authorization / rate limits ---
   - name: pezhwan_authorization
@@ -137,8 +137,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Authorization denial rate is elevated"
-          description: "More than 10 denials per second — misconfigured permissions or probing."
+          summary: 'Authorization denial rate is elevated'
+          description: 'More than 10 denials per second — misconfigured permissions or probing.'
 
       - alert: RateLimitSaturation
         expr: rate(ratelimit_hit_total[5m]) > 20
@@ -146,8 +146,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Rate limiter is hitting saturation"
-          description: "Sustained rate-limit rejections for 15 minutes — abuse or over-tuned limits."
+          summary: 'Rate limiter is hitting saturation'
+          description: 'Sustained rate-limit rejections for 15 minutes — abuse or over-tuned limits.'
 
       - alert: SecurityEventFlood
         expr: increase(security_event_total[5m]) > 50
@@ -155,8 +155,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Security event volume spike"
-          description: "More than 50 security events in 5 minutes — correlate with audit logs."
+          summary: 'Security event volume spike'
+          description: 'More than 50 security events in 5 minutes — correlate with audit logs.'
 
   # --- OAuth ---
   - name: pezhwan_oauth
@@ -167,5 +167,5 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High OAuth token exchange rate"
-          description: "OAuth token exchanges exceeding 50/s — verify this matches expected traffic."
+          summary: 'High OAuth token exchange rate'
+          description: 'OAuth token exchanges exceeding 50/s — verify this matches expected traffic.'

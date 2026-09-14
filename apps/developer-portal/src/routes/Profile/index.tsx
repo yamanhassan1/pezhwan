@@ -36,7 +36,9 @@ export default function Profile() {
 
   async function loadSessions() {
     try {
-      const res = await api.get<{ sessions: Session[]; total: number }>('/v1/admin/sessions?limit=100&offset=0');
+      const res = await api.get<{ sessions: Session[]; total: number }>(
+        '/v1/admin/sessions?limit=100&offset=0',
+      );
       setSessions(res.sessions);
       setSessionsTotal(res.total);
     } catch (err) {
@@ -53,7 +55,9 @@ export default function Profile() {
     setMessage(null);
     try {
       const res = await api.post<{ revoked: boolean }>(`/v1/admin/sessions/${session.id}/revoke`);
-      setMessage(res.revoked ? `Session revoked (${deviceLabel(session.device)}).` : 'Revoke failed.');
+      setMessage(
+        res.revoked ? `Session revoked (${deviceLabel(session.device)}).` : 'Revoke failed.',
+      );
       await loadSessions();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to revoke session');
@@ -82,7 +86,10 @@ export default function Profile() {
         </div>
       ) : user ? (
         <>
-          <div className="grid" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.4fr)', gap: 16 }}>
+          <div
+            className="grid"
+            style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.4fr)', gap: 16 }}
+          >
             <div className="card">
               <h3 className="mb-3">Account</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -112,7 +119,9 @@ export default function Profile() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
                   <span className="muted">Email</span>
-                  <span style={{ fontWeight: 600, wordBreak: 'break-all', textAlign: 'right' }}>{user.email}</span>
+                  <span style={{ fontWeight: 600, wordBreak: 'break-all', textAlign: 'right' }}>
+                    {user.email}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
                   <span className="muted">Phone</span>
@@ -140,7 +149,14 @@ export default function Profile() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
                   <span className="muted">Roles</span>
-                  <span style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      gap: 5,
+                      flexWrap: 'wrap',
+                      justifyContent: 'flex-end',
+                    }}
+                  >
                     {user.roles.map((r) => (
                       <span key={r} className="badge badge-primary">
                         {r}
@@ -149,7 +165,9 @@ export default function Profile() {
                   </span>
                 </div>
               </div>
-              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+              <hr
+                style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }}
+              />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
                 <div>
                   <span className="muted">Tenant ID </span>
@@ -163,7 +181,14 @@ export default function Profile() {
             </div>
 
             <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 14,
+                }}
+              >
                 <h3>Active sessions</h3>
                 <span className="badge badge-info">
                   {activeCount} active of {sessionsTotal}
@@ -189,18 +214,36 @@ export default function Profile() {
                         }}
                       >
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 14 }}>
-                            <span className={`status-dot ${active ? 'status-dot-online' : 'status-dot-offline'}`} />
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              fontWeight: 600,
+                              fontSize: 14,
+                            }}
+                          >
+                            <span
+                              className={`status-dot ${active ? 'status-dot-online' : 'status-dot-offline'}`}
+                            />
                             <span className="text-ellipsis">{deviceLabel(s.device)}</span>
                           </div>
                           <div className="muted" style={{ fontSize: 12.5, marginTop: 3 }}>
                             Last active {formatDate(s.lastActiveAt)} · {s.applicationId}
                           </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                          <span className={`badge ${active ? 'badge-success' : 'badge'}`}>{active ? 'active' : s.status}</span>
+                        <div
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
+                        >
+                          <span className={`badge ${active ? 'badge-success' : 'badge'}`}>
+                            {active ? 'active' : s.status}
+                          </span>
                           {active && (
-                            <button className="btn btn-danger btn-sm" disabled={revoking === s.id} onClick={() => void revoke(s)}>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              disabled={revoking === s.id}
+                              onClick={() => void revoke(s)}
+                            >
                               {revoking === s.id ? '...' : 'Revoke'}
                             </button>
                           )}

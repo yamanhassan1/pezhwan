@@ -24,7 +24,12 @@ const DataExportSchema = new Schema<DataExportDoc>(
     userId: { type: String, required: true, index: true },
     tenantId: { type: String },
     scope: { type: [String], default: [] },
-    status: { type: String, enum: ['pending', 'processing', 'ready', 'failed'], default: 'pending', index: true },
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'ready', 'failed'],
+      default: 'pending',
+      index: true,
+    },
     format: { type: String, enum: ['json', 'csv'], default: 'json' },
     url: { type: String },
     expiresAt: { type: Date },
@@ -36,4 +41,5 @@ const DataExportSchema = new Schema<DataExportDoc>(
 );
 
 export const DataExportModel: Model<DataExportDoc> =
-  (models.DataExport as Model<DataExportDoc>) ?? model<DataExportDoc>('DataExport', DataExportSchema);
+  (models.DataExport as Model<DataExportDoc>) ??
+  model<DataExportDoc>('DataExport', DataExportSchema);

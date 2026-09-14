@@ -10,14 +10,14 @@ audit chain to MongoDB, and can ship both to Loki or any JSON collector.
 
 Every line is a single JSON object:
 
-| Field | Type | Description |
-| ----- | ---- | ----------- |
-| `ts` | string | ISO 8601 emit time |
-| `level` | `debug`/`info`/`warn`/`error` | Ordered severity |
-| `service` | string | Defaults to `pezhwan`; set via `serviceName` |
-| `env` | string | Environment tag (optional) |
-| `message` | string | Human-readable message |
-| `...` | object | Context + caller fields, redacted at emit time |
+| Field     | Type                          | Description                                    |
+| --------- | ----------------------------- | ---------------------------------------------- |
+| `ts`      | string                        | ISO 8601 emit time                             |
+| `level`   | `debug`/`info`/`warn`/`error` | Ordered severity                               |
+| `service` | string                        | Defaults to `pezhwan`; set via `serviceName`   |
+| `env`     | string                        | Environment tag (optional)                     |
+| `message` | string                        | Human-readable message                         |
+| `...`     | object                        | Context + caller fields, redacted at emit time |
 
 Levels filter at emit: `debug < info < warn < error`. Set with
 `PEZHWAN_LOG_LEVEL` (default `info`).
@@ -38,15 +38,15 @@ A default key set in `logger.service.ts:19-61` masks matching nested keys
 (case-insensitive, recursive, cycle-safe) as `[REDACTED]`; the `redact` option
 adds project keys.
 
-| Category | Keys |
-| -------- | ---- |
-| Credentials | `password`, `passwordhash`, `sessionid`, `sessiontoken`, `bearertoken` |
-| Tokens | `accesstoken`, `refreshtoken`, `token`, `tokenhash`, `apikey`, `api_key` |
-| Secrets | `secret`, `clientsecret`, `clientsecrethash`, `oauthclientsecret`, `signingkey`, `privatekey` |
-| MFA / OTP | `mfarecoverycode`, `mfasecret`, `otp`, `totp`, `code`, `codehash`, `codeverifier`, `codechallenge` |
-| HTTP auth | `authorization`, `cookie`, `set-cookie`, `x-csrf-token` |
-| Conn strings | `connectionstring`, `mongodburi`, `redisurl`, `databaseurl` |
-| Cloud keys | `awssecretaccesskey`, `firebaseserviceaccount` |
+| Category     | Keys                                                                                               |
+| ------------ | -------------------------------------------------------------------------------------------------- |
+| Credentials  | `password`, `passwordhash`, `sessionid`, `sessiontoken`, `bearertoken`                             |
+| Tokens       | `accesstoken`, `refreshtoken`, `token`, `tokenhash`, `apikey`, `api_key`                           |
+| Secrets      | `secret`, `clientsecret`, `clientsecrethash`, `oauthclientsecret`, `signingkey`, `privatekey`      |
+| MFA / OTP    | `mfarecoverycode`, `mfasecret`, `otp`, `totp`, `code`, `codehash`, `codeverifier`, `codechallenge` |
+| HTTP auth    | `authorization`, `cookie`, `set-cookie`, `x-csrf-token`                                            |
+| Conn strings | `connectionstring`, `mongodburi`, `redisurl`, `databaseurl`                                        |
+| Cloud keys   | `awssecretaccesskey`, `firebaseserviceaccount`                                                     |
 
 Logging never crashes the caller: sink and exporter failures are swallowed.
 
@@ -66,11 +66,11 @@ application log stream (`packages/core/src/services/audit.service.ts`):
 
 ## Shipping options
 
-| Option | Mechanism |
-| ------ | --------- |
+| Option          | Mechanism                                                               |
+| --------------- | ----------------------------------------------------------------------- |
 | Console + agent | JSON on stdout; ship with Promtail, Grafana Alloy, Fluent Bit, Filebeat |
-| Logger exporter | Async `exporter(line)` hook for OTLP/direct ingestion (best-effort) |
-| Audit sink | `AuditService.setSink()` for security events to the SIEM |
+| Logger exporter | Async `exporter(line)` hook for OTLP/direct ingestion (best-effort)     |
+| Audit sink      | `AuditService.setSink()` for security events to the SIEM                |
 
 ## Loki ingestion
 
@@ -81,11 +81,11 @@ streams with `service="pezhwan"` and `env`; keep requestIds **in the line**
 
 ## Retention recommendations
 
-| Stream | Retention | Rationale |
-| ------ | --------- | --------- |
-| App logs (`debug`/`info`) | 7-14 days | Operational diagnostics |
-| `warn`/`error` + security events | 30-90 days | Incident forensics |
-| Audit chain (MongoDB) | Per compliance (1-7 years) | Evidence; TTL via `setRetentionDays` |
+| Stream                           | Retention                  | Rationale                            |
+| -------------------------------- | -------------------------- | ------------------------------------ |
+| App logs (`debug`/`info`)        | 7-14 days                  | Operational diagnostics              |
+| `warn`/`error` + security events | 30-90 days                 | Incident forensics                   |
+| Audit chain (MongoDB)            | Per compliance (1-7 years) | Evidence; TTL via `setRetentionDays` |
 
 Comply with the approved data-handling policy: never log raw tokens, passwords,
 OTP codes, or client secrets; preserve logs and correlate by requestId during

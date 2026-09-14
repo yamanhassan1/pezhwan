@@ -86,22 +86,22 @@ Risk events persist signals and verdict per scored login — `risk.service.ts:13
 
 ## 8. Trusted infrastructure boundary
 
-| Component              | Boundary                                                             |
-| ---------------------- | -------------------------------------------------------------------- |
-| MongoDB                | Network-isolated; clients never reach it directly; durable source     |
-| Redis                  | Network-isolated; optimizer only, never authoritative                |
-| Signing key storage    | Filesystem/secret mount; private keys never leave the KeyStore       |
-| Reverse proxy / TLS    | TLS terminated upstream; Pezhwan validates the proxied certificate   |
+| Component           | Boundary                                                           |
+| ------------------- | ------------------------------------------------------------------ |
+| MongoDB             | Network-isolated; clients never reach it directly; durable source  |
+| Redis               | Network-isolated; optimizer only, never authoritative              |
+| Signing key storage | Filesystem/secret mount; private keys never leave the KeyStore     |
+| Reverse proxy / TLS | TLS terminated upstream; Pezhwan validates the proxied certificate |
 
 Deployments that place Mongo/Redis outside this boundary need additional
 controls (field-level encryption, network policy).
 
 ## 9. Documented carve-outs
 
-| Carve-out                       | Status      | Mitigation                                                       |
-| ------------------------------- | ----------- | ---------------------------------------------------------------- |
-| TOTP secret at rest             | Accepted    | `mfaSecret` base64 + `select:false`; envelope encryption documented for out-of-boundary DBs — G3 |
-| Audit hash chain in HA          | Best-effort | `prevHash` may fork under concurrent writers; single-writer shard needed — G7 |
-| Roles in access-token JWT       | Trade-off   | Authoritative for 15-min TTL; immediate revocation via `tokenVersion` |
-| Rate limit on Redis outage      | Trade-off   | Per-process counter; availability over strictness                 |
-| Session liveness cache staleness| Trade-off   | 30-s cache; authoritative Mongo check underneath                  |
+| Carve-out                        | Status      | Mitigation                                                                                       |
+| -------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| TOTP secret at rest              | Accepted    | `mfaSecret` base64 + `select:false`; envelope encryption documented for out-of-boundary DBs — G3 |
+| Audit hash chain in HA           | Best-effort | `prevHash` may fork under concurrent writers; single-writer shard needed — G7                    |
+| Roles in access-token JWT        | Trade-off   | Authoritative for 15-min TTL; immediate revocation via `tokenVersion`                            |
+| Rate limit on Redis outage       | Trade-off   | Per-process counter; availability over strictness                                                |
+| Session liveness cache staleness | Trade-off   | 30-s cache; authoritative Mongo check underneath                                                 |

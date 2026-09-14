@@ -18,7 +18,9 @@ export default {
       ctx.out(ctx.json(client));
       return 0;
     }
-    const data = (await ctx.api('/v1/oauth/clients')) as { data?: { clients?: Array<Record<string, unknown>> } };
+    const data = (await ctx.api('/v1/oauth/clients')) as {
+      data?: { clients?: Array<Record<string, unknown>> };
+    };
     const clients = data.data?.clients ?? [];
     ctx.out(
       ctx.table(

@@ -18,16 +18,30 @@ export default function ApiKeysList() {
       <div className="page-header">
         <div>
           <h1 className="page-title">API keys</h1>
-          <p className="page-desc">Issue and revoke server-side keys for programmatic access to the PEZHWAN API.</p>
+          <p className="page-desc">
+            Issue and revoke server-side keys for programmatic access to the PEZHWAN API.
+          </p>
         </div>
         <div className="page-actions">
-          <button className="btn btn-secondary" onClick={() => setFilter('all')} style={filter === 'all' ? activeFilterStyle : undefined}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setFilter('all')}
+            style={filter === 'all' ? activeFilterStyle : undefined}
+          >
             All
           </button>
-          <button className="btn btn-secondary" onClick={() => setFilter('active')} style={filter === 'active' ? activeFilterStyle : undefined}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setFilter('active')}
+            style={filter === 'active' ? activeFilterStyle : undefined}
+          >
             Active
           </button>
-          <button className="btn btn-secondary" onClick={() => setFilter('revoked')} style={filter === 'revoked' ? activeFilterStyle : undefined}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setFilter('revoked')}
+            style={filter === 'revoked' ? activeFilterStyle : undefined}
+          >
             Revoked
           </button>
           <Link className="btn" to="/api-keys/create">
@@ -42,7 +56,8 @@ export default function ApiKeysList() {
         <span className="label">About API keys</span>
         <p className="muted" style={{ fontSize: 13.5 }}>
           Server-side keys use the <span className="code">pk_live_</span> prefix and are sent as{' '}
-          <span className="code">Authorization: Bearer &lt;key&gt;</span>. The full key is returned exactly once at creation — store it securely.
+          <span className="code">Authorization: Bearer &lt;key&gt;</span>. The full key is returned
+          exactly once at creation — store it securely.
         </p>
       </div>
     </div>

@@ -25,7 +25,9 @@ export interface MfaLoginResult {
 
 export function useMFA() {
   const beginSetup = useCallback(async (): Promise<MfaSetupResult> => {
-    return (await request(getActiveConfig(), '/v1/mfa/setup', { method: 'POST' })) as MfaSetupResult;
+    return (await request(getActiveConfig(), '/v1/mfa/setup', {
+      method: 'POST',
+    })) as MfaSetupResult;
   }, []);
 
   const enable = useCallback(async (code: string): Promise<void> => {

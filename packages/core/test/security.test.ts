@@ -157,6 +157,49 @@ test('RedisManager honors a bounded retry strategy and fails fast', async () => 
   assert.equal(manager.connectedClient, null);
 });
 
+test('RedisManager rejects invalid Sentinel configuration', () => {
+  assert.throws(
+    () => createRedisManager({ mode: 'sentinel' }),
+    /requires a `name` and at least one `sentinels`/,
+  );
+  assert.throws(
+    () => createRedisManager({ mode: 'sentinel', name: 'mymaster' }),
+    /requires a `name` and at least one `sentinels`/,
+  );
+});
+
+test('RedisManager rejects invalid Cluster configuration', () => {
+  assert.throws(
+    () => createRedisManager({ mode: 'cluster' }),
+    /requires at least one `clusterNodes`/,
+  );
+});
+
+test('RedisManager rejects a single-mode config without a url', () => {
+  assert.throws(() => createRedisManager({}), /requires a `url`/);
+});
+
+test('RedisManager accepts Sentinel / Cluster configs and stays lazy', async () => {
+  const sentinel = createRedisManager({
+    mode: 'sentinel',
+    name: 'mymaster',
+    sentinels: [{ host: 'sentinel1', port: 26379 }],
+    password: 's3cret',
+  });
+  assert.equal(sentinel.connectedClient, null);
+  assert.equal(await sentinel.isHealthy(), false);
+  await sentinel.disconnect();
+  await sentinel.disconnect();
+
+  const cluster = createRedisManager({
+    mode: 'cluster',
+    clusterNodes: [{ host: 'redis1', port: 6379 }],
+  });
+  assert.equal(cluster.connectedClient, null);
+  assert.equal(await cluster.isHealthy(), false);
+  await cluster.disconnect();
+});
+
 test('MemoryCache fallback is bounded (no unbounded growth)', async () => {
   const cache = new MemoryCache(5);
   for (let i = 0; i < 50; i += 1) {

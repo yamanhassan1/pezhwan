@@ -74,40 +74,40 @@ It listens on `http://localhost:4011` by default.
 The repository is a set of npm workspaces (`packages/*` and `apps/*`) with a
 strict, one-way dependency layering. Lower layers never know about higher ones.
 
-| Area                | Contents                                                        |
-| ------------------- | --------------------------------------------------------------- |
-| `packages/shared`   | Types, constants, error classes, validators (zero runtime deps) |
-| `packages/crypto`   | Argon2id, JWT + JWKS, key rotation, OTP/TOTP, encryption        |
-| `packages/oauth`    | OAuth 2.1 / OIDC flows, PKCE, federation, SCIM                 |
-| `packages/core`     | Auth engine, domain models, services (sessions, RBAC, MFA, ...) |
-| `packages/node`     | Node.js SDK facade over core                                    |
-| `packages/express`  | Express middleware, routers, security helpers                   |
-| `packages/react`    | React provider, hooks, route guards                             |
-| `packages/angular`  | Angular SDK (module, service, guard, interceptor)               |
-| `packages/vue`      | Vue SDK (plugin, composables, components)                       |
-| `packages/python|go|java|dotnet|cli` | Language SDKs and CLI tool                        |
-| `apps/identity-server` | Reference identity server                                      |
-| `apps/admin-console` | React admin UI                                                  |
-| `apps/developer-portal` | React developer portal                                        |
-| `infrastructure/`   | Docker, Kubernetes/Helm, Terraform, scripts                     |
-| `tests/`            | Cross-cutting unit, security, failure, interop, integration     |
-| `migrations/`       | Numbered database migrations                                    |
-| `scripts/`          | Secret scan, seed, backup/restore drills, release tooling       |
-| `docs/`             | Documentation (see `docs/README.md`)                            |
-| `demos/`, `templates/` | Demo applications and app templates                           |
+| Area                    | Contents                                                        |
+| ----------------------- | --------------------------------------------------------------- |
+| `packages/shared`       | Types, constants, error classes, validators (zero runtime deps) |
+| `packages/crypto`       | Argon2id, JWT + JWKS, key rotation, OTP/TOTP, encryption        |
+| `packages/oauth`        | OAuth 2.1 / OIDC flows, PKCE, federation, SCIM                  |
+| `packages/core`         | Auth engine, domain models, services (sessions, RBAC, MFA, ...) |
+| `packages/node`         | Node.js SDK facade over core                                    |
+| `packages/express`      | Express middleware, routers, security helpers                   |
+| `packages/react`        | React provider, hooks, route guards                             |
+| `packages/angular`      | Angular SDK (module, service, guard, interceptor)               |
+| `packages/vue`          | Vue SDK (plugin, composables, components)                       |
+| `packages/python        | go                                                              | java | dotnet | cli` | Language SDKs and CLI tool |
+| `apps/identity-server`  | Reference identity server                                       |
+| `apps/admin-console`    | React admin UI                                                  |
+| `apps/developer-portal` | React developer portal                                          |
+| `infrastructure/`       | Docker, Kubernetes/Helm, Terraform, scripts                     |
+| `tests/`                | Cross-cutting unit, security, failure, interop, integration     |
+| `migrations/`           | Numbered database migrations                                    |
+| `scripts/`              | Secret scan, seed, backup/restore drills, release tooling       |
+| `docs/`                 | Documentation (see `docs/README.md`)                            |
+| `demos/`, `templates/`  | Demo applications and app templates                             |
 
 ## Building and validating
 
-| Command                 | Purpose                                                     |
-| ----------------------- | ----------------------------------------------------------- |
-| `npm run build`         | Builds all packages in dependency order                     |
-| `npm run typecheck`     | Type-checks every workspace (`--workspaces --if-present`)   |
-| `npm run lint`          | Runs ESLint on the repository                               |
-| `npm run lint:fix`      | Runs ESLint and applies fixes                               |
-| `npm run format:check`  | Checks formatting with Prettier                             |
-| `npm run format`        | Writes Prettier formatting                                  |
-| `npm run license:check` | Fails on copyleft licenses in the dependency tree           |
-| `npm run sbom`          | Generates a CycloneDX software bill of materials            |
+| Command                 | Purpose                                                   |
+| ----------------------- | --------------------------------------------------------- |
+| `npm run build`         | Builds all packages in dependency order                   |
+| `npm run typecheck`     | Type-checks every workspace (`--workspaces --if-present`) |
+| `npm run lint`          | Runs ESLint on the repository                             |
+| `npm run lint:fix`      | Runs ESLint and applies fixes                             |
+| `npm run format:check`  | Checks formatting with Prettier                           |
+| `npm run format`        | Writes Prettier formatting                                |
+| `npm run license:check` | Fails on copyleft licenses in the dependency tree         |
+| `npm run sbom`          | Generates a CycloneDX software bill of materials          |
 
 Run `npm run build` and `npm run typecheck` before opening a PR. CI runs build,
 typecheck, lint, format check, workspace tests, license check, and the secret
@@ -118,16 +118,16 @@ scanner (see `.github/workflows/ci.yml`).
 The repository keeps its test suites under `tests/`. Each test suite has a
 dedicated root script:
 
-| Command                  | Suite                                          |
-| ------------------------ | ---------------------------------------------- |
-| `npm run test:unit`      | Unit tests (`tests/unit/*.test.ts`)            |
-| `npm run test:security-suite` | Security tests (`tests/security/*.test.ts`) |
-| `npm run test:failure`   | Failure-injection tests (`tests/failure/*.test.ts`) |
-| `npm run test:interop`   | Interoperability tests (`tests/interop/*.test.ts`) |
-| `npm run test:root`      | Unit + security + failure + interop in sequence |
-| `npm run test:integration` | Integration tests (requires build + MongoDB/Redis) |
-| `npm run test:load`      | Load tests (requires a running server)          |
-| `npm run test:coverage`  | Combined suites with coverage report             |
+| Command                       | Suite                                               |
+| ----------------------------- | --------------------------------------------------- |
+| `npm run test:unit`           | Unit tests (`tests/unit/*.test.ts`)                 |
+| `npm run test:security-suite` | Security tests (`tests/security/*.test.ts`)         |
+| `npm run test:failure`        | Failure-injection tests (`tests/failure/*.test.ts`) |
+| `npm run test:interop`        | Interoperability tests (`tests/interop/*.test.ts`)  |
+| `npm run test:root`           | Unit + security + failure + interop in sequence     |
+| `npm run test:integration`    | Integration tests (requires build + MongoDB/Redis)  |
+| `npm run test:load`           | Load tests (requires a running server)              |
+| `npm run test:coverage`       | Combined suites with coverage report                |
 
 `npm test` builds the workspace and runs every package's own test script.
 
@@ -135,12 +135,12 @@ dedicated root script:
 
 Hooks live in `.husky/` and are installed by `npm run setup`:
 
-| Hook          | Purpose                                                        |
-| ------------- | -------------------------------------------------------------- |
-| `pre-commit`  | Runs the secret scanner (`scripts/secret-scan.mjs`); blocks    |
-|               | commits that stage obvious secrets                             |
-| `pre-push`    | Runs the test suite before pushing                             |
-| `commit-msg`  | Validates the commit message                                   |
+| Hook         | Purpose                                                     |
+| ------------ | ----------------------------------------------------------- |
+| `pre-commit` | Runs the secret scanner (`scripts/secret-scan.mjs`); blocks |
+|              | commits that stage obvious secrets                          |
+| `pre-push`   | Runs the test suite before pushing                          |
+| `commit-msg` | Validates the commit message                                |
 
 Commit messages are validated against commitlint using the rules declared in
 `.commitlintrc.json` at the repository root. If a message does not conform, the
@@ -158,18 +158,18 @@ Pezhwan uses [Conventional Commits](https://www.conventionalcommits.org/):
 [optional footer(s)]
 ```
 
-| Type      | Use for                                                  |
-| --------- | -------------------------------------------------------- |
-| `feat`    | A new user-facing capability                             |
-| `fix`     | A bug fix                                                |
-| `docs`    | Documentation only                                       |
-| `test`    | Adding or correcting tests                               |
-| `refactor`| Code change with no behavioral change                    |
-| `perf`    | Performance improvement                                  |
-| `chore`   | Tooling, dependencies, and maintenance                   |
-| `ci`      | Continuous integration changes                           |
-| `style`   | Formatting, whitespace, missing semicolons               |
-| `build`   | Build system or dependency changes                       |
+| Type       | Use for                                    |
+| ---------- | ------------------------------------------ |
+| `feat`     | A new user-facing capability               |
+| `fix`      | A bug fix                                  |
+| `docs`     | Documentation only                         |
+| `test`     | Adding or correcting tests                 |
+| `refactor` | Code change with no behavioral change      |
+| `perf`     | Performance improvement                    |
+| `chore`    | Tooling, dependencies, and maintenance     |
+| `ci`       | Continuous integration changes             |
+| `style`    | Formatting, whitespace, missing semicolons |
+| `build`    | Build system or dependency changes         |
 
 Use a scope when it is useful: `feat(core): ...`, `fix(express): ...`,
 `chore(ci): ...`. Examples from this repository:

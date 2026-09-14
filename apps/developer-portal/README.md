@@ -27,18 +27,18 @@ Package: `pezhwan-developer-portal` (private, `type: module`).
 
 Defined in `src/App.tsx`:
 
-| Route              | Feature                                                            |
-| ------------------ | ------------------------------------------------------------------ |
-| `/login`           | Sign-in (`/v1/auth/login`; MFA-required accounts are rejected)     |
-| `/`                | Dashboard: stats cards, recent risk events, health panel           |
-| `/api-keys`        | List / filter / revoke API keys (`KeyManager`)                     |
-| `/api-keys/create` | Create an API key; shows the raw key once                          |
-| `/webhooks`        | List webhooks, copy signing secret, send test pings                 |
-| `/webhooks/create` | Create a webhook subscription                                       |
-| `/explorer`        | Live API explorer with presets and history (`ApiExplorer`)         |
-| `/analytics`       | 7-day audit aggregation, top event types, unique users             |
-| `/docs`            | In-app API documentation                                            |
-| `/profile`         | Current user profile and session info                              |
+| Route              | Feature                                                        |
+| ------------------ | -------------------------------------------------------------- |
+| `/login`           | Sign-in (`/v1/auth/login`; MFA-required accounts are rejected) |
+| `/`                | Dashboard: stats cards, recent risk events, health panel       |
+| `/api-keys`        | List / filter / revoke API keys (`KeyManager`)                 |
+| `/api-keys/create` | Create an API key; shows the raw key once                      |
+| `/webhooks`        | List webhooks, copy signing secret, send test pings            |
+| `/webhooks/create` | Create a webhook subscription                                  |
+| `/explorer`        | Live API explorer with presets and history (`ApiExplorer`)     |
+| `/analytics`       | 7-day audit aggregation, top event types, unique users         |
+| `/docs`            | In-app API documentation                                       |
+| `/profile`         | Current user profile and session info                          |
 
 ### Components
 
@@ -92,7 +92,7 @@ npm run preview -w pezhwan-developer-portal   # serve the build
 
 ## Documentation
 
-- `docs/OPENAPI.yaml` — HTTP surface of the reference server
+- `docs/api/OPENAPI.yaml` — HTTP surface of the reference server
 - `docs/api/webhooks.md` — webhook events, signing, and delivery semantics
 - `docs/api/rate-limits.md` — rate-limit and retry guidance
 - `docs/tutorials/` — step-by-step integration guides

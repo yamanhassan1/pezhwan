@@ -120,7 +120,7 @@ sequenceDiagram
             S->>M: revokeFamily(familyId)  [the whole chain]
             S-->>R: SessionError REFRESH_TOKEN_REUSE (401)
         else in-flight 'rotating'
-            S-->>R: fail closed (loser gets no token; winner completes)
+            S-->>R: fail closed (loser gets no token - winner completes)
         end
     else claim succeeded
         S->>M: create child session (same familyId, new hash)  [tx]

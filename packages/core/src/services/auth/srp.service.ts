@@ -32,7 +32,10 @@ function modPow(base: bigint, exp: bigint, m: bigint): bigint {
 
 /** Only ASCII k for SRP-6a: k = H(N | g). */
 function kFactor(): bigint {
-  const hash = createHash('sha256').update(Buffer.from(N_HEX, 'hex')).update(Buffer.from([2])).digest();
+  const hash = createHash('sha256')
+    .update(Buffer.from(N_HEX, 'hex'))
+    .update(Buffer.from([2]))
+    .digest();
   return BigInt('0x' + hash.toString('hex')) % N;
 }
 
@@ -55,7 +58,10 @@ export class SrpService {
   /** Derive a password verifier for storage at registration time. */
   deriveVerifier(identifier: string, password: string): SrpRegistrationVerifier {
     const salt = randomBytes(16);
-    const x = BigInt('0x' + scryptSync(password, `${identifier}:${salt.toString('hex')}`, 32).toString('hex')) % N;
+    const x =
+      BigInt(
+        '0x' + scryptSync(password, `${identifier}:${salt.toString('hex')}`, 32).toString('hex'),
+      ) % N;
     const v = modPow(g, x, N);
     return { salt: salt.toString('hex'), verifier: v.toString(16) };
   }
@@ -90,7 +96,7 @@ export class SrpService {
       .digest();
     const u = BigInt('0x' + uHash.toString('hex')) % N;
     if (u === 0n) return false;
-    const S = modPow(A * modPow(session.verifier, u, N) % N, session.serverPrivate, N);
+    const S = modPow((A * modPow(session.verifier, u, N)) % N, session.serverPrivate, N);
     const sessionKey = this.hashToKey(S, clientPublicHex, session.serverPublic);
     const identityHash = createHash('sha256').update(session.salt).digest('hex');
     const expected = createHash('sha256')

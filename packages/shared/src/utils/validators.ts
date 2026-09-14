@@ -36,10 +36,7 @@ export function isBase64Url(value: string): boolean {
 }
 
 /** Whether a password satisfies the configured composition policy. */
-export function isStrongPassword(
-  value: string,
-  policy = PASSWORD_POLICY,
-): boolean {
+export function isStrongPassword(value: string, policy = PASSWORD_POLICY): boolean {
   if (value.length < policy.MIN_LENGTH || value.length > policy.MAX_LENGTH) {
     return false;
   }

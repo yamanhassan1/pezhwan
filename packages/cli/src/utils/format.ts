@@ -15,7 +15,11 @@ export function table(headers: string[], rows: Array<Array<string | number>>): s
     `${left}${widths.map((w) => '-'.repeat(w + 2)).join(mid)}${right}`;
   const line = (cells: Array<string | number>) =>
     `| ${cells.map((cell, i) => String(cell).padEnd(widths[i]!)).join(' | ')} |`;
-  return [rule('+', '+', '+'), line(headers), rule('+', '=', '+'), ...rows.map(line), rule('+', '+', '+')].join(
-    '\n',
-  );
+  return [
+    rule('+', '+', '+'),
+    line(headers),
+    rule('+', '=', '+'),
+    ...rows.map(line),
+    rule('+', '+', '+'),
+  ].join('\n');
 }

@@ -48,5 +48,10 @@ export function attachWebSocketServer(
 }
 
 export { PezhwanWebSocketServer, type WsClient, type PezhwanWebSocketOptions } from './server.ts';
-export { PEZHWAN_WS_EVENTS, wsEvent, type WsEventMessage, type PezhwanWsEventType } from './events.ts';
+export {
+  PEZHWAN_WS_EVENTS,
+  wsEvent,
+  type WsEventMessage,
+  type PezhwanWsEventType,
+} from './events.ts';
 export { extractWsAccessToken, authenticateHandshake } from './auth.ts';

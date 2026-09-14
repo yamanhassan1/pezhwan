@@ -11,10 +11,7 @@ import type { Severity } from '../types.ts';
 export { AUDIT_EVENT, type AuditEventType } from '../types.ts';
 
 /** Default severity assigned to each audit event when writing audit records. */
-export const AUDIT_EVENT_SEVERITY: Record<
-  import('../types.ts').AuditEventType,
-  Severity
-> = {
+export const AUDIT_EVENT_SEVERITY: Record<import('../types.ts').AuditEventType, Severity> = {
   USER_REGISTERED: 'info',
   LOGIN_SUCCESS: 'info',
   LOGIN_FAILED: 'warning',

@@ -24,14 +24,14 @@ provides the controls an IAM layer adjacent to a Cardholder Data Environment
 
 ### Requirement 8 — Identify and authenticate access
 
-| Control                          | Pezhwan implementation                                   |
-| -------------------------------- | --------------------------------------------------------- |
-| 8.1 Unique IDs                   | `tenantId + email/phone` unique per tenant                |
-| 8.2/8.3 MFA                     | TOTP, backup codes, WebAuthn; risk-based MFA step-up      |
-| 8.4 Password policy              | Argon2id hashing, strength validation, reuse rejected      |
-| 8.5 Account lockout              | 5 failures, 15-min lockout, `retryAfterMs`                |
-| 8.6 Session timeout              | Idle and absolute expiry server-side                     |
-| 8.7 Password history             | Current-password reuse rejected on change                 |
+| Control              | Pezhwan implementation                                |
+| -------------------- | ----------------------------------------------------- |
+| 8.1 Unique IDs       | `tenantId + email/phone` unique per tenant            |
+| 8.2/8.3 MFA          | TOTP, backup codes, WebAuthn; risk-based MFA step-up  |
+| 8.4 Password policy  | Argon2id hashing, strength validation, reuse rejected |
+| 8.5 Account lockout  | 5 failures, 15-min lockout, `retryAfterMs`            |
+| 8.6 Session timeout  | Idle and absolute expiry server-side                  |
+| 8.7 Password history | Current-password reuse rejected on change             |
 
 ### Requirement 7 — Least privilege
 
@@ -51,12 +51,12 @@ available).
 
 ## 3. What remains the organization's responsibility
 
-| Requirement                            | Responsibility                                   |
-| -------------------------------------- | ------------------------------------------------ |
-| CDE network segmentation               | Infrastructure / cloud networking                |
-| Certified tokenization                 | External vault or bank token service             |
-| CDE vulnerability scanning             | Infrastructure scanning tools                    |
-| PCI DSS assessment                     | Qualified Security Assessor (QSA)               |
+| Requirement                | Responsibility                       |
+| -------------------------- | ------------------------------------ |
+| CDE network segmentation   | Infrastructure / cloud networking    |
+| Certified tokenization     | External vault or bank token service |
+| CDE vulnerability scanning | Infrastructure scanning tools        |
+| PCI DSS assessment         | Qualified Security Assessor (QSA)    |
 
 ## 4. Deployment checklist
 

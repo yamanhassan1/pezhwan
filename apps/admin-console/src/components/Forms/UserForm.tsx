@@ -50,9 +50,7 @@ export default function UserForm({
   }, []);
 
   const toggleRole = (name: string) => {
-    setRoles((prev) =>
-      prev.includes(name) ? prev.filter((r) => r !== name) : [...prev, name],
-    );
+    setRoles((prev) => (prev.includes(name) ? prev.filter((r) => r !== name) : [...prev, name]));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,9 +68,15 @@ export default function UserForm({
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      {error && <div className="toast toast-error" style={{ marginBottom: 16 }}>{error}</div>}
+      {error && (
+        <div className="toast toast-error" style={{ marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
       <div className="form-group">
-        <label className="label" htmlFor="email">Email</label>
+        <label className="label" htmlFor="email">
+          Email
+        </label>
         <input
           id="email"
           className="input"
@@ -83,7 +87,9 @@ export default function UserForm({
         />
       </div>
       <div className="form-group">
-        <label className="label" htmlFor="phone">Phone (optional)</label>
+        <label className="label" htmlFor="phone">
+          Phone (optional)
+        </label>
         <input
           id="phone"
           className="input"
@@ -133,7 +139,11 @@ export default function UserForm({
       </div>
       <div className="form-group">
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+          />
           Active
         </label>
       </div>

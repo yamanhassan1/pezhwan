@@ -21,11 +21,11 @@ relying-party identity `localhost:5178`.
 
 ## Key files
 
-| File | Role |
-|------|------|
-| `server.ts` | Express app: runtime, durable keys, `WebAuthnService`, ceremony + account routes |
-| `index.html` | SPA — register, password login, passkey register/authenticate, token inspector |
-| `keys/` | Durable signing keys created on first boot by `initKeyPersistence` |
+| File         | Role                                                                             |
+| ------------ | -------------------------------------------------------------------------------- |
+| `server.ts`  | Express app: runtime, durable keys, `WebAuthnService`, ceremony + account routes |
+| `index.html` | SPA — register, password login, passkey register/authenticate, token inspector   |
+| `keys/`      | Durable signing keys created on first boot by `initKeyPersistence`               |
 
 ### API surface (`server.ts`)
 
@@ -37,7 +37,7 @@ relying-party identity `localhost:5178`.
 ## Required configuration
 
 **Self-contained.** The demo embeds `@pezhwan/core` and connects directly to
-MongoDB — it does *not* call the identity-server. `ISSUER` defaults to
+MongoDB — it does _not_ call the identity-server. `ISSUER` defaults to
 `http://localhost:4011` purely to stamp the same `iss` claim the identity-server
 uses, so tokens share the same contract.
 
@@ -46,13 +46,13 @@ The `WebAuthnService` is configured in `server.ts:53` with `rpId: 'localhost'`,
 `attestation: 'none'`. These must match the origin you actually open in the
 browser.
 
-| Environment variable | Default | Purpose |
-|---|---|---|
-| `MONGODB_URI` | `mongodb://localhost:27017/pezhwan` | Shared database |
-| `PORT` | `5178` | HTTP listen port |
-| `TENANT_ID` | `dev-tenant` | Tenant the demo runs as |
-| `APPLICATION_ID` | `dev-app` | Application within the tenant |
-| `ISSUER` | `http://localhost:4011` | JWT `iss` claim |
+| Environment variable | Default                             | Purpose                       |
+| -------------------- | ----------------------------------- | ----------------------------- |
+| `MONGODB_URI`        | `mongodb://localhost:27017/pezhwan` | Shared database               |
+| `PORT`               | `5178`                              | HTTP listen port              |
+| `TENANT_ID`          | `dev-tenant`                        | Tenant the demo runs as       |
+| `APPLICATION_ID`     | `dev-app`                           | Application within the tenant |
+| `ISSUER`             | `http://localhost:4011`             | JWT `iss` claim               |
 
 ## Run it
 
@@ -64,7 +64,7 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
    npm install
    npm run build
    ```
-2. *Full-stack context only — not required.* Start the identity-server on 4011:
+2. _Full-stack context only — not required._ Start the identity-server on 4011:
    ```bash
    npm run dev -w @pezhwan/identity-server
    ```
@@ -85,8 +85,8 @@ stripping) and a local MongoDB (`mongodb://localhost:27017`).
 
 ## Troubleshooting
 
-- **HTTPS / secure context** — `navigator.credentials` only runs in a *secure
-  context*. `http://localhost` is exempt, so the demo works as-is on
+- **HTTPS / secure context** — `navigator.credentials` only runs in a _secure
+  context_. `http://localhost` is exempt, so the demo works as-is on
   `http://localhost:5178`. Opening it via a LAN IP (`http://192.168.x.x:5178`)
   or a raw IP will not prompt — use `localhost` or serve the demo over HTTPS.
 - **`origins` / `rpId` mismatch** — the `origins` array in `server.ts:56` and

@@ -52,9 +52,7 @@ export default function UsersList() {
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   const visibleUsers =
-    activeFilter === ''
-      ? users
-      : users.filter((u) => String(u.isActive) === activeFilter);
+    activeFilter === '' ? users : users.filter((u) => String(u.isActive) === activeFilter);
 
   return (
     <div>
@@ -95,9 +93,15 @@ export default function UsersList() {
             load({ search, isActive: e.target.value, offset: 0 });
           }}
         >
-          <option className="option" value="">All statuses</option>
-          <option className="option" value="true">Active</option>
-          <option className="option" value="false">Inactive</option>
+          <option className="option" value="">
+            All statuses
+          </option>
+          <option className="option" value="true">
+            Active
+          </option>
+          <option className="option" value="false">
+            Inactive
+          </option>
         </select>
         <button
           className="btn btn-ghost"

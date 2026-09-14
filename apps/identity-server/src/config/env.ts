@@ -66,7 +66,28 @@ const envSchema = z.object({
   PEZHWAN_ACCESS_TOKEN_TTL: z.string().default('15m'),
   PEZHWAN_REFRESH_TOKEN_TTL: z.string().default('30d'),
   PEZHWAN_SESSION_TTL: z.string().default('30d'),
-  PEZHWAN_JWT_ALGORITHM: z.enum(['RS256', 'RS384', 'RS512']).default('RS256'),
+  // Crypto agility (docs/PROMPT.md A.2): every algorithm is a config value.
+  // PQC/hybrid values (ML-DSA-65, hybrid-RS256-MLDSA65, ...) are backed by the
+  // @noble/post-quantum signing backend shipped in @pezhwan/crypto.
+  PEZHWAN_JWT_ALGORITHM: z
+    .enum([
+      'RS256',
+      'ES256',
+      'EdDSA',
+      'ML-DSA-65',
+      'ML-DSA-87',
+      'hybrid-RS256-MLDSA65',
+      'hybrid-ES256-MLDSA65',
+    ])
+    .default('RS256'),
+  PEZHWAN_KEY_ENCAPSULATION_ALGORITHM: z
+    .enum(['RSA-OAEP', 'ECDH', 'ML-KEM-768', 'ML-KEM-1024', 'hybrid-X25519-MLKEM768'])
+    .default('RSA-OAEP'),
+  PEZHWAN_TOKEN_HASH_ALGORITHM: z.enum(['sha256', 'sha512', 'sha3-256']).default('sha256'),
+  PEZHWAN_AUDIT_HASH_ALGORITHM: z.enum(['sha256', 'sha3-256']).default('sha256'),
+  PEZHWAN_ARGON2_MEMORY_COST: z.coerce.number().int().min(8192).default(65536),
+  PEZHWAN_ARGON2_TIME_COST: z.coerce.number().int().min(1).max(10).default(3),
+  PEZHWAN_ARGON2_PARALLELISM: z.coerce.number().int().min(1).max(16).default(1),
   PEZHWAN_JWKS_CACHE_TTL: z.coerce.number().int().min(0).default(300),
 
   // ── Signing keys ──────────────────────────────────────────────────────
@@ -306,6 +327,19 @@ function buildConfig(raw: EnvConfig) {
       sessionTtlMs,
       algorithm: raw.PEZHWAN_JWT_ALGORITHM,
       jwksCacheTtl: raw.PEZHWAN_JWKS_CACHE_TTL,
+    }),
+
+    crypto: Object.freeze({
+      jwtSigningAlgorithm: raw.PEZHWAN_JWT_ALGORITHM,
+      keyEncapsulationAlgorithm: raw.PEZHWAN_KEY_ENCAPSULATION_ALGORITHM,
+      tokenHashAlgorithm: raw.PEZHWAN_TOKEN_HASH_ALGORITHM,
+      auditHashAlgorithm: raw.PEZHWAN_AUDIT_HASH_ALGORITHM,
+      passwordHashParams: Object.freeze({
+        algorithm: 'argon2id',
+        memoryCost: raw.PEZHWAN_ARGON2_MEMORY_COST,
+        timeCost: raw.PEZHWAN_ARGON2_TIME_COST,
+        parallelism: raw.PEZHWAN_ARGON2_PARALLELISM,
+      }),
     }),
 
     signingKeys: Object.freeze({

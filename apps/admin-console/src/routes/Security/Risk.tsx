@@ -73,9 +73,7 @@ export default function Risk() {
                   return (
                     <tr key={r.id ?? i}>
                       <td>
-                        <span style={{ color: scoreColor(score), fontWeight: 600 }}>
-                          {score}
-                        </span>
+                        <span style={{ color: scoreColor(score), fontWeight: 600 }}>{score}</span>
                         <span className="score-bar">
                           <span
                             className="score-bar-fill"

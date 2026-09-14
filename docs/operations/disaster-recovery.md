@@ -9,11 +9,11 @@ and [multi-region.md](./multi-region.md) for failover semantics.
 
 ## Recovery targets
 
-| Metric | Target | Measured (latest drill) |
-| ------ | ------ | ----------------------- |
-| **RPO** — max acceptable data loss (age of newest backed-up doc) | < 24 h | `rpoSeconds: 0` |
-| **RTO** — restore a usable, verified identity store | < 1 h | `rtoSeconds: 1` |
-| **Drill duration** — full backup → restore → verify cycle | < 15 min | end-to-end |
+| Metric                                                           | Target   | Measured (latest drill) |
+| ---------------------------------------------------------------- | -------- | ----------------------- |
+| **RPO** — max acceptable data loss (age of newest backed-up doc) | < 24 h   | `rpoSeconds: 0`         |
+| **RTO** — restore a usable, verified identity store              | < 1 h    | `rtoSeconds: 1`         |
+| **Drill duration** — full backup → restore → verify cycle        | < 15 min | end-to-end              |
 
 Production RPO is the age of the newest archive at dump time; RTO is the
 measured restore duration. The executed `npm run drill:backup-restore` reports

@@ -30,7 +30,12 @@ export default function AuditLogs() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = async (opts?: { eventType?: string; severity?: string; userId?: string; offset?: number }) => {
+  const load = async (opts?: {
+    eventType?: string;
+    severity?: string;
+    userId?: string;
+    offset?: number;
+  }) => {
     setLoading(true);
     setError(null);
     const e = opts?.eventType ?? eventType;
@@ -99,7 +104,9 @@ export default function AuditLogs() {
           value={eventType}
           onChange={(e) => setEventType(e.target.value)}
         >
-          <option className="option" value="">All event types</option>
+          <option className="option" value="">
+            All event types
+          </option>
           {AUDIT_EVENT_NAMES.map((n) => (
             <option className="option" key={n} value={n}>
               {n}
@@ -112,7 +119,9 @@ export default function AuditLogs() {
           value={severity}
           onChange={(e) => setSeverity(e.target.value)}
         >
-          <option className="option" value="">All severities</option>
+          <option className="option" value="">
+            All severities
+          </option>
           {SEVERITY_NAMES.map((s) => (
             <option className="option" key={s} value={s}>
               {s}
@@ -157,7 +166,9 @@ export default function AuditLogs() {
               <tbody>
                 {logs.length === 0 ? (
                   <tr>
-                    <td className="empty-state" colSpan={7}>No audit entries match the filters</td>
+                    <td className="empty-state" colSpan={7}>
+                      No audit entries match the filters
+                    </td>
                   </tr>
                 ) : (
                   logs.map((l) => (

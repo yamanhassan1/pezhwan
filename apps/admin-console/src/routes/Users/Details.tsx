@@ -267,7 +267,9 @@ export default function UsersDetails() {
                     <tr key={s.id}>
                       <td>{s.id.slice(0, 8)}</td>
                       <td>
-                        <span className={`badge ${s.status === 'active' ? 'badge-green' : 'badge-red'}`}>
+                        <span
+                          className={`badge ${s.status === 'active' ? 'badge-green' : 'badge-red'}`}
+                        >
                           {s.status}
                         </span>
                       </td>

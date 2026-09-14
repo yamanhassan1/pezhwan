@@ -62,7 +62,10 @@ export default function Analytics() {
     return logs.filter((l) => l.eventType === selectedEvent);
   }, [logs, selectedEvent]);
 
-  const eventTypes = useMemo(() => Array.from(new Set(logs.map((l) => l.eventType))).sort(), [logs]);
+  const eventTypes = useMemo(
+    () => Array.from(new Set(logs.map((l) => l.eventType))).sort(),
+    [logs],
+  );
 
   const summary = useMemo<Summary>(() => {
     const byType = new Map<string, number>();
@@ -117,7 +120,11 @@ export default function Analytics() {
           <label className="label" style={{ margin: 0 }}>
             Filter
           </label>
-          <select className="select" value={selectedEvent} onChange={(e) => setSelectedEvent(e.target.value)}>
+          <select
+            className="select"
+            value={selectedEvent}
+            onChange={(e) => setSelectedEvent(e.target.value)}
+          >
             <option value="all">All event types</option>
             {eventTypes.map((ev) => (
               <option key={ev} value={ev}>
@@ -148,7 +155,10 @@ export default function Analytics() {
         </div>
       ) : (
         <>
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+          <div
+            className="grid"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}
+          >
             <div className="card stat-card">
               <span className="stat-value">{summary.total.toLocaleString()}</span>
               <span className="stat-label">Total events</span>
@@ -167,7 +177,10 @@ export default function Analytics() {
             </div>
           </div>
 
-          <div className="grid mt-4" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16 }}>
+          <div
+            className="grid mt-4"
+            style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16 }}
+          >
             <div className="card">
               <h3 className="mb-3">Events by type (top 12)</h3>
               {byEvent.length === 0 ? (
@@ -179,7 +192,10 @@ export default function Analytics() {
                       {e.name}
                     </span>
                     <div className="bar-track">
-                      <div className="bar-fill" style={{ width: `${(e.count / maxEvent) * 100}%` }} />
+                      <div
+                        className="bar-fill"
+                        style={{ width: `${(e.count / maxEvent) * 100}%` }}
+                      />
                     </div>
                     <span className="muted" style={{ textAlign: 'right' }}>
                       {e.count}
@@ -229,7 +245,9 @@ export default function Analytics() {
                           <span className="code">{l.eventType}</span>
                         </td>
                         <td>
-                          <span className={`badge ${l.severity === 'high' ? 'badge-danger' : l.severity === 'medium' ? 'badge-warning' : 'badge-info'}`}>
+                          <span
+                            className={`badge ${l.severity === 'high' ? 'badge-danger' : l.severity === 'medium' ? 'badge-warning' : 'badge-info'}`}
+                          >
                             {l.severity}
                           </span>
                         </td>

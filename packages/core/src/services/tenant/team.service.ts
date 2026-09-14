@@ -32,11 +32,7 @@ export class TeamService {
   }
 
   async addMember(teamId: string, userId: string): Promise<TeamDoc | null> {
-    return TeamModel.findByIdAndUpdate(
-      teamId,
-      { $addToSet: { memberIds: userId } },
-      { new: true },
-    );
+    return TeamModel.findByIdAndUpdate(teamId, { $addToSet: { memberIds: userId } }, { new: true });
   }
 
   async removeMember(teamId: string, userId: string): Promise<TeamDoc | null> {

@@ -20,7 +20,10 @@ export interface PasswordlessLoginResult {
 
 export function usePasswordless() {
   const send = useCallback(
-    async (channel: OtpChannel, target: string): Promise<{ verified?: boolean; expiresIn?: number }> => {
+    async (
+      channel: OtpChannel,
+      target: string,
+    ): Promise<{ verified?: boolean; expiresIn?: number }> => {
       return (await request(getActiveConfig(), '/v1/auth/otp/send', {
         method: 'POST',
         body: JSON.stringify({ channel, target, purpose: 'login' }),

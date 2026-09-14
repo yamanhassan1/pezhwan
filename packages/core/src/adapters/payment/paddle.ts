@@ -32,7 +32,10 @@ export class PaddleAdapter implements BillingProviderClient {
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
   }
 
-  async createCheckout(plan: string, customerRef: string): Promise<{ url: string; externalId: string }> {
+  async createCheckout(
+    plan: string,
+    customerRef: string,
+  ): Promise<{ url: string; externalId: string }> {
     const body = new URLSearchParams({
       vendor_id: this.vendorId,
       vendor_auth_code: this.authCode,

@@ -47,7 +47,10 @@ export class TenantService {
     return TenantModel.find().sort({ createdAt: -1 });
   }
 
-  async update(tenantId: string, patch: Partial<Pick<TenantDoc, 'name' | 'config'>>): Promise<TenantDoc | null> {
+  async update(
+    tenantId: string,
+    patch: Partial<Pick<TenantDoc, 'name' | 'config'>>,
+  ): Promise<TenantDoc | null> {
     return TenantModel.findByIdAndUpdate(tenantId, { $set: patch }, { new: true });
   }
 

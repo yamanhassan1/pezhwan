@@ -80,6 +80,8 @@ export const AuditLogModel: Model<AuditLogDoc> =
 export interface AuditSequenceDoc {
   _id: string;
   seq: number;
+  /** SHA-256 of the most recently committed audit entry (the chain tip). */
+  lastHash?: string;
 }
 
 export const AuditSequenceModel: Model<AuditSequenceDoc> =
@@ -90,6 +92,7 @@ export const AuditSequenceModel: Model<AuditSequenceDoc> =
       {
         _id: { type: String, required: true },
         seq: { type: Number, default: 0 },
+        lastHash: { type: String },
       },
       { versionKey: false },
     ),

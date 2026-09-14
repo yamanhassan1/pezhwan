@@ -63,7 +63,11 @@ export class TracingService {
     return span;
   }
 
-  async trace<T>(name: string, fn: () => Promise<T>, attributes: Record<string, string> = {}): Promise<T> {
+  async trace<T>(
+    name: string,
+    fn: () => Promise<T>,
+    attributes: Record<string, string> = {},
+  ): Promise<T> {
     const span = this.root(name, attributes);
     try {
       return await fn();

@@ -73,23 +73,31 @@ import { hashPassword } from '@pezhwan/crypto';
 
 await mongoose.connect(process.env.PEZHWAN_MONGODB_URI!);
 const runtime = createPezhwan({
-  tenantId: 'acme-prod', applicationId: 'web',
-  issuer: 'https://id.example.com', audience: 'pezhwan.clients', otpDelivery: {},
+  tenantId: 'acme-prod',
+  applicationId: 'web',
+  issuer: 'https://id.example.com',
+  audience: 'pezhwan.clients',
+  otpDelivery: {},
 });
 for (const u of exportedUsers) {
-  const passwordHash = u.temporaryPassword
-    ? await hashPassword(u.temporaryPassword) : null;
+  const passwordHash = u.temporaryPassword ? await hashPassword(u.temporaryPassword) : null;
   const doc = await UserModel.create({
-    tenantId: 'acme-prod', email: u.email, emailVerified: u.emailVerified,
+    tenantId: 'acme-prod',
+    email: u.email,
+    emailVerified: u.emailVerified,
     passwordHash,
     metadata: { source: 'auth0', originalId: u.user_id, ...u.app_metadata, ...u.user_metadata },
-  }).catch(() => undefined);               // skip duplicates
+  }).catch(() => undefined); // skip duplicates
   if (!doc) continue;
   for (const role of u.roles ?? []) {
-    await runtime.authorization.assignRole({
-      userId: String(doc._id), tenantId: 'acme-prod',
-      applicationId: 'web', roleName: role.toLowerCase(),
-    }).catch(() => undefined);
+    await runtime.authorization
+      .assignRole({
+        userId: String(doc._id),
+        tenantId: 'acme-prod',
+        applicationId: 'web',
+        roleName: role.toLowerCase(),
+      })
+      .catch(() => undefined);
   }
 }
 await mongoose.disconnect();
@@ -97,18 +105,18 @@ await mongoose.disconnect();
 
 ## 5. Mapping
 
-| Auth0 concept | Pezhwan concept |
-| --- | --- |
-| `user_id` (e.g. `auth0|abc`) | `User._id`; keep the original in `metadata.originalId`. |
-| `email` / `phone_number` | `User.email` / `User.phone` (unique per tenant). |
-| `email_verified` | `User.emailVerified`. |
-| `app_metadata` + `user_metadata` | `User.metadata` (free-form claims). |
-| RBAC roles | `Role` (tenant+application scoped) + `UserRoleAssignment`; surfaced as `roles[]` on the identity. |
-| Auth0 tenant / connection | Pezhwan `Tenant` (`slug`); social/enterprise providers become `LinkedIdentity`. |
-| Guardian MFA | `User.mfaEnabled` after re-enrollment; factor secrets cannot transfer. |
-| Auth0 application/client | `Application` (`clientId`). |
-| Auth0 access/refresh JWTs | Pezhwan RS256 access token (15m) + rotating refresh family. |
-| Password hash (BCrypt-family) | Not transferable — users reset via `/v1/verify/password/forgot` or temporary password. |
+| Auth0 concept                    | Pezhwan concept                                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `user_id` (e.g. `auth0           | abc`)                                                                                             | `User._id`; keep the original in `metadata.originalId`. |
+| `email` / `phone_number`         | `User.email` / `User.phone` (unique per tenant).                                                  |
+| `email_verified`                 | `User.emailVerified`.                                                                             |
+| `app_metadata` + `user_metadata` | `User.metadata` (free-form claims).                                                               |
+| RBAC roles                       | `Role` (tenant+application scoped) + `UserRoleAssignment`; surfaced as `roles[]` on the identity. |
+| Auth0 tenant / connection        | Pezhwan `Tenant` (`slug`); social/enterprise providers become `LinkedIdentity`.                   |
+| Guardian MFA                     | `User.mfaEnabled` after re-enrollment; factor secrets cannot transfer.                            |
+| Auth0 application/client         | `Application` (`clientId`).                                                                       |
+| Auth0 access/refresh JWTs        | Pezhwan RS256 access token (15m) + rotating refresh family.                                       |
+| Password hash (BCrypt-family)    | Not transferable — users reset via `/v1/verify/password/forgot` or temporary password.            |
 
 ## 6. Rolling out
 

@@ -58,4 +58,4 @@ A compliance framework is evidence, not certification. Use these services to
 answer regulator and auditor requests (export one user, delete one user, prove
 who read PHI), then validate the surrounding controls — retention windows,
 backups, access reviews — in your deployment, as described under
-[operations](../operations/).
+[operations](../../operations/).

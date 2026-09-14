@@ -42,7 +42,11 @@ function buildStack() {
   return { tokens, cache, middleware };
 }
 
-function seedAccountState(cache: MemoryCache, userId: string, state: Record<string, boolean>): Promise<void> {
+function seedAccountState(
+  cache: MemoryCache,
+  userId: string,
+  state: Record<string, boolean>,
+): Promise<void> {
   return cache.set(`accountState:${userId}`, JSON.stringify(state), 30);
 }
 
@@ -103,7 +107,8 @@ test('missing or malformed bearer tokens are rejected before lookup', async () =
   const { middleware } = buildStack();
   await assert.rejects(middleware.verify(undefined), /missing bearer token/i);
   await assert.rejects(middleware.verify('not-a-bearer'), /missing bearer token/i);
-  await assert.rejects(middleware.verify('Bearer  '), (error: unknown) =>
-    error instanceof Error && /JWT|jwt|invalid|malformed/i.test(error.message),
+  await assert.rejects(
+    middleware.verify('Bearer  '),
+    (error: unknown) => error instanceof Error && /JWT|jwt|invalid|malformed/i.test(error.message),
   );
 });

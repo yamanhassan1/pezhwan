@@ -126,7 +126,10 @@ export default function ClientsList() {
                     <td>{formatDate(c.createdAt)}</td>
                     <td>
                       {c.isActive ? (
-                        <button className="btn btn-danger btn-sm" onClick={() => disable(c.clientId)}>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => disable(c.clientId)}
+                        >
                           Disable
                         </button>
                       ) : (

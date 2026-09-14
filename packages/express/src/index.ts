@@ -17,6 +17,7 @@ import type { NextFunction, Request, RequestHandler, Response, Router } from 'ex
 import type { IdentityContext } from '@pezhwan/shared';
 import { AuthorizationError, AuthenticationError } from '@pezhwan/shared';
 import type { PezhwanRuntime } from '@pezhwan/core';
+import { FreshPermissionsMiddleware } from '@pezhwan/core';
 import { createAuthRouter, createSessionRouter } from './routes.ts';
 import { createOauthRouter } from './routes.oauth.ts';
 import { createMfaRouter, createVerificationRouter } from './routes.extra.ts';
@@ -142,6 +143,51 @@ export function jwksHandler(runtime: PezhwanRuntime): RequestHandler {
   return (_req: Request, res: Response) => {
     res.setHeader('Cache-Control', 'public, max-age=300');
     res.json({ keys: runtime.store.jwks() });
+  };
+}
+
+/**
+ * Opt-in freshness middleware: re-resolve the authenticated identity's roles
+ * and permissions from Mongo on this request, replacing the (potentially
+ * stale) claims baked into the access token. Trade a DB read for zero
+ * revocation latency on sensitive handlers. Mount AFTER authenticate()/
+ * requireAuth().
+ */
+export function requireFreshPermissions(runtime: PezhwanRuntime): RequestHandler {
+  const fresh = new FreshPermissionsMiddleware(runtime.authorization);
+  return async (req: PezhwanRequest, _res: Response, next: NextFunction) => {
+    if (!req.pezhwan) {
+      return next(new AuthenticationError('Authentication required', 'UNAUTHENTICATED'));
+    }
+    try {
+      req.pezhwan = await fresh.refresh(req.pezhwan);
+      return next();
+    } catch (err) {
+      return next(err);
+    }
+  };
+}
+
+/**
+ * Fresh permission gate: re-resolve the identity and require the permission on
+ * the CURRENT database state, rejecting the request the moment the grant is
+ * gone — no waiting for the token TTL. Opt-in (a DB read per request).
+ */
+export function requireFreshPermission(
+  runtime: PezhwanRuntime,
+  permission: string,
+): RequestHandler {
+  const fresh = new FreshPermissionsMiddleware(runtime.authorization);
+  return async (req: PezhwanRequest, _res: Response, next: NextFunction) => {
+    if (!req.pezhwan) {
+      return next(new AuthenticationError('Authentication required', 'UNAUTHENTICATED'));
+    }
+    try {
+      req.pezhwan = await fresh.require(req.pezhwan, permission);
+      return next();
+    } catch (err) {
+      return next(err);
+    }
   };
 }
 

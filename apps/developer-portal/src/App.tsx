@@ -14,7 +14,15 @@ import Profile from './routes/Profile';
 
 function FullScreenLoader() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: 'var(--bg)',
+      }}
+    >
       <span className="loader" />
     </div>
   );
@@ -22,10 +30,16 @@ function FullScreenLoader() {
 
 function Forbidden() {
   return (
-    <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <div
+      className="page"
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}
+    >
       <div className="card" style={{ maxWidth: 440, textAlign: 'center' }}>
         <h2 className="mb-2">403 Forbidden</h2>
-        <p className="muted mb-3">Your account does not have the ADMIN role required to access this area of the developer portal.</p>
+        <p className="muted mb-3">
+          Your account does not have the ADMIN role required to access this area of the developer
+          portal.
+        </p>
         <Link className="btn" to="/" style={{ textDecoration: 'none' }}>
           Back to dashboard
         </Link>

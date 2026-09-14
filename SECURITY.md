@@ -11,10 +11,10 @@ mirrored as `.github/SECURITY.md` so GitHub displays it in the Security tab.
 Pezhwan is currently in development (`0.1.x`). Only the latest release receives
 security fixes. Older releases are fixed only by upgrading.
 
-| Version | Supported                            |
-| ------- | ------------------------------------ |
-| 0.1.x   | Latest patch of the latest release   |
-| < 0.1   | Not supported                        |
+| Version | Supported                          |
+| ------- | ---------------------------------- |
+| 0.1.x   | Latest patch of the latest release |
+| < 0.1   | Not supported                      |
 
 ## Reporting a vulnerability
 
@@ -53,12 +53,12 @@ extensions possible for complex fixes.
 
 ## Timeframes
 
-| Milestone                                             | Target                          |
-| ----------------------------------------------------- | ------------------------------- |
-| Initial acknowledgement                               | Within 5 business days          |
-| Status update after triage                            | Within 10 business days         |
-| Fix for critical vulnerabilities on latest release    | Within 30 days, often sooner    |
-| Coordinated public disclosure                         | Within 90 days of confirmation  |
+| Milestone                                          | Target                         |
+| -------------------------------------------------- | ------------------------------ |
+| Initial acknowledgement                            | Within 5 business days         |
+| Status update after triage                         | Within 10 business days        |
+| Fix for critical vulnerabilities on latest release | Within 30 days, often sooner   |
+| Coordinated public disclosure                      | Within 90 days of confirmation |
 
 ## Disclosure process
 

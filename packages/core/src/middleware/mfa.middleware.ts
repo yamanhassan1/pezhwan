@@ -33,7 +33,8 @@ export class MfaMiddleware {
     }
     const highRisk = (input.riskScore ?? 0) >= 0.7;
     const stepUpStale =
-      input.sessionVerifiedAt !== undefined && Date.now() - input.sessionVerifiedAt > STEP_UP_WINDOW_MS;
+      input.sessionVerifiedAt !== undefined &&
+      Date.now() - input.sessionVerifiedAt > STEP_UP_WINDOW_MS;
     const needsStepUp = (await this.policy(input)) || highRisk || stepUpStale;
     if (!needsStepUp) {
       return { required: false, challenge: 'none', reason: 'mfa-satisfied' };

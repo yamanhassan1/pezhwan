@@ -10,7 +10,12 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { ValidationError, type ScimUser, type ScimGroup, type ScimPatchOperation } from '@pezhwan/shared';
+import {
+  ValidationError,
+  type ScimUser,
+  type ScimGroup,
+  type ScimPatchOperation,
+} from '@pezhwan/shared';
 import {
   MemoryScimUserStore,
   MemoryScimGroupStore,
@@ -57,7 +62,10 @@ export function createScimRouter(runtime: PezhwanRuntime): Router {
 
   router.get('/Users', linked, (req: Request, res: Response) => {
     const filter = typeof req.query.filter === 'string' ? req.query.filter : undefined;
-    ok(res, scimListUsers(users, { filter, startIndex: parseStartIndex(req), count: parseCount(req) }));
+    ok(
+      res,
+      scimListUsers(users, { filter, startIndex: parseStartIndex(req), count: parseCount(req) }),
+    );
   });
 
   router.post('/Users', linked, (req: Request, res: Response) => {
@@ -96,7 +104,10 @@ export function createScimRouter(runtime: PezhwanRuntime): Router {
 
   router.get('/Groups', linked, (req: Request, res: Response) => {
     const filter = typeof req.query.filter === 'string' ? req.query.filter : undefined;
-    ok(res, scimListGroups(groups, { filter, startIndex: parseStartIndex(req), count: parseCount(req) }));
+    ok(
+      res,
+      scimListGroups(groups, { filter, startIndex: parseStartIndex(req), count: parseCount(req) }),
+    );
   });
 
   router.post('/Groups', linked, (req: Request, res: Response) => {

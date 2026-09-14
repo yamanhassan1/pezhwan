@@ -27,7 +27,8 @@ const APPLICATION_ID = process.env.APPLICATION_ID ?? 'dev-app';
 const ISSUER = process.env.ISSUER ?? 'http://localhost:4011';
 const AUDIENCE = 'pezhwan.clients';
 const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/pezhwan';
-const MFA_ENC_KEY = process.env.MFA_ENCRYPTION_KEY ?? 'cGV6aHdhbi1kZW1vLW1mYS1rZXktMDEyMzQ1Njc4OWE=';
+const MFA_ENC_KEY =
+  process.env.MFA_ENCRYPTION_KEY ?? 'cGV6aHdhbi1kZW1vLW1mYS1rZXktMDEyMzQ1Njc4OWE=';
 
 await mongoose.connect(MONGODB_URI);
 console.log('[m2m] connected to MongoDB');
@@ -74,22 +75,21 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, '.')));
 
-const h = (fn: (req: PezhwanRequest, res: express.Response) => Promise<unknown>) => (
-  req: PezhwanRequest,
-  res: express.Response,
-): void => {
-  fn(req, res).then(
-    (data) => res.json({ success: true, data }),
-    (err: { code?: string; message?: string; status?: number }) => {
-      const status = err.status ?? (err.code ? 400 : 500);
-      console.error(`[m2m] ${req.method} ${req.path} failed:`, err);
-      res.status(status).json({
-        success: false,
-        error: { code: err.code ?? 'ERROR', message: err.message ?? 'Unexpected error' },
-      });
-    },
-  );
-};
+const h =
+  (fn: (req: PezhwanRequest, res: express.Response) => Promise<unknown>) =>
+  (req: PezhwanRequest, res: express.Response): void => {
+    fn(req, res).then(
+      (data) => res.json({ success: true, data }),
+      (err: { code?: string; message?: string; status?: number }) => {
+        const status = err.status ?? (err.code ? 400 : 500);
+        console.error(`[m2m] ${req.method} ${req.path} failed:`, err);
+        res.status(status).json({
+          success: false,
+          error: { code: err.code ?? 'ERROR', message: err.message ?? 'Unexpected error' },
+        });
+      },
+    );
+  };
 
 // ---------------------------------------------------------------------------
 // API Key management routes
@@ -129,7 +129,12 @@ app.post(
     }).lean();
     if (doc) entry.id = String(doc._id);
 
-    return { name, rawKey: result.rawKey, prefix: result.prefix, warning: 'Store the raw key now — it cannot be retrieved again.' };
+    return {
+      name,
+      rawKey: result.rawKey,
+      prefix: result.prefix,
+      warning: 'Store the raw key now — it cannot be retrieved again.',
+    };
   }),
 );
 

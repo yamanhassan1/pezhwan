@@ -6,6 +6,7 @@ export * from './bot.middleware.ts';
 export * from './compliance.middleware.ts';
 export * from './cors.middleware.ts';
 export * from './csrf.middleware.ts';
+export * from './fresh-permissions.middleware.ts';
 export * from './mfa.middleware.ts';
 export * from './rate-limit.middleware.ts';
 export * from './request-context.ts';

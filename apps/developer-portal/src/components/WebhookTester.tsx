@@ -2,7 +2,15 @@ import { useState } from 'react';
 import { api } from '../lib/api';
 import type { Webhook } from '../types';
 
-export default function WebhookTester({ webhook, secret, onClose }: { webhook: Webhook; secret?: string; onClose: () => void }) {
+export default function WebhookTester({
+  webhook,
+  secret,
+  onClose,
+}: {
+  webhook: Webhook;
+  secret?: string;
+  onClose: () => void;
+}) {
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ delivered: boolean; url: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +20,9 @@ export default function WebhookTester({ webhook, secret, onClose }: { webhook: W
     setTesting(true);
     setError(null);
     try {
-      const res = await api.post<{ delivered: boolean; url: string }>(`/v1/admin/webhooks/${webhook.id}/test`);
+      const res = await api.post<{ delivered: boolean; url: string }>(
+        `/v1/admin/webhooks/${webhook.id}/test`,
+      );
       setResult(res);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Test ping failed');
@@ -37,19 +47,33 @@ export default function WebhookTester({ webhook, secret, onClose }: { webhook: W
         </p>
 
         <div className="alert alert-warning mb-3" style={{ fontSize: 13.5 }}>
-          Sending a test ping delivers a synthetic event payload to your endpoint using the configured signing secret.
+          Sending a test ping delivers a synthetic event payload to your endpoint using the
+          configured signing secret.
         </div>
 
         {error && <div className="alert alert-danger">{error}</div>}
         {result && (
           <div className={`alert ${result.delivered ? 'alert-success' : 'alert-danger'} mt-2`}>
-            {result.delivered ? 'Delivered' : 'Delivery failed'} — POST to <span className="code">{result.url}</span>
+            {result.delivered ? 'Delivered' : 'Delivery failed'} — POST to{' '}
+            <span className="code">{result.url}</span>
           </div>
         )}
 
         <div className="mb-3">
-          <button className="btn" onClick={() => void test()} disabled={testing} style={{ width: '100%' }}>
-            {testing ? <span className="loader" style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }} /> : 'Send test ping'}
+          <button
+            className="btn"
+            onClick={() => void test()}
+            disabled={testing}
+            style={{ width: '100%' }}
+          >
+            {testing ? (
+              <span
+                className="loader"
+                style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }}
+              />
+            ) : (
+              'Send test ping'
+            )}
           </button>
         </div>
 
@@ -64,15 +88,26 @@ export default function WebhookTester({ webhook, secret, onClose }: { webhook: W
                 {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
-            <p className="hint">Store this value. It is used to compute the X-Pezhwan-Signature HMAC-SHA256 header.</p>
+            <p className="hint">
+              Store this value. It is used to compute the X-Pezhwan-Signature HMAC-SHA256 header.
+            </p>
           </div>
         ) : (
           <div>
-            <p className="hint">This secret is shown once at webhook creation and cannot be retrieved afterward. It signs every delivery via HMAC-SHA256.</p>
+            <p className="hint">
+              This secret is shown once at webhook creation and cannot be retrieved afterward. It
+              signs every delivery via HMAC-SHA256.
+            </p>
             <ul style={{ paddingLeft: 18, fontSize: 13.5, color: 'var(--text-muted)' }}>
-              <li>Header: <span className="code">X-Pezhwan-Signature</span></li>
-              <li>Algorithm: <span className="code">HMAC-SHA256</span></li>
-              <li>Payload: <span className="code">timestamp + '.' + body</span></li>
+              <li>
+                Header: <span className="code">X-Pezhwan-Signature</span>
+              </li>
+              <li>
+                Algorithm: <span className="code">HMAC-SHA256</span>
+              </li>
+              <li>
+                Payload: <span className="code">timestamp + '.' + body</span>
+              </li>
             </ul>
           </div>
         )}

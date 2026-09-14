@@ -5,4 +5,8 @@
  */
 export * from '../verificationToken.service.ts';
 
-export { IssueTokenInput, RedeemResult, VerificationTokenService } from '../verificationToken.service.ts';
+export {
+  IssueTokenInput,
+  RedeemResult,
+  VerificationTokenService,
+} from '../verificationToken.service.ts';

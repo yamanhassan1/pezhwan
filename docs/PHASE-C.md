@@ -87,12 +87,13 @@ Phase C leaves no `[Gap]` items open in the threat model.
 
 ## 3. Remaining follow-ups (all optional, tracked in `security-audit.md` §5)
 
-1. Opt-in per-request permission re-check (`requireFreshPermissions`).
-2. Mongo replica set + transactions for rotation `create`+`finalise`.
-3. Redis Sentinel/Cluster in `RedisManager`.
-4. Field-level envelope encryption of `mfaSecret` + signing PEMs (outside trust
-   boundary deployments).
-5. Audit retention knob + single-writer shard for strict ordering (G7 hardening).
+All five items from the §5 follow-up list are now implemented:
+
+1. ✅ Opt-in per-request permission re-check (`requireFreshPermissions`).
+2. ✅ Mongo replica set + transactions for rotation `create`+`finalise` (was already in place).
+3. ✅ Redis Sentinel/Cluster in `RedisManager`.
+4. ✅ Field-level DEK envelope encryption of `mfaSecret` (v3 format; v2/legacy compat for migration).
+5. ✅ Audit strict hash-link ordering via `withTransaction` + single counter document.
 
 ## 4. Cross-references
 

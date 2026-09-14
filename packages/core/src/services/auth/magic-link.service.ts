@@ -43,7 +43,15 @@ export class MagicLinkService {
     return createHash('sha256').update(`${payload}.${this.secret}`).digest('base64url');
   }
 
-  create({ subject, audience, redirectUri }: { subject: string; audience: string; redirectUri?: string }): MagicLink {
+  create({
+    subject,
+    audience,
+    redirectUri,
+  }: {
+    subject: string;
+    audience: string;
+    redirectUri?: string;
+  }): MagicLink {
     const nonce = randomBytes(24).toString('base64url');
     const exp = Math.floor(Date.now() / 1000) + this.ttlSeconds;
     const base = `${subject}.${audience}.${exp}.${nonce}`;
@@ -58,12 +66,19 @@ export class MagicLinkService {
   verify(token: string): { subject: string; audience: string; nonce: string } {
     const parts = token.split('.');
     if (parts.length !== 5) throw new Error('Invalid magic link');
-    const [subject, audience, expStr, nonce, sig] = parts as unknown as [string, string, string, string, string];
+    const [subject, audience, expStr, nonce, sig] = parts as unknown as [
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
     const base = `${subject}.${audience}.${expStr}.${nonce}`;
     const expected = this.sign(base);
     const a = Buffer.from(sig, 'base64url');
     const b = Buffer.from(expected, 'base64url');
-    if (a.length !== b.length || !timingSafeEqual(a, b)) throw new Error('Invalid magic link signature');
+    if (a.length !== b.length || !timingSafeEqual(a, b))
+      throw new Error('Invalid magic link signature');
     const exp = Number.parseInt(expStr, 10);
     if (!Number.isFinite(exp) || Date.now() / 1000 > exp) throw new Error('Magic link expired');
     return { subject, audience, nonce };

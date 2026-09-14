@@ -96,7 +96,10 @@ export async function getCsrf(): Promise<string> {
 export async function login(
   email: string,
   password: string,
-): Promise<{ mfaRequired: boolean; tokens: { accessToken: string; refreshToken: string; expiresIn: number } }> {
+): Promise<{
+  mfaRequired: boolean;
+  tokens: { accessToken: string; refreshToken: string; expiresIn: number };
+}> {
   return request('POST', '/v1/auth/login', { email, password }, { skipAuth: true });
 }
 

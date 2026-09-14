@@ -34,7 +34,6 @@ const fallback: RequestContextData = {
 function loadAls(): AsyncLocalStore | null {
   if (als) return als;
   try {
-     
     const { AsyncLocalStorage } = require('node:async_hooks') as {
       AsyncLocalStorage: new () => AsyncLocalStore;
     };

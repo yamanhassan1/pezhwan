@@ -31,7 +31,10 @@ export class ComplianceMiddleware {
     if (context.consent && !context.consent.given && context.purpose?.startsWith('marketing')) {
       warnings.push('marketing-without-consent');
     }
-    const blocked = context.region === 'eu' && context.consent?.given === false && context.legalBasis !== 'legal_obligation';
+    const blocked =
+      context.region === 'eu' &&
+      context.consent?.given === false &&
+      context.legalBasis !== 'legal_obligation';
     return {
       allowed: !blocked,
       reason: blocked ? 'EU consent required for this purpose' : undefined,

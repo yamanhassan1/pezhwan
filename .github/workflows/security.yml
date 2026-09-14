@@ -69,6 +69,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Test (security suite — crypto agility, PQC, token attacks)
+        run: npm run test:security-suite
+
       - name: Test (integration — live MongoDB via mongodb-memory-server)
         run: npm run test:integration
 
@@ -100,3 +103,31 @@ jobs:
 
       - name: Build identity server image
         run: docker build -f apps/identity-server/Dockerfile -t pezhwan-identity-server:ci .
+
+  container-scan:
+    name: Container Trivy Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build identity server image
+        run: docker build -f apps/identity-server/Dockerfile -t pezhwan-identity-server:scan .
+
+      - name: Trivy scan image (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: pezhwan-identity-server:scan
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif

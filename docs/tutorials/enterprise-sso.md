@@ -24,13 +24,13 @@ import { buildAuthnRequestUrl, parseSamlResponse, decodeSaml } from '@pezhwan/oa
 import type { SamlConfig } from '@pezhwan/shared';
 
 const config: SamlConfig = {
-  entityId: 'urn:pezhwan:sp',                     // our SP audience
+  entityId: 'urn:pezhwan:sp', // our SP audience
   acsUrl: 'https://auth.example.com/saml/acs',
   idpSsoUrl: 'https://okta.example.com/app/.../sso/saml',
-  idpEntityId: 'http://www.okta.com/exk...',      // checked against <Issuer>
+  idpEntityId: 'http://www.okta.com/exk...', // checked against <Issuer>
   binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
   nameIdFormat: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
-  attributeMapping: { email: 'emailAddress' },    // IdP attr name → user fields
+  attributeMapping: { email: 'emailAddress' }, // IdP attr name → user fields
 };
 ```
 
@@ -74,14 +74,17 @@ const url = oidc.buildAuthorizationUrl(discovery, {
   clientId: AZURE_CLIENT_ID,
   redirectUri: 'https://auth.example.com/oidc/callback',
   state: randomState,
-  nonce: randomNonce,                 // bound to the session, checked below
+  nonce: randomNonce, // bound to the session, checked below
 });
 
 // callback → { code, state }
 const { tokenSet, claims, profile } = await oidc.handleCallback({
-  discovery, clientId: AZURE_CLIENT_ID, clientSecret: AZURE_CLIENT_SECRET,
+  discovery,
+  clientId: AZURE_CLIENT_ID,
+  clientSecret: AZURE_CLIENT_SECRET,
   redirectUri: 'https://auth.example.com/oidc/callback',
-  code, nonce,
+  code,
+  nonce,
 });
 ```
 
@@ -98,12 +101,18 @@ so downstream middleware is uniform:
 
 ```ts
 const sessions = await runtime.sessions.create({
-  userId, tenantId, applicationId,
+  userId,
+  tenantId,
+  applicationId,
 });
 const accessToken = runtime.tokens.signAccessToken({
-  userId, tenantId, applicationId,
-  sessionId: sessions.sessionId, roles: [], permissions: [],
-  authMethod: 'oidc',               // or 'password' / 'oauth'
+  userId,
+  tenantId,
+  applicationId,
+  sessionId: sessions.sessionId,
+  roles: [],
+  permissions: [],
+  authMethod: 'oidc', // or 'password' / 'oauth'
 });
 ```
 
@@ -116,15 +125,15 @@ PEZHWAN mounts a SCIM 2.0 surface at `/v1/scim` behind `createAuthenticate` +
 `requireAuth` + `requireRole('ADMIN')`. Sydney-style responses follow RFC 7643
 (resource / list / error envelopes — not the `{ success, data }` wrapper):
 
-| Endpoint | Purpose |
-| --- | --- |
-| `GET/POST /v1/scim/Users` | List (with `filter`, `startIndex`, `count`) / create |
-| `GET/PUT/PATCH/DELETE /v1/scim/Users/:id` | Read / replace / partial-update / delete |
-| `GET/POST /v1/scim/Groups` | List / create groups |
-| `GET/PUT/PATCH/DELETE /v1/scim/Groups/:id` | Group membership management |
-| `GET /v1/scim/ServiceProviderConfig` | Capabilities document (`serviceProviderConfig()`) |
-| `GET /v1/scim/Schemas` | The User schema document (`userSchemaDocument()`) |
-| `GET /v1/scim/` | Registered resource types (User, Group) |
+| Endpoint                                   | Purpose                                              |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `GET/POST /v1/scim/Users`                  | List (with `filter`, `startIndex`, `count`) / create |
+| `GET/PUT/PATCH/DELETE /v1/scim/Users/:id`  | Read / replace / partial-update / delete             |
+| `GET/POST /v1/scim/Groups`                 | List / create groups                                 |
+| `GET/PUT/PATCH/DELETE /v1/scim/Groups/:id` | Group membership management                          |
+| `GET /v1/scim/ServiceProviderConfig`       | Capabilities document (`serviceProviderConfig()`)    |
+| `GET /v1/scim/Schemas`                     | The User schema document (`userSchemaDocument()`)    |
+| `GET /v1/scim/`                            | Registered resource types (User, Group)              |
 
 Example — create a user:
 
@@ -162,26 +171,26 @@ authenticate with a bearer token, and use the standard `filter` (`userName eq
 
 ## 5. Security considerations
 
-| Concern | PEZHWAN behavior / checklist |
-| --- | --- |
-| Assertion validation | `parseSamlResponse` verifies subject present + audience = SP `entityId`; configured `idpEntityId` is checked against `<Issuer>`. |
-| Clock validity | SAML `NotOnOrAfter`/`NotBefore` live on the parsed assertion — reject expired assertions. |
-| id_token verification | `verifyIdToken`: signature against discovered JWKS, `iss`, `aud`, `exp` (60 s leeway), `nonce`. |
-| Audience | id_token `aud` must contain your `client_id`; SAML `Audience` must contain SP `entityId`. |
-| Redirect hygiene | The OAuth authorize router never redirects to an unvalidated `redirect_uri` (`routes.oauth.ts`). |
-| Admin gate | SCIM + client registration are `ADMIN`-role enforced server-side. |
-| Secrets | Client secrets and SP signing keys come from env/secrets — never from client input. |
+| Concern               | PEZHWAN behavior / checklist                                                                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Assertion validation  | `parseSamlResponse` verifies subject present + audience = SP `entityId`; configured `idpEntityId` is checked against `<Issuer>`. |
+| Clock validity        | SAML `NotOnOrAfter`/`NotBefore` live on the parsed assertion — reject expired assertions.                                        |
+| id_token verification | `verifyIdToken`: signature against discovered JWKS, `iss`, `aud`, `exp` (60 s leeway), `nonce`.                                  |
+| Audience              | id_token `aud` must contain your `client_id`; SAML `Audience` must contain SP `entityId`.                                        |
+| Redirect hygiene      | The OAuth authorize router never redirects to an unvalidated `redirect_uri` (`routes.oauth.ts`).                                 |
+| Admin gate            | SCIM + client registration are `ADMIN`-role enforced server-side.                                                                |
+| Secrets               | Client secrets and SP signing keys come from env/secrets — never from client input.                                              |
 
 ## Troubleshooting
 
-| Problem | Cause / fix |
-| --- | --- |
-| `SAML assertion audience mismatch` | Your SP `entityId` isn't in the IdP's assertion `Audience` — align the two. |
-| `SAML assertion issuer mismatch` | `idpEntityId` in code differs from the IdP's `<Issuer>`. |
-| `id_token issuer mismatch` / `audience mismatch` | Discovery issuer/client_id drift between app registration and code. |
-| Observation: code works in Okta but not Azure AD | Different claim sets; use `attributeMapping`/`fieldMapping` per provider. |
-| SCIM returns 401/403 | Caller is not an `ADMIN`; authenticate with an ADMIN bearer token. |
-| SCIM 404 on `PATCH` | Memory store persists per runtime — restart resets it; replace with a durable store. |
+| Problem                                          | Cause / fix                                                                          |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `SAML assertion audience mismatch`               | Your SP `entityId` isn't in the IdP's assertion `Audience` — align the two.          |
+| `SAML assertion issuer mismatch`                 | `idpEntityId` in code differs from the IdP's `<Issuer>`.                             |
+| `id_token issuer mismatch` / `audience mismatch` | Discovery issuer/client_id drift between app registration and code.                  |
+| Observation: code works in Okta but not Azure AD | Different claim sets; use `attributeMapping`/`fieldMapping` per provider.            |
+| SCIM returns 401/403                             | Caller is not an `ADMIN`; authenticate with an ADMIN bearer token.                   |
+| SCIM 404 on `PATCH`                              | Memory store persists per runtime — restart resets it; replace with a durable store. |
 
 ## Further reading
 

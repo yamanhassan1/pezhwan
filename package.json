@@ -28,6 +28,7 @@
     "test:integration": "npm run build && node --test tests/integration/*.test.ts",
     "test:load": "npm run build && node tests/load/auth.load.js && node tests/load/mfa.load.js && node tests/load/oauth.load.js && node tests/load/register.load.js && node tests/load/refresh.load.js && node tests/load/sessions.load.js && node tests/load/audit.load.js && node tests/load/mixed.load.js && node tests/load/totp.load.js && node tests/load/key-rotation.load.js",
     "test:coverage": "npm run build && node --experimental-test-coverage --test tests/unit/*.test.ts tests/security/*.test.ts tests/failure/*.test.ts tests/interop/*.test.ts tests/integration/*.test.ts",
+    "test:coverage:gate": "npm run build && node --experimental-test-coverage --test-coverage-lines=55 --test-coverage-branches=60 --test-coverage-functions=35 --test tests/unit/*.test.ts tests/security/*.test.ts tests/failure/*.test.ts tests/interop/*.test.ts tests/integration/*.test.ts",
     "test:root": "npm run test:unit && npm run test:security-suite && npm run test:failure && npm run test:interop",
     "sbom": "npm sbom --sbom-format=cyclonedx",
     "seed": "node scripts/seed-database.mjs",
@@ -36,6 +37,9 @@
     "drill:backup": "node scripts/backup-drill.mjs --seed",
     "drill:restore": "node scripts/restore-drill.mjs --verify-auth",
     "drill:backup-restore": "node scripts/backup-drill.mjs --seed && node scripts/restore-drill.mjs --verify-auth --in backups/latest.pzbu",
+    "drill:full": "npm run drill:backup && npm run drill:restore",
+    "verify:rotation": "node scripts/verify-rotation.mjs",
+    "verify:audit-chain": "node scripts/verify-audit-chain.mjs",
     "clean": "npm run clean --workspaces --if-present",
     "setup": "node scripts/install-hooks.mjs && node -e \"console.log('Pezhwan setup complete. Copy .env.example to .env and fill in required values.')\""
   },

@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: pezhwan
     app.kubernetes.io/component: redis
 spec:
-  accessModes: ["ReadWriteOnce"]
+  accessModes: ['ReadWriteOnce']
   storageClassName: standard
   resources:
     requests:

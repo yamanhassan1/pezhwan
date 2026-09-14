@@ -26,17 +26,17 @@ The per-provider modules are the building blocks:
 PEZHWAN platform objects as Terraform resources and data sources, so identity
 configuration can be provisioned declaratively alongside the infrastructure:
 
-| File                  | Contents                                                  |
-| --------------------- | --------------------------------------------------------- |
-| `provider.go`         | provider schema, configuration, version pinning           |
-| `resource_user.go`    | `pezhwan_user` — create/update/delete application users   |
-| `resource_tenant.go`  | `pezhwan_tenant` — tenants and their configuration        |
-| `resource_role.go`    | `pezhwan_role` — roles and their permission sets          |
-| `resource_client.go`  | `pezhwan_client` — OAuth clients (grants, scopes, URIs)   |
-| `resource_webhook.go` | `pezhwan_webhook` — webhook endpoints and event filters   |
-| `data_source_user.go` | `pezhwan_user` data source (read existing users)          |
+| File                    | Contents                                                |
+| ----------------------- | ------------------------------------------------------- |
+| `provider.go`           | provider schema, configuration, version pinning         |
+| `resource_user.go`      | `pezhwan_user` — create/update/delete application users |
+| `resource_tenant.go`    | `pezhwan_tenant` — tenants and their configuration      |
+| `resource_role.go`      | `pezhwan_role` — roles and their permission sets        |
+| `resource_client.go`    | `pezhwan_client` — OAuth clients (grants, scopes, URIs) |
+| `resource_webhook.go`   | `pezhwan_webhook` — webhook endpoints and event filters |
+| `data_source_user.go`   | `pezhwan_user` data source (read existing users)        |
 | `data_source_tenant.go` | `pezhwan_tenant` data source                            |
-| `go.mod`              | Go module (Terraform plugin SDK)                          |
+| `go.mod`                | Go module (Terraform plugin SDK)                        |
 
 ## Planning and applying
 

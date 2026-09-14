@@ -12,21 +12,21 @@ should consult both.
 
 ## Scorecard summary
 
-| Category | Score | Ops relevance |
-| -------- | -----: | ------------- |
-| Security and secrets | 8.5 | Secret management, env injection, key rotation |
-| Cryptography and JWT | 8.5 | Signing-key persistence, rotation interval, JWKS cache |
-| Auth and MFA/OTP | 8.0 | OTP provider chain; live send not yet executed |
-| Authorization and tenancy | 8.0 | Tenant-boundary enforcement across auth paths |
-| Session security | 8.0 | Atomic refresh rotation, reuse detection, TTLs |
-| OAuth/OIDC | 7.5 | Real-provider interop testing not completed |
-| MongoDB / Redis | 7.5 / 7.5 | Replica-set HA proof outstanding; durable rate-limit fallback proven |
-| Reliability and scalability | 6.0 | No load suite, no throughput/latency baseline |
-| Observability and operations | 7.0 | Metrics surface defined; dashboards/alerts not validated |
-| Disaster recovery | 7.0 | Backup/restore executed; signing-key recovery pending |
-| Testing and failure verification | 7.0 | 380+ tests; failure-injection gaps remain |
-| CI/CD and supply chain | 7.0 | No lint/coverage/dependency-review/container-scan gates |
-| Documentation | 8.0 | Comprehensive; ops runbooks stubbed |
+| Category                         |     Score | Ops relevance                                                        |
+| -------------------------------- | --------: | -------------------------------------------------------------------- |
+| Security and secrets             |       8.5 | Secret management, env injection, key rotation                       |
+| Cryptography and JWT             |       8.5 | Signing-key persistence, rotation interval, JWKS cache               |
+| Auth and MFA/OTP                 |       8.0 | OTP provider chain; live send not yet executed                       |
+| Authorization and tenancy        |       8.0 | Tenant-boundary enforcement across auth paths                        |
+| Session security                 |       8.0 | Atomic refresh rotation, reuse detection, TTLs                       |
+| OAuth/OIDC                       |       7.5 | Real-provider interop testing not completed                          |
+| MongoDB / Redis                  | 7.5 / 7.5 | Replica-set HA proof outstanding; durable rate-limit fallback proven |
+| Reliability and scalability      |       6.0 | No load suite, no throughput/latency baseline                        |
+| Observability and operations     |       7.0 | Metrics surface defined; dashboards/alerts not validated             |
+| Disaster recovery                |       7.0 | Backup/restore executed; signing-key recovery pending                |
+| Testing and failure verification |       7.0 | 380+ tests; failure-injection gaps remain                            |
+| CI/CD and supply chain           |       7.0 | No lint/coverage/dependency-review/container-scan gates              |
+| Documentation                    |       8.0 | Comprehensive; ops runbooks stubbed                                  |
 
 **Overall: 7.5/10** (root scorecard) | **8.2/10** (evidence-based assessment)
 
@@ -92,32 +92,32 @@ Operators must verify:
 
 ## What operators must verify in every deployment
 
-| Area | Check | Ref |
-| ---- | ----- | --- |
-| Secrets | No secrets in repo/env; vault in prod | [../security/secrets-management.md](../security/secrets-management.md) |
-| Signing keys | Persisted path + rotation enabled | [../security/key-management.md](../security/key-management.md) |
-| MongoDB | TLS + auth; replica set running | `.env.example` |
-| Redis | Sentinel/cluster for multi-instance | `redis-manager.ts` |
-| CORS / cookies | Prod origins only; `PEZHWAN_COOKIE_SECURE=true` | `.env.example` |
-| Rate limits | Tuned to traffic; WAF in front | [../security/rate-limiting.md](../security/rate-limiting.md) |
-| OTP providers | Real email/SMS enforced | [./mfa-migration.md](./mfa-migration.md) |
-| Health probes | `/health/live`, `/health/ready` wired to orchestrator | `apps/identity-server/src/server.ts` |
-| Shutdown | `SIGINT`/`SIGTERM` drain connections | `server.ts:316-354` |
-| Audit retention | `setRetentionDays()` set per policy | `audit.service.ts` |
-| Observability | Metrics exporter wired; logs shipped | [monitoring.md](./monitoring.md), [logging.md](./logging.md) |
+| Area            | Check                                                 | Ref                                                                    |
+| --------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| Secrets         | No secrets in repo/env; vault in prod                 | [../security/secrets-management.md](../security/secrets-management.md) |
+| Signing keys    | Persisted path + rotation enabled                     | [../security/key-management.md](../security/key-management.md)         |
+| MongoDB         | TLS + auth; replica set running                       | `.env.example`                                                         |
+| Redis           | Sentinel/cluster for multi-instance                   | `redis-manager.ts`                                                     |
+| CORS / cookies  | Prod origins only; `PEZHWAN_COOKIE_SECURE=true`       | `.env.example`                                                         |
+| Rate limits     | Tuned to traffic; WAF in front                        | [../security/rate-limiting.md](../security/rate-limiting.md)           |
+| OTP providers   | Real email/SMS enforced                               | [./mfa-migration.md](./mfa-migration.md)                               |
+| Health probes   | `/health/live`, `/health/ready` wired to orchestrator | `apps/identity-server/src/server.ts`                                   |
+| Shutdown        | `SIGINT`/`SIGTERM` drain connections                  | `server.ts:316-354`                                                    |
+| Audit retention | `setRetentionDays()` set per policy                   | `audit.service.ts`                                                     |
+| Observability   | Metrics exporter wired; logs shipped                  | [monitoring.md](./monitoring.md), [logging.md](./logging.md)           |
 
 ---
 
 ## Path to 9.5+/10
 
-| Gap | Target state | Current |
-| --- | ------------ | ------- |
-| Replica-set HA | Automated failover test in CI/drill | Not started |
-| OTP live send | End-to-end flow with real provider | Wired, not executed |
-| Load testing | Baseline p95/p99 under peak traffic | Not started |
-| Failure injection | Systematic dependency failure matrix | Not started |
-| CI gates | Lint, coverage, dependency review, container scan | Not implemented |
-| Alert/dashboard validation | Tested in staging before prod | Configs not populated |
+| Gap                        | Target state                                      | Current               |
+| -------------------------- | ------------------------------------------------- | --------------------- |
+| Replica-set HA             | Automated failover test in CI/drill               | Not started           |
+| OTP live send              | End-to-end flow with real provider                | Wired, not executed   |
+| Load testing               | Baseline p95/p99 under peak traffic               | Not started           |
+| Failure injection          | Systematic dependency failure matrix              | Not started           |
+| CI gates                   | Lint, coverage, dependency review, container scan | Not implemented       |
+| Alert/dashboard validation | Tested in staging before prod                     | Configs not populated |
 
 ---
 

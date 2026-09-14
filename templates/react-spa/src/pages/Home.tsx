@@ -7,9 +7,7 @@ export default function Home() {
   return (
     <main>
       <h1>Pezhwan React SPA</h1>
-      <p>
-        {isAuthenticated ? `Signed in as ${user?.email ?? 'unknown user'}` : 'Not signed in'}
-      </p>
+      <p>{isAuthenticated ? `Signed in as ${user?.email ?? 'unknown user'}` : 'Not signed in'}</p>
       <nav>
         <Link to="/profile">Profile</Link>
         <Link to="/login">Login</Link>

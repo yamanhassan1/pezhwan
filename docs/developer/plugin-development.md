@@ -9,10 +9,10 @@ capabilities build on the same mechanism.
 
 Three pieces, in dependency order:
 
-| Piece | Module | Responsibility |
-| --- | --- | --- |
-| `Hooks` | `src/plugins/hooks.ts` | Typed event bus. Plugins register handlers under named hooks; the runtime invokes them in registration order. |
-| `PluginLoader` | `src/plugins/plugin-loader.ts` | Resolves a manifest's `entry` (module specifier or path) and imports it. Loads are cached by resolved URL. |
+| Piece           | Module                          | Responsibility                                                                                                                                                                  |
+| --------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Hooks`         | `src/plugins/hooks.ts`          | Typed event bus. Plugins register handlers under named hooks; the runtime invokes them in registration order.                                                                   |
+| `PluginLoader`  | `src/plugins/plugin-loader.ts`  | Resolves a manifest's `entry` (module specifier or path) and imports it. Loads are cached by resolved URL.                                                                      |
 | `PluginManager` | `src/plugins/plugin-manager.ts` | Owns lifecycle: loads via the loader, activates a plugin's hooks into the bus, toggles `enable`/`disable`, tracks per-plugin status, and quarantines plugins that fail to load. |
 
 The shared types `PluginContext`, `PluginManifest`, and
@@ -29,7 +29,7 @@ import { Hooks, PluginLoader, PluginManager } from '@pezhwan/core/src/plugins';
 ```ts
 // src/plugins/hooks.ts
 export interface HookContext {
-  event: string;                 // hook name, e.g. 'user.registered'
+  event: string; // hook name, e.g. 'user.registered'
   payload: Record<string, unknown>;
 }
 export type HookHandler = (context: HookContext) => void | Promise<void>;
@@ -59,10 +59,10 @@ const allHandlersSucceeded = await hooks.run('user.registered', {
 
 There are two related shapes — do not confuse them:
 
-| Type | Source | Fields | Purpose |
-| --- | --- | --- | --- |
-| `PluginManifest` (shared) | `packages/shared/src/types/plugin.types.ts` | `name`, `version`, `description?`, `provides: string[]` | Declarative capability declaration (e.g. `['email-provider', 'captcha-provider']`); re-exported by `@pezhwan/core`. |
-| `PluginManifest` (loader) | `packages/core/src/plugins/plugin-loader.ts` | `name`, `version`, `entry`, `enabled?` | Runtime manifest consumed by `PluginLoader`/`PluginManager`; `entry` is the module to import. |
+| Type                      | Source                                       | Fields                                                  | Purpose                                                                                                             |
+| ------------------------- | -------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `PluginManifest` (shared) | `packages/shared/src/types/plugin.types.ts`  | `name`, `version`, `description?`, `provides: string[]` | Declarative capability declaration (e.g. `['email-provider', 'captcha-provider']`); re-exported by `@pezhwan/core`. |
+| `PluginManifest` (loader) | `packages/core/src/plugins/plugin-loader.ts` | `name`, `version`, `entry`, `enabled?`                  | Runtime manifest consumed by `PluginLoader`/`PluginManager`; `entry` is the module to import.                       |
 
 `PluginLoaderOptions` accepts `enabledOnly` (throw when a disabled plugin is
 loaded) and `deps` (a `Record<string, unknown>` of runtime dependencies handed
@@ -101,10 +101,10 @@ export default {
   hooks: {
     'user.registered': async (ctx) => {
       const { payload } = ctx;
-      await sendWelcome(payload.email);          // side effect, never blocks auth
+      await sendWelcome(payload.email); // side effect, never blocks auth
     },
     'login.succeeded': (ctx) => {
-      track(ctx.payload.userId);                 // void handlers are fine too
+      track(ctx.payload.userId); // void handlers are fine too
     },
   },
 };

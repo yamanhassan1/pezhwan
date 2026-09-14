@@ -34,16 +34,16 @@ applications, and the `ADMIN` role via `npm run seed` / `ensureBootstrap`.
 
 Shape the export as records Pezhwan can ingest directly:
 
-| Column to produce | Notes |
-| --- | --- |
-| `sourceId` | Legacy primary key; keep for reference and rollback joins. |
-| `email`, `phone` | Verify uniqueness semantics now — Pezhwan enforces `(tenantId, email)` / `(tenantId, phone)` uniqueness. |
-| `emailVerified`, `phoneVerified`, `isActive` | Derive from legacy `verified_at`, `status`, `disabled`, `deleted_at`. |
-| `roles[]` | Flatten group→role assignments; record any permission grants you want to reproduce. |
-| `metadata` | Free-form legacy attributes/claims as a JSON object. |
-| `providerData[]` | Federated identities (`{ provider, subject }`). |
-| `mfa` | Factor types + enrollment dates (type only — never the seed). |
-| `passwordHash` | Reference the algorithm + salt **for documentation**; do not import the value. |
+| Column to produce                            | Notes                                                                                                    |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `sourceId`                                   | Legacy primary key; keep for reference and rollback joins.                                               |
+| `email`, `phone`                             | Verify uniqueness semantics now — Pezhwan enforces `(tenantId, email)` / `(tenantId, phone)` uniqueness. |
+| `emailVerified`, `phoneVerified`, `isActive` | Derive from legacy `verified_at`, `status`, `disabled`, `deleted_at`.                                    |
+| `roles[]`                                    | Flatten group→role assignments; record any permission grants you want to reproduce.                      |
+| `metadata`                                   | Free-form legacy attributes/claims as a JSON object.                                                     |
+| `providerData[]`                             | Federated identities (`{ provider, subject }`).                                                          |
+| `mfa`                                        | Factor types + enrollment dates (type only — never the seed).                                            |
+| `passwordHash`                               | Reference the algorithm + salt **for documentation**; do not import the value.                           |
 
 Emit idempotent batches (e.g. `WHERE id > $lastId ORDER BY id`) so the import
 can resume after failures.
@@ -65,23 +65,33 @@ import { createPezhwan, UserModel } from '@pezhwan/core';
 import { hashPassword } from '@pezhwan/crypto';
 
 await mongoose.connect(process.env.PEZHWAN_MONGODB_URI!);
-const runtime = createPezhwan({ tenantId: 'acme', applicationId: 'web', /* ... */ otpDelivery: {} });
+const runtime = createPezhwan({
+  tenantId: 'acme',
+  applicationId: 'web',
+  /* ... */ otpDelivery: {},
+});
 
 for (const rec of exportedRecords) {
   const doc = await UserModel.create({
     tenantId: 'acme',
-    email: rec.email?.toLowerCase(), phone: rec.phone,
-    emailVerified: rec.emailVerified, phoneVerified: rec.phoneVerified,
+    email: rec.email?.toLowerCase(),
+    phone: rec.phone,
+    emailVerified: rec.emailVerified,
+    phoneVerified: rec.phoneVerified,
     isActive: rec.isActive !== false,
     passwordHash: rec.temporaryPassword ? await hashPassword(rec.temporaryPassword) : null,
     metadata: { source: 'legacy', legacyId: rec.sourceId, ...(rec.metadata ?? {}) },
-  }).catch(() => undefined);                                    // resume-safe
+  }).catch(() => undefined); // resume-safe
   if (!doc) continue;
   for (const roleName of rec.roles ?? []) {
-    await runtime.authorization.assignRole({
-      userId: String(doc._id), tenantId: 'acme',
-      applicationId: 'web', roleName: roleName.toUpperCase(),
-    }).catch(() => undefined);
+    await runtime.authorization
+      .assignRole({
+        userId: String(doc._id),
+        tenantId: 'acme',
+        applicationId: 'web',
+        roleName: roleName.toUpperCase(),
+      })
+      .catch(() => undefined);
   }
 }
 await mongoose.disconnect();
@@ -92,19 +102,19 @@ legacy password/bcrypt hash into `passwordHash` — Pezhwan only stores Argon2id
 
 ## 5. Mapping
 
-| Legacy concept | Pezhwan concept |
-| --- | --- |
-| Database / auth service instance | `Tenant` (`slug`, `name`). |
-| Product / audience scope | `Application` (`clientId`, platform, `redirectUris`). |
-| Primary key (`sourceId`) | `User._id` only if downstream refs demand it, else `metadata.legacyId`. |
-| `email` / `phone` | `User.email` / `User.phone` (unique per tenant). |
-| `verified_at` / `status` / `disabled` | `emailVerified`, `isActive`. |
-| Roles / groups / permissions | `Role` (+ `permissionIds`) and `UserRoleAssignment`; surface as `roles[]`. |
-| Custom claims / attributes | `User.metadata`. |
-| Federation / SSO links | `LinkedIdentity` (`provider`, `subject`). |
-| MFA factor enrollment | Re-enroll on Pezhwan (`User.mfaEnabled`) — seeds never transfer. |
-| Legacy token/session TTLs | Pezhwan access (15m) + rotating refresh family; normalize, don't preserve. |
-| Password hash (any scheme) | Discarded; Argon2id via reset flow or `hashPassword` temporary. |
+| Legacy concept                        | Pezhwan concept                                                            |
+| ------------------------------------- | -------------------------------------------------------------------------- |
+| Database / auth service instance      | `Tenant` (`slug`, `name`).                                                 |
+| Product / audience scope              | `Application` (`clientId`, platform, `redirectUris`).                      |
+| Primary key (`sourceId`)              | `User._id` only if downstream refs demand it, else `metadata.legacyId`.    |
+| `email` / `phone`                     | `User.email` / `User.phone` (unique per tenant).                           |
+| `verified_at` / `status` / `disabled` | `emailVerified`, `isActive`.                                               |
+| Roles / groups / permissions          | `Role` (+ `permissionIds`) and `UserRoleAssignment`; surface as `roles[]`. |
+| Custom claims / attributes            | `User.metadata`.                                                           |
+| Federation / SSO links                | `LinkedIdentity` (`provider`, `subject`).                                  |
+| MFA factor enrollment                 | Re-enroll on Pezhwan (`User.mfaEnabled`) — seeds never transfer.           |
+| Legacy token/session TTLs             | Pezhwan access (15m) + rotating refresh family; normalize, don't preserve. |
+| Password hash (any scheme)            | Discarded; Argon2id via reset flow or `hashPassword` temporary.            |
 
 ## 6. Rolling out
 

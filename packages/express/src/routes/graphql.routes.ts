@@ -92,25 +92,33 @@ export function createGraphqlRouter(runtime: PezhwanRuntime): Router {
     },
   };
 
-  router.post('/', rateLimit(runtime, { type: 'api', scope }), async (req: PezhwanRequest, res: Response) => {
-    const body = (req.body ?? {}) as { query?: unknown; variables?: unknown; operationName?: unknown };
-    if (typeof body.query !== 'string' || body.query.length === 0) {
-      res.status(400).json({
-        success: false,
-        error: { code: 'GRAPHQL_QUERY_REQUIRED', message: 'query is required' },
+  router.post(
+    '/',
+    rateLimit(runtime, { type: 'api', scope }),
+    async (req: PezhwanRequest, res: Response) => {
+      const body = (req.body ?? {}) as {
+        query?: unknown;
+        variables?: unknown;
+        operationName?: unknown;
+      };
+      if (typeof body.query !== 'string' || body.query.length === 0) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'GRAPHQL_QUERY_REQUIRED', message: 'query is required' },
+        });
+        return;
+      }
+      const result = await graphql({
+        schema,
+        source: body.query,
+        rootValue: root,
+        contextValue: { req },
+        variableValues: (body.variables ?? {}) as Record<string, unknown>,
+        operationName: typeof body.operationName === 'string' ? body.operationName : undefined,
       });
-      return;
-    }
-    const result = await graphql({
-      schema,
-      source: body.query,
-      rootValue: root,
-      contextValue: { req },
-      variableValues: (body.variables ?? {}) as Record<string, unknown>,
-      operationName: typeof body.operationName === 'string' ? body.operationName : undefined,
-    });
-    res.status(200).json({ success: true, data: result });
-  });
+      res.status(200).json({ success: true, data: result });
+    },
+  );
 
   router.get('/schema', (_req: Request, res: Response) => {
     res.setHeader('content-type', 'text/plain; charset=utf-8');

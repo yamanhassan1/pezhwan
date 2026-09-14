@@ -41,7 +41,12 @@ export class AzureBlobAdapter {
     return `/${this.container}/${blob}`;
   }
 
-  private async request(method: string, blob: string, body?: Uint8Array, contentType?: string): Promise<Response> {
+  private async request(
+    method: string,
+    blob: string,
+    body?: Uint8Array,
+    contentType?: string,
+  ): Promise<Response> {
     const now = new Date().toUTCString();
     const path = encodeURI(this.resource(blob));
     const canonical = `${method}\n\n\n${contentType ?? ''}\n\n\n\n\n\n\n\n\nx-ms-blob-type:BlockBlob\nx-ms-date:${now}\nx-ms-version:2019-12-12\n${this.resource(blob)}`;
@@ -64,7 +69,11 @@ export class AzureBlobAdapter {
     });
   }
 
-  async put(name: string, body: Uint8Array | string, contentType = 'application/octet-stream'): Promise<void> {
+  async put(
+    name: string,
+    body: Uint8Array | string,
+    contentType = 'application/octet-stream',
+  ): Promise<void> {
     const payload = typeof body === 'string' ? new TextEncoder().encode(body) : body;
     const response = await this.request('PUT', name, payload, contentType);
     if (response.status >= 300) throw new Error(`Azure blob put failed: ${response.status}`);

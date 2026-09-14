@@ -7,7 +7,14 @@
  * using the profile from ~/.pezhwan/config.json.
  */
 
-import { CliConfig, configPath, loadConfig, parseFlags, requireConfig, saveConfig } from './utils/config.ts';
+import {
+  CliConfig,
+  configPath,
+  loadConfig,
+  parseFlags,
+  requireConfig,
+  saveConfig,
+} from './utils/config.ts';
 import { json, table } from './utils/format.ts';
 import { err as errOut, ok as okOut, out, warn } from './utils/logger.ts';
 

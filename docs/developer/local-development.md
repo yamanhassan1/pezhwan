@@ -42,10 +42,12 @@ There is no single "build everything on save" script in the repo (run
 Two patterns work well:
 
 1. **`tsc -w` per package.** Open one terminal per package you are editing:
+
    ```bash
    npm run build -w @pezhwan/core     # once, to seed dist/
    npx tsc -p packages/core/tsconfig.json -w
    ```
+
    This re-emits `dist/` on every save. Rebuild dependents (`express`,
    `identity-server`) when their types change.
 

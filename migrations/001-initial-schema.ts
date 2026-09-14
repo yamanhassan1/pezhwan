@@ -94,12 +94,17 @@ function indexMatches(spec: IndexSpec, ix: Record<string, unknown>): boolean {
   const ixSparse = Boolean(ix.sparse);
   if ((spec.unique ?? false) !== ixUnique) return false;
   if ((spec.sparse ?? false) !== ixSparse) return false;
-  if (spec.expireAfterSeconds !== undefined && Number(ix.expireAfterSeconds) !== spec.expireAfterSeconds) {
+  if (
+    spec.expireAfterSeconds !== undefined &&
+    Number(ix.expireAfterSeconds) !== spec.expireAfterSeconds
+  ) {
     return false;
   }
   const ixPartial = ix.partialFilterExpression ?? null;
-  if (spec.partialFilterExpression !== undefined &&
-      JSON.stringify(ixPartial) !== JSON.stringify(spec.partialFilterExpression)) {
+  if (
+    spec.partialFilterExpression !== undefined &&
+    JSON.stringify(ixPartial) !== JSON.stringify(spec.partialFilterExpression)
+  ) {
     return false;
   }
   return true;
@@ -230,10 +235,7 @@ const SCHEMA: CollectionSpec[] = [
   {
     // --- API keys --------------------------------------------------------------
     name: 'apikeys',
-    indexes: [
-      { key: { tenantId: 1 } },
-      { key: { keyHash: 1 }, unique: true },
-    ],
+    indexes: [{ key: { tenantId: 1 } }, { key: { keyHash: 1 }, unique: true }],
   },
   {
     // --- RBAC ------------------------------------------------------------------
@@ -254,10 +256,7 @@ const SCHEMA: CollectionSpec[] = [
   {
     // --- OAuth ----------------------------------------------------------------
     name: 'oauthclients',
-    indexes: [
-      { key: { clientId: 1 }, unique: true },
-      { key: { tenantId: 1, applicationId: 1 } },
-    ],
+    indexes: [{ key: { clientId: 1 }, unique: true }, { key: { tenantId: 1, applicationId: 1 } }],
   },
   {
     name: 'authorizationcodes',
@@ -278,10 +277,7 @@ const SCHEMA: CollectionSpec[] = [
   {
     // --- Decoy honeypot users -------------------------------------------------
     name: 'decoyusers',
-    indexes: [
-      { key: { tenantId: 1 } },
-      { key: { tenantId: 1, handle: 1 }, unique: true },
-    ],
+    indexes: [{ key: { tenantId: 1 } }, { key: { tenantId: 1, handle: 1 }, unique: true }],
   },
   {
     // --- Trusted devices ------------------------------------------------------

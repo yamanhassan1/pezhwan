@@ -40,7 +40,11 @@ export class PasswordlessService {
     return { delivery: channel };
   }
 
-  async sendMagicLink(input: { subject: string; audience: string; redirectUri?: string }): Promise<PasswordlessChallengeResult> {
+  async sendMagicLink(input: {
+    subject: string;
+    audience: string;
+    redirectUri?: string;
+  }): Promise<PasswordlessChallengeResult> {
     if (!this.magicLink) throw new Error('Magic-link delivery is not configured');
     const link = this.magicLink.create(input);
     return { delivery: 'magic-link', magicUrl: link.url };

@@ -34,7 +34,9 @@ export class SessionService {
 
   async refresh(): Promise<void> {
     try {
-      const payload = (await this.api('/v1/sessions')) as { data?: { sessions?: PezhwanSession[] } };
+      const payload = (await this.api('/v1/sessions')) as {
+        data?: { sessions?: PezhwanSession[] };
+      };
       this.sessionsSubject.next(payload.data?.sessions ?? []);
     } catch {
       this.sessionsSubject.next([]);
